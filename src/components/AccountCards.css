@@ -1,0 +1,115 @@
+.accounts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.account-card {
+    border-radius: 16px;
+    padding: 20px;
+    color: white;
+    position: relative;
+    cursor: default;
+    transition: box-shadow 0.2s, transform 0.2s;
+    box-shadow: 0 8px 24px rgba(30, 64, 175, 0.25);
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+}
+
+.account-card::before {
+    content: "";
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.account-card::after {
+    content: "";
+    position: absolute;
+    bottom: -20px;
+    left: -20px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.account-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 36px rgba(30, 64, 175, 0.35);
+}
+
+.card-drag-handle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    cursor: grab;
+    z-index: 2;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.card-drag-handle:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.card-drag-handle:active {
+    cursor: grabbing;
+}
+
+.ac-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    z-index: 1;
+    position: relative;
+}
+
+.ac-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    opacity: 0.85;
+    margin-bottom: 2px;
+}
+
+.ac-number {
+    font-size: 0.78rem;
+    opacity: 0.6;
+    font-family: monospace;
+}
+
+.ac-balance {
+    z-index: 1;
+    position: relative;
+}
+
+.ac-bal-label {
+    display: block;
+    font-size: 0.74rem;
+    opacity: 0.7;
+    margin-bottom: 2px;
+}
+
+.ac-bal-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.ac-trend {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    opacity: 0.8;
+    z-index: 1;
+    position: relative;
+}
