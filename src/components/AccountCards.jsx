@@ -6,7 +6,7 @@
  * Each card displays real-time balance trends and basic account information.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
     DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
 } from "@dnd-kit/core";
@@ -47,11 +47,13 @@ function AccountCard({ account }) {
                 ...activeCardStyle,
                 background: `linear-gradient(135deg, ${account.color}, ${account.color}cc)`
             }}
-            className="account-card"
+            className={`account-card ${isDragging ? 'is-dragging' : ''}`}
             data-testid={`account-card-${account.id}`}
             data-account-type={account.type}
+            {...attributes}
+            {...listeners}
         >
-            <div className="card-drag-handle" {...attributes} {...listeners} data-testid={`drag-handle-${account.id}`}>
+            <div className="card-drag-handle" data-testid={`drag-handle-${account.id}`}>
                 <GripVertical size={18} color="rgba(255,255,255,0.6)" />
             </div>
             <div className="ac-header">
@@ -77,8 +79,17 @@ function AccountCard({ account }) {
     );
 }
 
-export default function AccountCards() {
-    const [accountList, setAccountList] = useState(mockAccounts);
+export default function AccountCards({ accounts }) {
+    // We use the accounts from props to ensure balances are dynamic
+    // But we still want local state for reordering within the session
+    const [sortedAccountIds, setSortedAccountIds] = useState(null);
+
+    const accountList = useMemo(() => {
+        if (!sortedAccountIds) return accounts;
+        return [...accounts].sort((a, b) => {
+            return sortedAccountIds.indexOf(a.id) - sortedAccountIds.indexOf(b.id);
+        });
+    }, [accounts, sortedAccountIds]);
 
     // Configure accessibility and pointer sensors for drag-and-drop
     const controlSensors = useSensors(
@@ -88,11 +99,10 @@ export default function AccountCards() {
 
     const onReorderComplete = ({ active, over }) => {
         if (active.id !== over?.id) {
-            setAccountList(currentAccounts => {
-                const previousIndex = currentAccounts.findIndex(account => account.id === active.id);
-                const targetIndex = currentAccounts.findIndex(account => account.id === over.id);
-                return arrayMove(currentAccounts, previousIndex, targetIndex);
-            });
+            const oldIndex = accountList.findIndex(acc => acc.id === active.id);
+            const newIndex = accountList.findIndex(acc => acc.id === over.id);
+            const newOrder = arrayMove(accountList, oldIndex, newIndex).map(acc => acc.id);
+            setSortedAccountIds(newOrder);
         }
     };
 

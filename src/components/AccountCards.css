@@ -9,7 +9,7 @@
     padding: 20px;
     color: white;
     position: relative;
-    cursor: default;
+    cursor: grab;
     transition: box-shadow 0.2s, transform 0.2s;
     box-shadow: 0 8px 24px rgba(30, 64, 175, 0.25);
     min-height: 160px;
@@ -17,6 +17,12 @@
     flex-direction: column;
     justify-content: space-between;
     overflow: hidden;
+    user-select: none;
+    touch-action: none;
+}
+
+.account-card.is-dragging {
+    cursor: grabbing;
 }
 
 .account-card::before {
@@ -50,19 +56,16 @@
     position: absolute;
     top: 12px;
     right: 12px;
-    cursor: grab;
     z-index: 2;
     padding: 4px;
     border-radius: 6px;
-    transition: background 0.2s;
+    pointer-events: none;
+    opacity: 0.7;
+    transition: opacity 0.2s;
 }
 
-.card-drag-handle:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.card-drag-handle:active {
-    cursor: grabbing;
+.account-card:hover .card-drag-handle {
+    opacity: 1;
 }
 
 .ac-header {
