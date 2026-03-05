@@ -458,6 +458,44 @@ body.dark-mode {
     color: var(--danger);
 }
 
+/* ── Glassmorphic UI Refinements ──────────────── */
+.glassmorphic {
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.45) !important;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07) !important;
+}
+
+body.dark-mode .glassmorphic {
+    background: rgba(30, 41, 59, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ── Market Pulse Card ──────────────────────── */
+.market-pulse-card {
+    padding: 0 !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.market-pulse-card .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.market-pulse-container.compact {
+    margin: 0;
+    min-height: 240px;
+    background: transparent;
+    padding: 0;
+}
+
+.market-pulse-container iframe {
+    display: block;
+}
+
 /* ── Sections ──────────────────── */
 .section {
     padding: 0 28px 20px;
@@ -468,6 +506,83 @@ body.dark-mode {
     grid-template-columns: 1fr 1.5fr;
     gap: 20px;
     padding: 0 28px 20px;
+    align-items: start;
+}
+
+/* ── PDF Export / Print Styles ──────────────── */
+@media print {
+
+    /* Force visibility and disable animations that might hide content */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        animation: none !important;
+        transition: none !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+    }
+
+    /* Hide all UI shell elements */
+    .sidebar,
+    .topbar,
+    .sidebar-overlay,
+    .summary-strip,
+    .two-col,
+    .CheckboxFilter,
+    .TransferForm,
+    .PayToUser,
+    .market-pulse-card,
+    .badge-blue,
+    .btn-download,
+    .notif-wrapper,
+    .menu-btn,
+    .sidebar-user,
+    .pagination-minimal,
+    .avatar-sm {
+        display: none !important;
+    }
+
+    /* Reset layout for print */
+    .dashboard-layout {
+        display: block !important;
+        height: auto !important;
+    }
+
+    .dashboard-main {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        display: block !important;
+    }
+
+    .page-content {
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    .section {
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+    }
+
+    /* Hide sections that don't contain the transaction table */
+    /* We use a more compatible approach than :has if needed, 
+       but forcing visibility on children often helps. */
+    .section:not(:last-child) {
+        display: none !important;
+    }
+
+    .section:last-child {
+        display: block !important;
+    }
+
+    body {
+        background: white !important;
+        color: black !important;
+        margin: 0 !important;
+    }
 }
 
 /* ── Mobile overlay ─────────────── */
@@ -680,4 +795,21 @@ body.dark-mode {
 
 .toggle-switch.on .toggle-knob {
     transform: translateX(20px);
+}
+
+/* ── Download Statement Button ─── */
+.btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.btn-download:hover {
+    background: var(--blue-600);
+    color: white;
+    border-color: var(--blue-600);
 }

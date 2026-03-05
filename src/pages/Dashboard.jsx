@@ -12,20 +12,24 @@ import { useAuth } from "../context/AuthContext.jsx";
 import {
     Building2, LayoutDashboard, CreditCard, ArrowLeftRight, PieChart,
     Settings, LogOut, Bell, Menu, X, ShieldCheck, Lock, Globe,
-    TrendingUp, TrendingDown, Wallet, PiggyBank, BarChart3, User, Mail, Phone, MapPin
+    TrendingUp, TrendingDown, Wallet, PiggyBank, BarChart3, User, Mail, Phone, MapPin,
+    Download
 } from "lucide-react";
 import GlobalSearch from "../components/GlobalSearch.jsx";
 import AccountCards from "../components/AccountCards.jsx";
 import TransferForm from "../components/TransferForm.jsx";
+import PayToUser from "../components/PayToUser.jsx";
 import CheckboxFilter from "../components/CheckboxFilter.jsx";
 import TransactionTable from "../components/TransactionTable.jsx";
-import { mockTransactions, transactionCategories, mockAccounts } from "../data/mockData.js";
+import FDManager from "../components/FDManager.jsx";
+import { mockTransactions as initialMockTransactions, mockTransactions, transactionCategories, mockAccounts } from "../data/mockData.js";
 import "./Dashboard.css";
 import "../web-components/settings-web-component.js";
 
 const NAVIGATION_ITEMS = [
     { icon: LayoutDashboard, label: "Overview", id: "overview" },
     { icon: CreditCard, label: "Accounts", id: "accounts" },
+    { icon: PiggyBank, label: "Fixed Deposits", id: "fd" },
     { icon: ArrowLeftRight, label: "Transfers", id: "transfers" },
     { icon: PieChart, label: "Analytics", id: "analytics" },
     { icon: Settings, label: "Settings", id: "settings" },
@@ -34,13 +38,14 @@ const NAVIGATION_ITEMS = [
 const PAGE_METADATA = {
     overview: { title: "Dashboard Overview", subtitle: "Your complete financial snapshot" },
     accounts: { title: "My Accounts", subtitle: "Manage and reorder your linked accounts" },
-    transfers: { title: "Fund Transfers", subtitle: "Move money between your accounts securely" },
+    fd: { title: "Fixed Deposits", subtitle: "Secure your future with high-yield deposits" },
+    transfers: { title: "Fund Transfers", subtitle: "Move money between your accounts and others securely" },
     analytics: { title: "Analytics", subtitle: "Visualise your spending and income trends" },
     settings: { title: "Account Settings", subtitle: "Manage your profile, security and preferences" },
 };
 
-function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategories, onCategoryChange }) {
-    const totalBalance = 12450.75 + 56789.00 - 3241.50 + 98100.20;
+function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategories, onCategoryChange, onTransferComplete, accounts }) {
+    const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
 
     return (
         <>
@@ -59,13 +64,35 @@ function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategor
                 </div>
                 <div className="summary-card">
                     <span className="summary-label">Active Accounts</span>
-                    <span className="summary-value">4</span>
+                    <span className="summary-value">{accounts.length}</span>
                 </div>
             </section>
 
             <section className="section fade-in" style={{ animationDelay: "0.05s" }}>
-                <AccountCards />
+                <AccountCards accounts={accounts} />
             </section>
+
+            <div className="two-col fade-in" style={{ animationDelay: "0.08s", alignItems: 'stretch' }}>
+                <div className="card market-pulse-card glassmorphic" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div className="card-header">
+                        <h2 className="card-title">
+                            <TrendingUp size={18} style={{ marginRight: 8, color: "var(--blue-600)" }} />
+                            Market Pulse
+                        </h2>
+                        <span className="badge badge-blue">S&P 500</span>
+                    </div>
+                    <div className="market-pulse-container compact" style={{ flex: 1, minHeight: '300px' }}>
+                        <iframe
+                            src="/market-insights.html"
+                            width="100%"
+                            height="100%"
+                            style={{ border: "none", display: 'block' }}
+                            allowTransparency="true"
+                        ></iframe>
+                    </div>
+                </div>
+                <TransferForm onTransferComplete={onTransferComplete} />
+            </div>
 
             <div className="two-col fade-in" style={{ animationDelay: "0.1s" }}>
                 <CheckboxFilter
@@ -73,20 +100,32 @@ function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategor
                     selected={selectedCategories}
                     onChange={onCategoryChange}
                 />
-                <TransferForm />
+                <PayToUser onPaymentComplete={onTransferComplete} />
             </div>
 
             <section className="section fade-in" style={{ animationDelay: "0.15s" }}>
-                <TransactionTable
-                    transactions={filteredTransactions}
-                    globalSearch={globalSearchQuery}
-                />
+                <div className="card">
+                    <div className="card-header">
+                        <h2 className="card-title">Transaction History</h2>
+                        <button
+                            className="btn btn-outline btn-sm btn-download"
+                            onClick={() => window.print()}
+                            title="Download transaction statement as PDF"
+                        >
+                            <Download size={14} /> Download PDF
+                        </button>
+                    </div>
+                    <TransactionTable
+                        transactions={filteredTransactions}
+                        globalSearch={globalSearchQuery}
+                    />
+                </div>
             </section>
         </>
     );
 }
 
-function AccountsPage({ globalSearchQuery }) {
+function AccountsPage({ globalSearchQuery, accounts }) {
     const filteredTransactions = mockTransactions.filter(transaction => {
         const query = globalSearchQuery.toLowerCase();
         return !query ||
@@ -99,17 +138,26 @@ function AccountsPage({ globalSearchQuery }) {
     return (
         <div className="page-content fade-in" data-testid="accounts-page">
             <section className="section">
-                <AccountCards />
+                <AccountCards accounts={accounts} />
             </section>
 
             <section className="section">
                 <div className="card">
                     <div className="card-header">
                         <h2 className="card-title">Account Details</h2>
-                        <span className="badge badge-blue">4 Accounts</span>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                                className="btn btn-outline btn-sm btn-download"
+                                onClick={() => window.print()}
+                                title="Download account statement"
+                            >
+                                <Download size={14} /> Download PDF
+                            </button>
+                            <span className="badge badge-blue">4 Accounts</span>
+                        </div>
                     </div>
                     <div className="account-details-grid">
-                        {mockAccounts.map(account => {
+                        {accounts.map(account => {
                             const isNegative = account.balance < 0;
                             return (
                                 <div key={account.id} className="account-detail-row" data-testid={`account-detail-${account.id}`}>
@@ -135,9 +183,18 @@ function AccountsPage({ globalSearchQuery }) {
                 <div className="card">
                     <div className="card-header">
                         <h2 className="card-title">Recent Transactions</h2>
-                        {globalSearchQuery && (
-                            <span className="badge badge-blue">🔍 "{globalSearchQuery}" — {filteredTransactions.length} results</span>
-                        )}
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button
+                                className="btn btn-outline btn-sm btn-download"
+                                onClick={() => window.print()}
+                                title="Download transaction list"
+                            >
+                                <Download size={14} /> Download PDF
+                            </button>
+                            {globalSearchQuery && (
+                                <span className="badge badge-blue">🔍 "{globalSearchQuery}" — {filteredTransactions.length} results</span>
+                            )}
+                        </div>
                     </div>
                     <TransactionTable transactions={filteredTransactions} globalSearch={globalSearchQuery} />
                 </div>
@@ -146,9 +203,9 @@ function AccountsPage({ globalSearchQuery }) {
     );
 }
 
-function TransfersPage({ globalSearchQuery }) {
+function TransfersPage({ globalSearchQuery, allTransactions, onTransferComplete }) {
     const query = globalSearchQuery.toLowerCase();
-    const transferHistory = mockTransactions
+    const transferHistory = allTransactions
         .filter(transaction => transaction.category === "Transfers")
         .filter(transaction => !query ||
             transaction.description.toLowerCase().includes(query) ||
@@ -157,59 +214,74 @@ function TransfersPage({ globalSearchQuery }) {
             Math.abs(transaction.amount).toString().includes(query)
         );
 
+    const handleDownloadStatement = () => {
+        const headers = ["Date", "Customer ID", "Description", "Category", "Amount", "Status", "Type"];
+        const rows = transferHistory.map(t => [
+            t.date,
+            t.customerId,
+            `"${t.description}"`,
+            t.category,
+            t.amount.toFixed(2),
+            t.status,
+            t.type
+        ]);
+        const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `transfer_statement_${new Date().toISOString().split("T")[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="page-content fade-in" data-testid="transfers-page">
             <section className="summary-strip">
                 <div className="summary-card">
                     <span className="summary-label">Transfers This Month</span>
-                    <span className="summary-value">12</span>
+                    <span className="summary-value">{transferHistory.length}</span>
                 </div>
                 <div className="summary-card">
                     <span className="summary-label">Total Sent</span>
-                    <span className="summary-value debit">-$4,700.00</span>
+                    <span className="summary-value debit">-${Math.abs(transferHistory.filter(t => t.type === "debit").reduce((s, t) => s + t.amount, 0)).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="summary-card">
                     <span className="summary-label">Total Received</span>
-                    <span className="summary-value credit">+$2,000.00</span>
+                    <span className="summary-value credit">+${transferHistory.filter(t => t.type === "credit").reduce((s, t) => s + t.amount, 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="summary-card">
                     <span className="summary-label">Pending</span>
-                    <span className="summary-value" style={{ color: "var(--warning)" }}>2</span>
+                    <span className="summary-value" style={{ color: "var(--warning)" }}>{transferHistory.filter(t => t.status === "Pending").length}</span>
                 </div>
             </section>
 
             <div className="two-col section fade-in" style={{ padding: "0 28px 20px" }}>
-                <TransferForm />
+                <TransferForm onTransferComplete={onTransferComplete} />
+                <PayToUser onPaymentComplete={onTransferComplete} />
+            </div>
+
+            {/* Transfer Transaction Table */}
+            <div className="section fade-in" style={{ padding: "0 28px 20px" }}>
                 <div className="card">
                     <div className="card-header">
-                        <h2 className="card-title">Quick Transfer History</h2>
-                        {globalSearchQuery && (
-                            <span className="badge badge-blue">🔍 {transferHistory.length} results</span>
-                        )}
-                    </div>
-                    {transferHistory.length === 0 ? (
-                        <p style={{ color: "var(--gray-400)", textAlign: "center", padding: "24px 0", fontSize: "0.9rem" }}>
-                            No transfers match "{globalSearchQuery}"
-                        </p>
-                    ) : (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                            {transferHistory.map(transaction => (
-                                <div key={transaction.id} className="quick-txn-row" data-testid={`transfer-hist-${transaction.id}`}>
-                                    <div className="quick-txn-icon" style={{ background: transaction.type === "credit" ? "#D1FAE5" : "#FEE2E2" }}>
-                                        {transaction.type === "credit" ? <TrendingUp size={16} color="var(--success)" /> : <TrendingDown size={16} color="var(--danger)" />}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--gray-800)" }}>{transaction.description}</div>
-                                        <div style={{ fontSize: "0.75rem", color: "var(--gray-400)" }}>{new Date(transaction.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
-                                    </div>
-                                    <div style={{ fontWeight: 700, fontSize: "0.9rem", color: transaction.type === "credit" ? "var(--success)" : "var(--danger)" }}>
-                                        {transaction.type === "credit" ? "+" : ""}{transaction.amount < 0 ? "-" : ""}${Math.abs(transaction.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                                    </div>
-                                    <span className={`badge ${transaction.status === "Completed" ? "badge-success" : "badge-warning"}`}>{transaction.status}</span>
-                                </div>
-                            ))}
+                        <h2 className="card-title">Transfer History</h2>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button
+                                className="btn btn-outline btn-sm btn-download"
+                                onClick={() => window.print()}
+                                title="Download transfer history"
+                            >
+                                <Download size={14} /> Download PDF
+                            </button>
+                            {globalSearchQuery && (
+                                <span className="badge badge-blue">🔍 {transferHistory.length} results</span>
+                            )}
                         </div>
-                    )}
+                    </div>
+                    <TransactionTable transactions={transferHistory} globalSearch={globalSearchQuery} />
                 </div>
             </div>
         </div>
@@ -234,9 +306,9 @@ function SearchResultsPage({ transactions, query }) {
     );
 }
 
-function AnalyticsPage() {
+function AnalyticsPage({ transactions }) {
     const categoryTotals = transactionCategories.map(categoryName => {
-        const matchingTransactions = mockTransactions.filter(transaction => transaction.category === categoryName);
+        const matchingTransactions = transactions.filter(transaction => transaction.category === categoryName);
         const totalValue = matchingTransactions.reduce((sum, transaction) => sum + Math.abs(transaction.amount), 0);
         const count = matchingTransactions.length;
         return { categoryName, totalValue, count };
@@ -247,6 +319,7 @@ function AnalyticsPage() {
     const CATEGORY_COLORS = {
         Salary: "#10B981", Deposits: "#3B82F6", Withdrawals: "#EF4444",
         Transfers: "#8B5CF6", Bills: "#F59E0B", Shopping: "#EC4899", Dining: "#14B8A6",
+        Investments: "#3B82F6"
     };
 
     return (
@@ -254,19 +327,25 @@ function AnalyticsPage() {
             <section className="summary-strip">
                 <div className="summary-card">
                     <span className="summary-label">Total Income</span>
-                    <span className="summary-value credit">+$10,338.25</span>
+                    <span className="summary-value credit">
+                        +${transactions.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0).toLocaleString()}
+                    </span>
                 </div>
                 <div className="summary-card">
                     <span className="summary-label">Total Expenses</span>
-                    <span className="summary-value debit">-$5,387.97</span>
+                    <span className="summary-value debit">
+                        -${Math.abs(transactions.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0)).toLocaleString()}
+                    </span>
                 </div>
                 <div className="summary-card">
                     <span className="summary-label">Net Savings</span>
-                    <span className="summary-value">+$4,950.28</span>
+                    <span className="summary-value">
+                        +${(transactions.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0) + transactions.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0)).toLocaleString()}
+                    </span>
                 </div>
                 <div className="summary-card">
                     <span className="summary-label">Transactions</span>
-                    <span className="summary-value">{mockTransactions.length}</span>
+                    <span className="summary-value">{transactions.length}</span>
                 </div>
             </section>
 
@@ -417,6 +496,47 @@ export default function Dashboard() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
     const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+    const [allTransactions, setAllTransactions] = useState(initialMockTransactions);
+    const [accounts, setAccounts] = useState(mockAccounts);
+
+    const handleTransferComplete = (newTxn) => {
+        setAllTransactions(prev => [newTxn, ...prev]);
+
+        // Update account balances reactively and generate notification
+        setAccounts(prevAccounts => {
+            const updatedAccounts = prevAccounts.map(acc => {
+                if (newTxn.category === "Transfers" || newTxn.description.includes("Payment to") || newTxn.description.includes("Transfer to")) {
+                    const amount = Math.abs(newTxn.amount);
+                    if (newTxn.type === "debit" && acc.type === "checking") {
+                        return { ...acc, balance: acc.balance - amount };
+                    }
+                    if (newTxn.type === "credit" && acc.type === "checking") {
+                        return { ...acc, balance: acc.balance + amount };
+                    }
+                }
+                return acc;
+            });
+
+            // Generate a notification after balance update
+            const checkingAcc = updatedAccounts.find(a => a.type === "checking");
+            const availableBalance = checkingAcc ? checkingAcc.balance : null;
+            const amount = Math.abs(newTxn.amount);
+            const isDebit = newTxn.type === "debit";
+            const newNotif = {
+                id: Date.now(),
+                icon: isDebit ? "💸" : "💰",
+                title: isDebit ? "Amount Debited" : "Amount Credited",
+                message: isDebit
+                    ? `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} debited · Available: $${availableBalance != null ? availableBalance.toLocaleString("en-US", { minimumFractionDigits: 2 }) : "—"}`
+                    : `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} credited · Available: $${availableBalance != null ? availableBalance.toLocaleString("en-US", { minimumFractionDigits: 2 }) : "—"}`,
+                time: "Just now",
+                isRead: false,
+            };
+            setNotifications(prev => [newNotif, ...prev]);
+
+            return updatedAccounts;
+        });
+    };
 
     useEffect(() => {
         // Load initial theme
@@ -442,7 +562,7 @@ export default function Dashboard() {
 
     const unreadNotificationsCount = notifications.filter(notification => !notification.isRead).length;
 
-    const filteredTransactions = mockTransactions.filter(transaction => {
+    const filteredTransactions = allTransactions.filter(transaction => {
         const matchesCategory = selectedCategories.includes(transaction.category);
         const query = globalSearchQuery.toLowerCase();
         const matchesSearch = !query ||
@@ -468,10 +588,13 @@ export default function Dashboard() {
                     globalSearchQuery={globalSearchQuery}
                     selectedCategories={selectedCategories}
                     onCategoryChange={setSelectedCategories}
+                    onTransferComplete={handleTransferComplete}
+                    accounts={accounts}
                 />;
-            case "accounts": return <AccountsPage globalSearchQuery={globalSearchQuery} />;
-            case "transfers": return <TransfersPage globalSearchQuery={globalSearchQuery} />;
-            case "analytics": return <AnalyticsPage />;
+            case "accounts": return <AccountsPage globalSearchQuery={globalSearchQuery} accounts={accounts} />;
+            case "fd": return <FDManager />;
+            case "transfers": return <TransfersPage globalSearchQuery={globalSearchQuery} allTransactions={allTransactions} onTransferComplete={handleTransferComplete} />;
+            case "analytics": return <AnalyticsPage transactions={allTransactions} />;
             case "settings": return <SettingsPage user={user} />;
             default: return null;
         }
