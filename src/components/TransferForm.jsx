@@ -11,7 +11,7 @@ import { mockAccounts } from "../data/mockData.js";
 import { Send, CheckCircle2 } from "lucide-react";
 import "./TransferForm.css";
 
-export default function TransferForm() {
+export default function TransferForm({ onTransferComplete }) {
     // Initial state for the transfer process
     const [transferFormData, setTransferFormData] = useState({
         from: "",
@@ -81,6 +81,23 @@ export default function TransferForm() {
 
         setIsTransferSuccessful(true);
         setIsProcessing(false);
+
+        // Create a new transaction for the transfer history
+        const fromAccount = mockAccounts.find(a => a.id === transferFormData.from);
+        const toAccount = mockAccounts.find(a => a.id === transferFormData.to);
+        const newTransaction = {
+            id: `txn-tf-${Date.now()}`,
+            customerId: "CID-101",
+            date: new Date().toISOString().split("T")[0],
+            description: `Transfer: ${fromAccount?.name || "Account"} → ${toAccount?.name || "Account"}`,
+            category: "Transfers",
+            amount: -Number(transferFormData.amount),
+            status: "Completed",
+            type: "debit",
+            note: transferFormData.note || ""
+        };
+
+        if (onTransferComplete) onTransferComplete(newTransaction);
 
         // Reset the form to its original blank state
         setTransferFormData({ from: "", to: "", amount: "", note: "", priority: "normal" });

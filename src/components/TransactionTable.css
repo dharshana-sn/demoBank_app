@@ -109,6 +109,99 @@
     font-style: normal;
 }
 
+/* Date Range Filter Bar */
+.txn-date-filter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 20px;
+    background: var(--blue-50);
+    border-bottom: 1px solid var(--blue-100);
+}
+
+.txn-date-filter-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.txn-date-icon {
+    color: var(--blue-600);
+    flex-shrink: 0;
+}
+
+.txn-date-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    white-space: nowrap;
+}
+
+.txn-date-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.txn-date-field label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    white-space: nowrap;
+}
+
+.txn-date-input {
+    border: 1.5px solid var(--blue-200);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    color: var(--gray-700);
+    background: white;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.txn-date-input:focus {
+    border-color: var(--blue-500);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+}
+
+.txn-date-clear {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border: 1.5px solid var(--danger);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--danger);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.txn-date-clear:hover {
+    background: var(--danger);
+    color: white;
+}
+
+.txn-date-active-badge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--blue-700);
+    background: white;
+    border: 1px solid var(--blue-200);
+    border-radius: 100px;
+    padding: 4px 12px;
+    white-space: nowrap;
+}
+
 .empty-row td {
     text-align: center;
     padding: 48px;
@@ -119,54 +212,102 @@
 
 /* Pagination */
 .pagination {
+    display: none;
+}
+
+.print-only {
+    display: none;
+}
+
+/* Minimal Pagination Styles */
+.pagination-minimal {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 14px 4px 0;
-    flex-wrap: wrap;
-    gap: 10px;
+    justify-content: flex-end;
+    gap: 15px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--gray-100);
 }
 
-.page-info {
-    font-size: 0.82rem;
-    color: var(--gray-400);
-}
-
-.page-btns {
-    display: flex;
-    gap: 4px;
-}
-
-.page-btn {
-    min-width: 34px;
-    height: 34px;
+.btn-pagination {
+    width: 32px;
+    height: 32px;
     border-radius: 8px;
-    border: 2px solid var(--gray-300);
-    background: var(--gray-100);
-    cursor: pointer;
-    font-size: 0.83rem;
-    font-weight: 600;
-    color: var(--gray-600);
+    border: 1px solid var(--gray-200);
+    background: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s;
-    padding: 0 6px;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.page-btn:hover:not(:disabled) {
-    background: var(--blue-50);
-    border-color: var(--blue-400);
-    color: var(--blue-700);
+.btn-pagination:hover:not(:disabled) {
+    background: var(--gray-50);
+    border-color: var(--gray-300);
+    color: var(--blue-600);
 }
 
-.page-btn.active {
-    background: var(--blue-600);
-    border-color: var(--blue-600);
-    color: white;
-}
-
-.page-btn:disabled {
-    opacity: 0.4;
+.btn-pagination:disabled {
+    opacity: 0.5;
     cursor: not-allowed;
+}
+
+.page-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.page-indicator .current {
+    color: var(--blue-600);
+}
+
+.page-indicator .separator {
+    color: var(--gray-300);
+}
+
+.page-indicator .total {
+    color: var(--gray-500);
+}
+
+/* Professional Print Styles for PDF Export */
+@media print {
+
+    .pagination-minimal,
+    .card-header .badge,
+    .btn-download,
+    .sort-icon,
+    .screen-only {
+        display: none !important;
+    }
+
+    .print-only {
+        display: table-row-group !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+
+    .txn-table {
+        font-size: 10pt;
+    }
+
+    .txn-table th {
+        background: #f8fafc !important;
+        color: black !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .search-highlight {
+        background: none !important;
+        padding: 0 !important;
+    }
 }

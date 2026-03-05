@@ -3,11 +3,11 @@
  * 
  * A highly functional data table for display financial records. 
  * Features include multi-column sorting, pagination, category-based styling, 
- * and real-time search highlighting for filtered results.
+ * real-time search highlighting for filtered results, and date range filtering.
  */
 
 import { useState, useMemo } from "react";
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, CalendarRange, X } from "lucide-react";
 import "./TransactionTable.css";
 
 const TRANSACTIONS_PER_PAGE = 8;
@@ -36,6 +36,8 @@ export default function TransactionTable({ transactions, globalSearch }) {
     const [currentSortKey, setCurrentSortKey] = useState("date");
     const [sortDirection, setSortDirection] = useState("desc");
     const [currentPage, setCurrentPage] = useState(1);
+    const [dateFrom, setDateFrom] = useState("");
+    const [dateTo, setDateTo] = useState("");
 
     const toggleSort = (columnKey) => {
         if (currentSortKey === columnKey) {
@@ -44,21 +46,39 @@ export default function TransactionTable({ transactions, globalSearch }) {
             setCurrentSortKey(columnKey);
             setSortDirection("asc");
         }
-        setCurrentPage(1); // Reset to first page when sorting changes
+        setCurrentPage(1);
+    };
+
+    const handleClearDates = () => {
+        setDateFrom("");
+        setDateTo("");
+        setCurrentPage(1);
     };
 
     const sortedTransactions = useMemo(() => {
-        return [...transactions].sort((recordA, recordB) => {
+        // First: date filter
+        let filtered = [...transactions];
+        if (dateFrom) {
+            const from = new Date(dateFrom);
+            from.setHours(0, 0, 0, 0);
+            filtered = filtered.filter(t => new Date(t.date) >= from);
+        }
+        if (dateTo) {
+            const to = new Date(dateTo);
+            to.setHours(23, 59, 59, 999);
+            filtered = filtered.filter(t => new Date(t.date) <= to);
+        }
+
+        // Then sort
+        return filtered.sort((recordA, recordB) => {
             let valueA = recordA[currentSortKey];
             let valueB = recordB[currentSortKey];
 
-            // Handle absolute values for amounts to sort by magnitude
             if (currentSortKey === "amount") {
                 valueA = Math.abs(valueA);
                 valueB = Math.abs(valueB);
             }
 
-            // Handle date objects for proper chronological sorting
             if (currentSortKey === "date") {
                 valueA = new Date(valueA);
                 valueB = new Date(valueB);
@@ -68,7 +88,7 @@ export default function TransactionTable({ transactions, globalSearch }) {
             if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
             return 0;
         });
-    }, [transactions, currentSortKey, sortDirection]);
+    }, [transactions, currentSortKey, sortDirection, dateFrom, dateTo]);
 
     const totalPagesCount = Math.ceil(sortedTransactions.length / TRANSACTIONS_PER_PAGE);
     const currentPageTransactions = sortedTransactions.slice(
@@ -113,6 +133,8 @@ export default function TransactionTable({ transactions, globalSearch }) {
         Dining: { bg: "#ECFDF5", color: "#065F46" },
     };
 
+    const isDateFiltered = dateFrom || dateTo;
+
     return (
         <div className="card" data-testid="transaction-table-section">
             <div className="card-header">
@@ -122,6 +144,53 @@ export default function TransactionTable({ transactions, globalSearch }) {
                         {sortedTransactions.length} records
                     </span>
                 </div>
+            </div>
+
+            {/* Date Range Filter */}
+            <div className="txn-date-filter" data-testid="date-filter-bar">
+                <div className="txn-date-filter-inner">
+                    <CalendarRange size={16} className="txn-date-icon" />
+                    <span className="txn-date-label">Filter by Date:</span>
+                    <div className="txn-date-field">
+                        <label htmlFor="txn-date-from">From</label>
+                        <input
+                            type="date"
+                            id="txn-date-from"
+                            className="txn-date-input"
+                            value={dateFrom}
+                            max={dateTo || undefined}
+                            onChange={e => { setDateFrom(e.target.value); setCurrentPage(1); }}
+                            data-testid="input-date-from"
+                        />
+                    </div>
+                    <div className="txn-date-field">
+                        <label htmlFor="txn-date-to">To</label>
+                        <input
+                            type="date"
+                            id="txn-date-to"
+                            className="txn-date-input"
+                            value={dateTo}
+                            min={dateFrom || undefined}
+                            onChange={e => { setDateTo(e.target.value); setCurrentPage(1); }}
+                            data-testid="input-date-to"
+                        />
+                    </div>
+                    {isDateFiltered && (
+                        <button
+                            className="txn-date-clear"
+                            onClick={handleClearDates}
+                            title="Clear date filter"
+                            data-testid="btn-clear-dates"
+                        >
+                            <X size={14} /> Clear
+                        </button>
+                    )}
+                </div>
+                {isDateFiltered && (
+                    <span className="txn-date-active-badge">
+                        📅 {sortedTransactions.length} results in selected range
+                    </span>
+                )}
             </div>
 
             <div className="table-wrapper" data-testid="transaction-table-wrapper">
@@ -144,7 +213,8 @@ export default function TransactionTable({ transactions, globalSearch }) {
                             ))}
                         </tr>
                     </thead>
-                    <tbody>
+                    {/* Screen-only paginated rows */}
+                    <tbody className="screen-only">
                         {currentPageTransactions.length === 0 ? (
                             <tr>
                                 <td colSpan={6} className="empty-row" data-testid="txn-empty-state">
@@ -162,33 +232,44 @@ export default function TransactionTable({ transactions, globalSearch }) {
                                     className={`txn-row ${index % 2 === 0 ? "even" : "odd"}`}
                                     data-testid={`txn-row-${transaction.id}`}
                                 >
-                                    <td className="td-date" data-testid={`txn-date-${transaction.id}`}>
-                                        {new Date(transaction.date).toLocaleDateString("en-US", {
-                                            month: "short",
-                                            day: "numeric",
-                                            year: "numeric"
-                                        })}
-                                    </td>
-                                    <td className="td-cid" data-testid={`txn-cid-${transaction.id}`}>
-                                        {getHighlightedText(transaction.customerId, globalSearch)}
-                                    </td>
-                                    <td className="td-desc" data-testid={`txn-desc-${transaction.id}`}>
-                                        {getHighlightedText(transaction.description, globalSearch)}
-                                    </td>
+                                    <td className="td-date">{new Date(transaction.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
+                                    <td className="td-cid">{getHighlightedText(transaction.customerId, globalSearch)}</td>
+                                    <td className="td-desc">{getHighlightedText(transaction.description, globalSearch)}</td>
                                     <td>
-                                        <span className="cat-dot" style={{ background: categoryStyle.bg, color: categoryStyle.color }}
-                                            data-testid={`txn-cat-${transaction.id}`}>
+                                        <span className="cat-dot" style={{ background: categoryStyle.bg, color: categoryStyle.color }}>
                                             {getHighlightedText(transaction.category, globalSearch)}
                                         </span>
                                     </td>
-                                    <td className={`td-amount ${transaction.type}`} data-testid={`txn-amount-${transaction.id}`}>
-                                        {transaction.type === "credit" ? "+" : ""}
-                                        ${Math.abs(transaction.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                    <td className={`td-amount ${transaction.type}`}>
+                                        {transaction.type === "credit" ? "+" : ""}${Math.abs(transaction.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                     </td>
                                     <td>
-                                        <span className={`badge ${getStatusBadgeClass(transaction.status)}`} data-testid={`txn-status-${transaction.id}`}>
-                                            {transaction.status}
+                                        <span className={`badge ${getStatusBadgeClass(transaction.status)}`}>{transaction.status}</span>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+
+                    {/* Print-only full rows (Hidden on screen) */}
+                    <tbody className="print-only">
+                        {sortedTransactions.map((transaction, index) => {
+                            const categoryStyle = CATEGORY_STYLE_MAP[transaction.category] || { bg: "#F1F5F9", color: "#475569" };
+                            return (
+                                <tr key={`print-${transaction.id}`} className={`txn-row ${index % 2 === 0 ? "even" : "odd"}`}>
+                                    <td className="td-date">{new Date(transaction.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
+                                    <td className="td-cid">{transaction.customerId}</td>
+                                    <td className="td-desc">{transaction.description}</td>
+                                    <td>
+                                        <span className="cat-dot" style={{ background: categoryStyle.bg, color: categoryStyle.color }}>
+                                            {transaction.category}
                                         </span>
+                                    </td>
+                                    <td className={`td-amount ${transaction.type}`}>
+                                        {transaction.type === "credit" ? "+" : ""}${Math.abs(transaction.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                    </td>
+                                    <td>
+                                        <span className={`badge ${getStatusBadgeClass(transaction.status)}`}>{transaction.status}</span>
                                     </td>
                                 </tr>
                             );
@@ -197,43 +278,34 @@ export default function TransactionTable({ transactions, globalSearch }) {
                 </table>
             </div>
 
-            {/* Pagination Controls */}
+            {/* Minimal Pagination Controls */}
             {totalPagesCount > 1 && (
-                <div className="pagination" data-testid="pagination">
-                    <span className="page-info">
-                        Page {currentPage} of {totalPagesCount} ({sortedTransactions.length} results)
-                    </span>
-                    <div className="page-btns">
-                        <button
-                            className="page-btn"
-                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                            disabled={currentPage === 1}
-                            data-testid="btn-prev-page"
-                        >
-                            <ChevronLeft size={16} />
-                        </button>
-                        {Array.from({ length: totalPagesCount }, (_, i) => i + 1).map(pageNumber => (
-                            <button
-                                key={pageNumber}
-                                className={`page-btn ${pageNumber === currentPage ? "active" : ""}`}
-                                onClick={() => setCurrentPage(pageNumber)}
-                                data-testid={`btn-page-${pageNumber}`}
-                            >
-                                {pageNumber}
-                            </button>
-                        ))}
-                        <button
-                            className="page-btn"
-                            onClick={() => setCurrentPage(prev => Math.min(totalPagesCount, prev + 1))}
-                            disabled={currentPage === totalPagesCount}
-                            data-testid="btn-next-page"
-                        >
-                            <ChevronRight size={16} />
-                        </button>
+                <div className="pagination-minimal" data-testid="pagination">
+                    <button
+                        className="btn-pagination"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        data-testid="btn-prev-page"
+                    >
+                        <ChevronLeft size={18} />
+                    </button>
+
+                    <div className="page-indicator">
+                        <span className="current">{currentPage}</span>
+                        <span className="separator">/</span>
+                        <span className="total">{totalPagesCount}</span>
                     </div>
+
+                    <button
+                        className="btn-pagination"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPagesCount, prev + 1))}
+                        disabled={currentPage === totalPagesCount}
+                        data-testid="btn-next-page"
+                    >
+                        <ChevronRight size={18} />
+                    </button>
                 </div>
             )}
         </div>
     );
 }
-
