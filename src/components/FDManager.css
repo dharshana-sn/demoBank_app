@@ -1,0 +1,1038 @@
+/* ── FD Calculator Layout ──────────────────── */
+.fd-calc-section {
+    padding: 0 28px;
+}
+
+.fd-calculator-layout {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 960px) {
+    .fd-calculator-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.fd-calc-controls {
+    padding: 28px;
+}
+
+/* ── Customer Type Toggle ─────────────────── */
+.fd-toggle-group {
+    display: inline-flex;
+    background: var(--gray-100);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 24px;
+    gap: 4px;
+}
+
+.fd-toggle-btn {
+    padding: 9px 22px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--gray-400);
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.fd-toggle-btn.fd-toggle-active {
+    background: linear-gradient(135deg, var(--blue-600), var(--blue-700));
+    color: white;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
+}
+
+.fd-toggle-btn:not(.fd-toggle-active):hover {
+    color: var(--gray-600);
+    background: var(--gray-200);
+}
+
+/* ── Control Blocks ───────────────────────── */
+.fd-control-block {
+    margin-bottom: 24px;
+}
+
+.fd-control-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--gray-600);
+}
+
+.fd-control-label span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fd-control-label svg {
+    color: var(--blue-500);
+}
+
+/* ── Amount Input ─────────────────────────── */
+.fd-amount-input-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--blue-50);
+    border: 1.5px solid var(--blue-200);
+    border-radius: 10px;
+    padding: 6px 12px;
+    transition: border-color 0.2s;
+}
+
+.fd-amount-input-wrap:focus-within {
+    border-color: var(--blue-500);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.fd-rupee-sign {
+    font-weight: 700;
+    color: var(--blue-600);
+    font-size: 0.95rem;
+    margin-right: 4px;
+}
+
+.fd-amount-input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    width: 120px;
+    text-align: right;
+    font-family: inherit;
+}
+
+/* ── Duration Display ─────────────────────── */
+.fd-duration-display {
+    background: var(--blue-50);
+    color: var(--blue-700);
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 5px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--blue-200);
+    letter-spacing: 0.5px;
+}
+
+/* ── Sliders ──────────────────────────────── */
+.fd-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--blue-200), var(--blue-400));
+    outline: none;
+    cursor: pointer;
+    margin-bottom: 6px;
+}
+
+.fd-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+    cursor: grab;
+    transition: transform 0.15s ease;
+}
+
+.fd-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+}
+
+.fd-slider::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    transform: scale(1.05);
+}
+
+.fd-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+    cursor: grab;
+}
+
+.fd-slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--gray-400);
+    font-weight: 500;
+}
+
+/* ── Payout Pills ─────────────────────────── */
+.fd-payout-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fd-payout-pill {
+    padding: 8px 18px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 100px;
+    background: var(--white);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.fd-payout-pill:hover {
+    border-color: var(--blue-400);
+    color: var(--blue-600);
+}
+
+.fd-payout-pill.fd-payout-active {
+    background: linear-gradient(135deg, var(--blue-600), var(--blue-700));
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+}
+
+/* ── Rate Cards ───────────────────────────── */
+.fd-rate-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+@media (max-width: 600px) {
+    .fd-rate-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.fd-rate-card {
+    position: relative;
+    text-align: center;
+    padding: 18px 12px;
+    border-radius: 14px;
+    background: var(--gray-50);
+    border: 1.5px solid var(--gray-200);
+    transition: all 0.25s ease;
+}
+
+.fd-rate-card:hover {
+    border-color: var(--blue-400);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.1);
+}
+
+.fd-rate-card-best {
+    background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+    border-color: var(--blue-400);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);
+}
+
+.fd-rate-badge {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 100px;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
+.fd-rate-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--blue-700);
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.fd-rate-card-best .fd-rate-value {
+    color: var(--blue-800);
+}
+
+.fd-rate-tenure {
+    font-size: 0.72rem;
+    color: var(--gray-400);
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.fd-rate-est {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding-top: 6px;
+    margin-top: 4px;
+}
+
+.fd-rate-est span {
+    display: block;
+    font-weight: 700;
+    color: var(--blue-600);
+    font-size: 0.8rem;
+}
+
+/* ── Bottom Section Layout ─────────────────── */
+.fd-bottom-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 1024px) {
+    .fd-bottom-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Benefits List (Refined) ──────────────── */
+.fd-benefits-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.benefit-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--gray-50);
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.benefit-item:hover {
+    background: var(--white);
+    border-color: var(--blue-100);
+    transform: translateX(4px);
+}
+
+.benefit-icon-wrap {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--blue-600);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+    flex-shrink: 0;
+}
+
+.benefit-text h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+    color: var(--gray-800);
+}
+
+.benefit-text p {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.fd-benefit-promo {
+    margin-top: 24px;
+    padding: 12px;
+    background: linear-gradient(90deg, var(--blue-50), transparent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--blue-700);
+}
+
+.fd-summary-panel {
+    background: linear-gradient(160deg, var(--blue-700), var(--blue-900));
+    border-radius: 20px;
+    padding: 28px 24px;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: sticky;
+    top: 90px;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.3);
+}
+
+.fd-summary-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    opacity: 0.9;
+}
+
+.fd-summary-highlight {
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+}
+
+.fd-summary-rate-label {
+    font-size: 0.78rem;
+    opacity: 0.7;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.fd-summary-rate-value {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.fd-summary-rate-value span {
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.7;
+}
+
+.fd-summary-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.fd-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fd-summary-row:last-child {
+    border-bottom: none;
+}
+
+.fd-summary-key {
+    font-size: 0.82rem;
+    opacity: 0.65;
+    font-weight: 500;
+}
+
+.fd-summary-val {
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.fd-summary-val small {
+    font-size: 0.72rem;
+    opacity: 0.6;
+    font-weight: 500;
+}
+
+.fd-summary-val-lg {
+    font-size: 1.15rem;
+}
+
+.fd-summary-val-accent {
+    color: #6EE7B7;
+}
+
+/* ── Summary Actions ──────────────────────── */
+.fd-summary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fd-btn-open {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 20px;
+    background: white;
+    color: var(--blue-700);
+    font-weight: 700;
+    border-radius: 12px;
+    border: none;
+    font-size: 0.92rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.fd-btn-open:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+.fd-btn-rates {
+    width: 100%;
+    justify-content: center;
+    padding: 11px 20px;
+    background: transparent;
+    color: white;
+    font-weight: 600;
+    border-radius: 12px;
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    font-size: 0.88rem;
+    transition: all 0.2s ease;
+}
+
+.fd-btn-rates:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Summary Note ─────────────────────────── */
+.fd-summary-note {
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fd-summary-note p {
+    font-size: 0.68rem;
+    opacity: 0.45;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+/* ── Active FD List ───────────────────────── */
+.fd-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 8px;
+    /* For scrollbar gap */
+}
+
+/* Custom scrollbar for fd-list */
+.fd-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.fd-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.fd-list::-webkit-scrollbar-thumb {
+    background: var(--gray-200);
+    border-radius: 10px;
+}
+
+.fd-list::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-300);
+}
+
+.fd-item {
+    padding: 18px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 14px;
+    transition: all 0.3s ease;
+}
+
+.fd-item:hover {
+    border-color: var(--blue-400);
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.08);
+    transform: translateY(-1px);
+}
+
+.fd-item-main {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.fd-item-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--blue-50), var(--blue-100));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--blue-600);
+    flex-shrink: 0;
+}
+
+.fd-item-info {
+    flex: 1;
+}
+
+.fd-item-name {
+    font-weight: 700;
+    color: var(--gray-800);
+    font-size: 1rem;
+}
+
+.fd-item-meta {
+    font-size: 0.8rem;
+    color: var(--gray-400);
+    margin-top: 2px;
+}
+
+.fd-item-val {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.maturity-label {
+    font-size: 0.75rem;
+    color: var(--gray-400);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.maturity-amt {
+    font-weight: 700;
+    color: var(--blue-700);
+    font-size: 1.1rem;
+}
+
+.fd-progress-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.fd-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--gray-100);
+    border-radius: 100px;
+    overflow: hidden;
+}
+
+.fd-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue-500), var(--blue-700));
+    border-radius: 100px;
+    transition: width 0.6s ease;
+}
+
+.fd-progress-text {
+    font-size: 0.75rem;
+    color: var(--gray-400);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ── Benefits Section (Legacy) ───────────────── */
+/* Kept for safety, though layout changed */
+.benefit-card {
+    text-align: center;
+    padding: 24px 16px;
+    border-radius: 14px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    transition: all 0.3s ease;
+}
+
+.benefit-card:hover {
+    border-color: var(--blue-400);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
+}
+
+.benefit-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--blue-50), var(--blue-100));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--blue-600);
+    margin-bottom: 12px;
+}
+
+.benefit-card h3 {
+    font-size: 1rem;
+    color: var(--gray-800);
+    margin: 0 0 8px;
+}
+
+.benefit-card p {
+    font-size: 0.85rem;
+    color: var(--gray-400);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ── Rate Card Selected State ─────────────── */
+.fd-rate-card-selected {
+    border-color: var(--blue-500);
+    background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2), 0 4px 14px rgba(37, 99, 235, 0.12);
+}
+
+.fd-rate-badge-selected {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 100px;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+
+/* ── Rate Payout Badge ────────────────────── */
+.fd-rate-payout-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--blue-700);
+    background: var(--blue-50);
+    border: 1px solid var(--blue-200);
+    border-radius: 100px;
+    padding: 4px 10px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ── Active FD Payout Chips ───────────────── */
+.fd-item-payouts {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.fd-payout-chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--blue-700);
+    background: var(--blue-50);
+    border: 1px solid var(--blue-100);
+    border-radius: 6px;
+    padding: 3px 8px;
+    white-space: nowrap;
+}
+
+/* ── Dark mode adjustments ────────────────── */
+body.dark-mode .fd-summary-panel {
+    background: linear-gradient(160deg, #1E3A5F, #0F172A);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .fd-rate-card-best {
+    background: linear-gradient(135deg, #1E293B, #334155);
+}
+
+body.dark-mode .fd-item {
+    background: var(--gray-100);
+}
+
+body.dark-mode .benefit-card {
+    background: var(--gray-100);
+}
+
+body.dark-mode .fd-amount-input-wrap {
+    background: var(--gray-100);
+    border-color: var(--gray-200);
+}
+
+body.dark-mode .fd-amount-input {
+    color: var(--gray-800);
+}
+
+/* ── Success Toast ──────────────────────────── */
+.fd-toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 9999;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+    max-width: 340px;
+    animation: toastIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-family: inherit;
+}
+
+@keyframes toastIn {
+    from {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.fd-toast-success {
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: white;
+}
+
+.fd-toast strong {
+    font-size: 0.95rem;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.fd-toast p {
+    margin: 0;
+    font-size: 0.82rem;
+    opacity: 0.9;
+}
+
+.fd-toast-close {
+    background: rgba(255, 255, 255, 0.25);
+    border: none;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    flex-shrink: 0;
+    margin-left: auto;
+    transition: background 0.2s;
+}
+
+.fd-toast-close:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+/* ── All Rates Modal ────────────────────────── */
+.fd-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.fd-modal {
+    background: white;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
+    animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+}
+
+@keyframes modalSlideUp {
+    from {
+        transform: translateY(30px) scale(0.97);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.fd-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.fd-modal-header h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.fd-modal-close {
+    background: var(--gray-100);
+    border: none;
+    border-radius: 10px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--gray-400);
+    transition: all 0.2s;
+}
+
+.fd-modal-close:hover {
+    background: var(--gray-200);
+    color: var(--gray-800);
+}
+
+.fd-modal-subtitle {
+    padding: 12px 24px 4px;
+    font-size: 0.82rem;
+    color: var(--gray-400);
+    margin: 0;
+}
+
+.fd-modal-table-wrap {
+    overflow-y: auto;
+    flex: 1;
+    padding: 12px 24px;
+}
+
+.fd-rates-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.fd-rates-table th {
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.fd-rates-table td {
+    padding: 13px 14px;
+    font-size: 0.88rem;
+    color: var(--gray-800);
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.fd-rates-table tr:hover td {
+    background: var(--blue-50);
+}
+
+.fd-rates-row-active td {
+    background: var(--blue-50) !important;
+    font-weight: 600;
+}
+
+.fd-rates-row-active td:first-child {
+    border-left: 3px solid var(--blue-600);
+}
+
+.fd-rate-cell {
+    font-weight: 700;
+    color: var(--blue-600);
+}
+
+.fd-rate-cell small {
+    font-weight: 400;
+    color: var(--gray-400);
+    margin-left: 2px;
+}
+
+.fd-rate-senior {
+    color: var(--success) !important;
+}
+
+.fd-modal-note {
+    padding: 12px 24px 18px;
+    font-size: 0.78rem;
+    color: var(--gray-400);
+    margin: 0;
+    border-top: 1px solid var(--gray-100);
+}
+
+/* Dark mode for modal */
+body.dark-mode .fd-modal {
+    background: #1e293b;
+}
+
+body.dark-mode .fd-modal-header {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .fd-modal-header h2 {
+    color: #f1f5f9;
+}
+
+body.dark-mode .fd-rates-table th {
+    background: rgba(255, 255, 255, 0.04);
+    color: #94a3b8;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .fd-rates-table td {
+    color: #e2e8f0;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .fd-rates-table tr:hover td {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+body.dark-mode .fd-rates-row-active td {
+    background: rgba(59, 130, 246, 0.15) !important;
+}
+
+body.dark-mode .fd-modal-close {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .fd-modal-note {
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #64748b;
+}
