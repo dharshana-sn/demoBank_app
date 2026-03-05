@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Pulse - Demo Bank</title>
+    <style>
+        html {
+            height: 100%;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --blue: #3B82F6;
+            --blue-dark: #2563EB;
+            --green: #10B981;
+            --red: #EF4444;
+            --gray-50: #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-300: #CBD5E1;
+            --gray-400: #94A3B8;
+            --gray-700: #334155;
+            --gray-800: #1E293B;
+            --font: 'Inter', system-ui, -apple-system, sans-serif;
+            --bg: #ffffff;
+            --card-bg: #F8FAFC;
+            --border: rgba(0, 0, 0, 0.06);
+            --text: #1E293B;
+            --text-muted: #94A3B8;
+        }
+
+        body.dark {
+            --bg: transparent;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #F1F5F9;
+            --text-muted: #64748B;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            padding: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            height: 100%;
+        }
+
+        /* ── Index Cards ─────────────────── */
+        .index-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .index-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .index-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .index-value {
+            font-size: 1rem;
+            font-weight: 800;
+            margin-top: 2px;
+        }
+
+        .index-change {
+            font-size: 0.72rem;
+            font-weight: 600;
+            margin-top: 1px;
+        }
+
+        .up {
+            color: var(--green);
+        }
+
+        .down {
+            color: var(--red);
+        }
+
+        /* ── Chart Area ──────────────────── */
+        .chart-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-height: 0;
+        }
+
+        /* Value readout banner */
+        .chart-readout {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 14px;
+            min-height: 34px;
+        }
+
+        .readout-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .readout-time {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--blue);
+        }
+
+        .readout-val {
+            font-size: 0.9rem;
+            font-weight: 800;
+        }
+
+        /* Bars wrapper */
+        .chart-bars-wrap {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 120px;
+        }
+
+        .chart-bars {
+            height: 160px;
+            display: flex;
+            align-items: flex-end;
+            gap: 5px;
+            padding: 0 2px;
+        }
+
+        .bar {
+            flex: 1;
+            min-width: 4px;
+            background: var(--blue);
+            border-radius: 4px 4px 0 0;
+            opacity: 0.7;
+            cursor: pointer;
+            transition: opacity .15s, background .15s, transform .2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: bottom;
+            position: relative;
+        }
+
+        .bar:hover {
+            opacity: 1;
+            transform: scaleY(1.04);
+        }
+
+        .bar.active {
+            background: var(--blue-dark);
+            opacity: 1;
+        }
+
+        .bar.positive {
+            background: var(--green);
+            opacity: 0.7;
+        }
+
+        .bar.positive:hover,
+        .bar.positive.active {
+            background: #059669;
+            opacity: 1;
+        }
+
+        .bar.negative {
+            background: var(--red);
+            opacity: 0.7;
+        }
+
+        .bar.negative:hover,
+        .bar.negative.active {
+            background: #DC2626;
+            opacity: 1;
+        }
+
+        /* X-axis */
+        .chart-xaxis {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 2px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .x-label {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* ── Ticker ──────────────────────── */
+        .ticker-wrap {
+            overflow: hidden;
+            border-top: 1px solid var(--border);
+            padding-top: 8px;
+        }
+
+        .ticker-inner {
+            display: flex;
+            gap: 28px;
+            white-space: nowrap;
+            animation: scroll 22s linear infinite;
+        }
+
+        .ticker-inner:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes scroll {
+            from {
+                transform: translateX(0);
+            }
+
+            to {
+                transform: translateX(-50%);
+            }
+        }
+
+        .ticker-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+        }
+
+        .t-sym {
+            font-weight: 700;
+        }
+
+        .t-price {
+            color: var(--text-muted);
+        }
+
+        .t-chg {
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Index Cards -->
+    <div class="index-row">
+        <div class="index-card">
+            <div class="index-label">S&amp;P 500</div>
+            <div class="index-value">5,137.08</div>
+            <div class="index-change up">▲ +0.8%</div>
+        </div>
+        <div class="index-card">
+            <div class="index-label">NASDAQ</div>
+            <div class="index-value">16,274.9</div>
+            <div class="index-change up">▲ +1.1%</div>
+        </div>
+        <div class="index-card">
+            <div class="index-label">FTSE 100</div>
+            <div class="index-value">7,640.33</div>
+            <div class="index-change down">▼ −0.2%</div>
+        </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-area">
+        <div class="chart-readout" id="readout">
+            <span class="readout-label">S&amp;P 500 — Today</span>
+            <span class="readout-time" id="r-time">—</span>
+            <span class="readout-val" id="r-val">Hover a bar</span>
+        </div>
+
+        <div class="chart-bars-wrap">
+            <div class="chart-bars" id="chart"></div>
+        </div>
+
+        <div class="chart-xaxis">
+            <span class="x-label">09:00</span>
+            <span class="x-label">11:00</span>
+            <span class="x-label">13:00</span>
+            <span class="x-label">15:00</span>
+            <span class="x-label">16:30</span>
+        </div>
+    </div>
+
+    <!-- Ticker -->
+    <div class="ticker-wrap">
+        <div class="ticker-inner">
+            <span class="ticker-item"><span class="t-sym">AAPL</span><span class="t-price">182.52</span><span
+                    class="t-chg up">+1.45%</span></span>
+            <span class="ticker-item"><span class="t-sym">TSLA</span><span class="t-price">202.64</span><span
+                    class="t-chg down">−2.10%</span></span>
+            <span class="ticker-item"><span class="t-sym">GOOGL</span><span class="t-price">143.96</span><span
+                    class="t-chg up">+0.88%</span></span>
+            <span class="ticker-item"><span class="t-sym">AMZN</span><span class="t-price">174.45</span><span
+                    class="t-chg up">+2.31%</span></span>
+            <span class="ticker-item"><span class="t-sym">MSFT</span><span class="t-price">415.50</span><span
+                    class="t-chg up">+0.54%</span></span>
+            <span class="ticker-item"><span class="t-sym">NFLX</span><span class="t-price">609.14</span><span
+                    class="t-chg down">−0.73%</span></span>
+            <span class="ticker-item"><span class="t-sym">NVDA</span><span class="t-price">878.36</span><span
+                    class="t-chg up">+3.12%</span></span>
+            <!-- Duplicate for seamless loop -->
+            <span class="ticker-item"><span class="t-sym">AAPL</span><span class="t-price">182.52</span><span
+                    class="t-chg up">+1.45%</span></span>
+            <span class="ticker-item"><span class="t-sym">TSLA</span><span class="t-price">202.64</span><span
+                    class="t-chg down">−2.10%</span></span>
+            <span class="ticker-item"><span class="t-sym">GOOGL</span><span class="t-price">143.96</span><span
+                    class="t-chg up">+0.88%</span></span>
+            <span class="ticker-item"><span class="t-sym">AMZN</span><span class="t-price">174.45</span><span
+                    class="t-chg up">+2.31%</span></span>
+            <span class="ticker-item"><span class="t-sym">MSFT</span><span class="t-price">415.50</span><span
+                    class="t-chg up">+0.54%</span></span>
+            <span class="ticker-item"><span class="t-sym">NFLX</span><span class="t-price">609.14</span><span
+                    class="t-chg down">−0.73%</span></span>
+            <span class="ticker-item"><span class="t-sym">NVDA</span><span class="t-price">878.36</span><span
+                    class="t-chg up">+3.12%</span></span>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        try {
+            if (window.parent && window.parent.document.body.classList.contains('dark-mode')) {
+                document.body.classList.add('dark');
+            }
+        } catch (e) { }
+
+        // Chart data — S&P 500 intraday (dummy)
+        const DATA = [
+            { time: '9:00', val: 5012, delta: -1.2 },
+            { time: '9:30', val: 5028, delta: +0.3 },
+            { time: '10:00', val: 5019, delta: -0.2 },
+            { time: '10:30', val: 5055, delta: +0.7 },
+            { time: '11:00', val: 5041, delta: -0.3 },
+            { time: '11:30', val: 5088, delta: +0.9 },
+            { time: '12:00', val: 5074, delta: -0.3 },
+            { time: '12:30', val: 5103, delta: +0.6 },
+            { time: '13:00', val: 5079, delta: -0.5 },
+            { time: '13:30', val: 5095, delta: +0.3 },
+            { time: '14:00', val: 5082, delta: -0.3 },
+            { time: '14:30', val: 5120, delta: +0.7 },
+            { time: '15:00', val: 5108, delta: -0.2 },
+            { time: '15:30', val: 5137, delta: +0.5 },
+        ];
+
+        const minVal = Math.min(...DATA.map(d => d.val));
+        const maxVal = Math.max(...DATA.map(d => d.val));
+        const range = maxVal - minVal || 1;
+
+        const chart = document.getElementById('chart');
+        const rTime = document.getElementById('r-time');
+        const rVal = document.getElementById('r-val');
+
+        let activeBar = null;
+
+        DATA.forEach((d, i) => {
+            const heightPct = ((d.val - minVal) / range) * 75 + 20; // 20–95%
+            const bar = document.createElement('div');
+            bar.className = 'bar ' + (d.delta >= 0 ? 'positive' : 'negative');
+            bar.style.height = '0%';
+            bar.title = `${d.time} — ${d.val.toLocaleString()}`;
+
+            // Animate in with stagger
+            setTimeout(() => {
+                bar.style.transition = 'height 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity .15s, background .15s, transform .15s';
+                bar.style.height = heightPct + '%';
+            }, i * 40);
+
+            bar.addEventListener('mouseenter', () => highlight(bar, d));
+            bar.addEventListener('click', () => highlight(bar, d));
+            chart.appendChild(bar);
+        });
+
+        function highlight(bar, d) {
+            if (activeBar) activeBar.classList.remove('active');
+            activeBar = bar;
+            bar.classList.add('active');
+            rTime.textContent = d.time;
+            const sign = d.delta >= 0 ? '+' : '';
+            rVal.textContent = `${d.val.toLocaleString()} (${sign}${d.delta}%)`;
+            rVal.style.color = d.delta >= 0 ? 'var(--green)' : 'var(--red)';
+        }
+
+        // Start with last bar highlighted
+        const lastBar = chart.lastElementChild;
+        if (lastBar) setTimeout(() => highlight(lastBar, DATA[DATA.length - 1]), 700);
+    </script>
+</body>
+
+</html>
