@@ -9,6 +9,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { mockUsers } from "../data/mockData.js";
+import { createTransaction } from "../api.js";
 import { Send, CheckCircle2, X, Users } from "lucide-react";
 import "./PayToUser.css";
 
@@ -66,7 +67,13 @@ export default function PayToUser({ onPaymentComplete }) {
             note: note || ""
         };
 
-        if (onPaymentComplete) onPaymentComplete(newTransaction);
+        try {
+            const saved = await createTransaction(newTransaction);
+            if (onPaymentComplete) onPaymentComplete(saved);
+        } catch (e) {
+            // Fallback: still notify parent with local data
+            if (onPaymentComplete) onPaymentComplete(newTransaction);
+        }
 
         setIsProcessing(false);
         setShowConfirm(false);

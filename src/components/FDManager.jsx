@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { getFixedDeposits, createFixedDeposit } from '../api.js';
 import { PiggyBank, Calculator, TrendingUp, Lock, Globe, Shield, Calendar, Percent, IndianRupee, Clock, Award, ChevronRight, X, CheckCircle, Info } from 'lucide-react';
 import './FDManager.css';
 
@@ -118,23 +119,14 @@ export default function FDManager() {
     const [showRatesModal, setShowRatesModal] = useState(false);
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [openedFD, setOpenedFD] = useState(null);
-    // Load persisted FDs from localStorage on mount
-    const [activeFDs, setActiveFDs] = useState(() => {
-        try {
-            const saved = localStorage.getItem('demobank_active_fds');
-            if (saved) return JSON.parse(saved);
-        } catch (e) { }
-        return [
-            { id: 'fd-1', principal: 50000, rate: 6.5, tenure: '1 Year', startDate: '2025-06-15', maturityDate: '2026-06-15', maturityAmount: 53250 },
-            { id: 'fd-2', principal: 150000, rate: 7.5, tenure: '3 Years', startDate: '2024-02-10', maturityDate: '2027-02-10', maturityAmount: 183750 },
-            { id: 'fd-3', principal: 300000, rate: 7.1, tenure: '5 Years', startDate: '2023-08-01', maturityDate: '2028-08-01', maturityAmount: 406500 },
-        ];
-    });
+    const [activeFDs, setActiveFDs] = useState([]);
 
-    // Persist activeFDs to localStorage whenever it changes
+    // Fetch active FDs from MongoDB on mount
     useEffect(() => {
-        try { localStorage.setItem('demobank_active_fds', JSON.stringify(activeFDs)); } catch (e) { }
-    }, [activeFDs]);
+        getFixedDeposits()
+            .then(setActiveFDs)
+            .catch(err => console.error('Failed to load FDs:', err));
+    }, []);
 
     // Close modal on Escape key
     useEffect(() => {
@@ -189,7 +181,7 @@ export default function FDManager() {
         setDurationDays(midDays);
     };
 
-    const handleOpenFD = () => {
+    const handleOpenFD = async () => {
         const today = new Date().toISOString().split('T')[0];
         const matDate = new Date(Date.now() + durationDays * 86400000).toISOString().split('T')[0];
         const fd = {
@@ -201,10 +193,16 @@ export default function FDManager() {
             maturityDate: matDate,
             maturityAmount: calculation.maturityAmount,
         };
-        setActiveFDs(prev => [fd, ...prev]);
-        setOpenedFD(fd);
-        setShowSuccessToast(true);
-        setTimeout(() => setShowSuccessToast(false), 4000);
+
+        try {
+            const saved = await createFixedDeposit(fd);
+            setActiveFDs(prev => [saved, ...prev]);
+            setOpenedFD(saved);
+            setShowSuccessToast(true);
+            setTimeout(() => setShowSuccessToast(false), 4000);
+        } catch (err) {
+            console.error('Failed to book FD:', err);
+        }
     };
 
     const handleViewAllRates = () => setShowRatesModal(true);

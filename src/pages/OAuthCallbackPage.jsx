@@ -8,12 +8,12 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { oauthLogin } from "../api.js";
+import { ShieldCheck, Loader2, AlertCircle } from "lucide-react";
 
 const PROVIDER_PROFILES = {
-    google: { name: "Test User", email: "testUser@gmail.com", avatar: "TU" },
-    github: { name: "Test User", email: "testUser@gmail.com", avatar: "TU" },
+    google: { email: "google.user@example.com" },
+    github: { email: "github.user@example.com" },
 };
 
 export default function OAuthCallbackPage() {
@@ -21,28 +21,39 @@ export default function OAuthCallbackPage() {
     const { login } = useAuth();
     const navigate = useNavigate();
     const [currentStatusMessage, setCurrentStatusMessage] = useState("Verifying authorization token...");
+    const [error, setError] = useState(null);
 
     const authProvider = searchParams.get("provider") || "google";
     const userMockProfile = PROVIDER_PROFILES[authProvider] || PROVIDER_PROFILES.google;
 
     useEffect(() => {
-        const authenticationSteps = [
-            [600, "Exchanging authorization code..."],
-            [1200, "Fetching user profile..."],
-            [1800, "Setting up your session..."],
-        ];
+        const performAuth = async () => {
+            const steps = [
+                [400, "Exchanging authorization code..."],
+                [900, "Fetching user profile..."],
+                [1400, "Finalizing your secure session..."],
+            ];
 
-        authenticationSteps.forEach(([delayInMs, messageText]) => {
-            setTimeout(() => setCurrentStatusMessage(messageText), delayInMs);
-        });
+            steps.forEach(([delay, msg]) => {
+                setTimeout(() => setCurrentStatusMessage(msg), delay);
+            });
 
-        const loginTimer = setTimeout(() => {
-            login({ ...userMockProfile, loginMethod: authProvider });
-            navigate("/dashboard");
-        }, 2400);
+            try {
+                // Real backend call to UPSERT the user
+                const user = await oauthLogin(authProvider, "mock_code_123");
 
-        return () => clearTimeout(loginTimer);
-    }, [authProvider, login, navigate, userMockProfile]);
+                setTimeout(() => {
+                    login({ ...user, loginMethod: authProvider });
+                    navigate("/dashboard");
+                }, 2000);
+            } catch (err) {
+                console.error("OAuth Error:", err);
+                setError("Authentication failed. Please try again.");
+            }
+        };
+
+        performAuth();
+    }, [authProvider, login, navigate]);
 
     return (
         <div style={{
@@ -67,15 +78,23 @@ export default function OAuthCallbackPage() {
                     Authenticating with {authProvider.charAt(0).toUpperCase() + authProvider.slice(1)}
                 </h2>
                 <p style={{ color: "var(--gray-400)", fontSize: "0.9rem", marginBottom: 20 }}
-                    data-testid="oauth-status">{currentStatusMessage}</p>
-                <div style={{
-                    background: "var(--blue-50)", borderRadius: 10, padding: "12px 16px",
-                    border: "1px solid var(--blue-100)",
-                }}>
-                    <p style={{ fontSize: "0.82rem", color: "var(--blue-700)" }}>
-                        Signing in as <strong>{userMockProfile.email}</strong>
-                    </p>
-                </div>
+                    data-testid="oauth-status">{error || currentStatusMessage}</p>
+
+                {error ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ef4444', background: '#fee2e2', padding: '12px', borderRadius: 8, border: '1px solid #fecaca' }}>
+                        <AlertCircle size={18} />
+                        <span style={{ fontSize: '0.85rem' }}>{error}</span>
+                    </div>
+                ) : (
+                    <div style={{
+                        background: "var(--blue-50)", borderRadius: 10, padding: "12px 16px",
+                        border: "1px solid var(--blue-100)",
+                    }}>
+                        <p style={{ fontSize: "0.82rem", color: "var(--blue-700)" }}>
+                            Signing in as <strong>{userMockProfile.email}</strong>
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );

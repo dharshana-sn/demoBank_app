@@ -6,12 +6,18 @@
  * Provides real-time feedback and a simulated loading state for improved UX.
  */
 
-import { useState } from "react";
-import { mockAccounts } from "../data/mockData.js";
+import { useState, useEffect } from "react";
+import { getAccounts } from "../api.js";
 import { Send, CheckCircle2 } from "lucide-react";
 import "./TransferForm.css";
 
 export default function TransferForm({ onTransferComplete }) {
+    const [accounts, setAccounts] = useState([]);
+
+    useEffect(() => {
+        getAccounts().then(setAccounts).catch(console.error);
+    }, []);
+
     // Initial state for the transfer process
     const [transferFormData, setTransferFormData] = useState({
         from: "",
@@ -109,7 +115,7 @@ export default function TransferForm({ onTransferComplete }) {
         setIsTransferSuccessful(false);
     };
 
-    const availableAccountOptions = mockAccounts.map(account => (
+    const availableAccountOptions = accounts.map(account => (
         <option key={account.id} value={account.id}>
             {account.name} ({account.number})
         </option>
