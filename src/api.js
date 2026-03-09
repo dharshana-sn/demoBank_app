@@ -4,7 +4,8 @@
  * Base URL is /api (proxied to Express server by Vite).
  */
 
-const BASE = '/api';
+const PROD_URL = 'https://demobank-app-backend.onrender.com/api';
+const BASE = import.meta.env.DEV ? '/api' : PROD_URL;
 
 async function request(path, options = {}) {
     const res = await fetch(`${BASE}${path}`, {
