@@ -22,7 +22,8 @@ import PayToUser from "../components/PayToUser.jsx";
 import CheckboxFilter from "../components/CheckboxFilter.jsx";
 import TransactionTable from "../components/TransactionTable.jsx";
 import FDManager from "../components/FDManager.jsx";
-import { mockTransactions as initialMockTransactions, mockTransactions, transactionCategories, mockAccounts } from "../data/mockData.js";
+import { mockUsers, transactionCategories } from "../data/mockData.js";
+import { getAccounts, getTransactions, createTransaction, updateAccountBalance, getUserProfile, updateUserProfile } from "../api.js";
 import "./Dashboard.css";
 import "../web-components/settings-web-component.js";
 
@@ -84,10 +85,11 @@ function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategor
                     <div className="market-pulse-container compact" style={{ flex: 1, minHeight: '300px' }}>
                         <iframe
                             src="/market-insights.html"
+                            title="Market Pulse Insights"
                             width="100%"
                             height="100%"
                             style={{ border: "none", display: 'block' }}
-                            allowTransparency="true"
+                            allowtransparency="true"
                         ></iframe>
                     </div>
                 </div>
@@ -125,8 +127,8 @@ function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategor
     );
 }
 
-function AccountsPage({ globalSearchQuery, accounts }) {
-    const filteredTransactions = mockTransactions.filter(transaction => {
+function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
+    const filteredTransactions = allTransactions.filter(transaction => {
         const query = globalSearchQuery.toLowerCase();
         return !query ||
             transaction.description.toLowerCase().includes(query) ||
@@ -402,19 +404,54 @@ function AnalyticsPage({ transactions }) {
     );
 }
 
-function SettingsPage({ user }) {
+function SettingsPage({ user: authUser }) {
+    const { login } = useAuth();
     const [profile, setProfile] = useState({
-        name: user?.name || "",
-        email: user?.email || "",
-        phone: "+1 (555) 012-3456",
-        address: "123 Oak Street, New York, NY 10001"
+        name: authUser?.name || "",
+        email: authUser?.email || "",
+        phone: "",
+        address: ""
     });
     const [isSaved, setIsSaved] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const handleProfileUpdate = (event) => {
+    useEffect(() => {
+        const fetchProfile = async () => {
+            if (authUser?.email) {
+                try {
+                    // Try to fetch by email or a fixed ID since we only have one test user
+                    const data = await getUserProfile("user-1");
+                    setProfile({
+                        name: data.name,
+                        email: data.email,
+                        phone: data.phone || "",
+                        address: data.address || ""
+                    });
+                } catch (err) {
+                    console.error("Failed to fetch profile:", err);
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+        };
+        fetchProfile();
+    }, [authUser]);
+
+    const handleProfileUpdate = async (event) => {
         event.preventDefault();
-        setIsSaved(true);
-        setTimeout(() => setIsSaved(false), 3000);
+        try {
+            const updated = await updateUserProfile("user-1", profile);
+            // Update auth context to keep sidebar/topbar in sync
+            login({
+                ...authUser,
+                name: updated.name,
+                email: updated.email
+            });
+            setIsSaved(true);
+            setTimeout(() => setIsSaved(false), 3000);
+        } catch (err) {
+            alert("Failed to save profile: " + err.message);
+        }
     };
 
     return (
@@ -428,10 +465,10 @@ function SettingsPage({ user }) {
 
                     <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24, padding: "16px", background: "var(--blue-50)", borderRadius: 12 }}>
                         <div className="avatar" style={{ width: 60, height: 60, fontSize: "1.2rem", borderRadius: 16 }}>
-                            {user?.avatar || user?.name?.charAt(0)}
+                            {authUser?.avatar || authUser?.name?.charAt(0)}
                         </div>
                         <div>
-                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--gray-800)" }}>{user?.name}</div>
+                            <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--gray-800)" }}>{authUser?.name}</div>
                             <div style={{ fontSize: "0.82rem", color: "var(--gray-500)" }}>Premium Account · Member since 2022</div>
                         </div>
                     </div>
@@ -496,33 +533,51 @@ export default function Dashboard() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
     const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
-    const [allTransactions, setAllTransactions] = useState(initialMockTransactions);
-    const [accounts, setAccounts] = useState(mockAccounts);
+    const [allTransactions, setAllTransactions] = useState([]);
+    const [accounts, setAccounts] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const handleTransferComplete = (newTxn) => {
-        setAllTransactions(prev => [newTxn, ...prev]);
+    // Fetch accounts + transactions from MongoDB on mount
+    useEffect(() => {
+        Promise.all([getAccounts(), getTransactions()])
+            .then(([accs, txns]) => {
+                setAccounts(accs);
+                setAllTransactions(txns);
+                setSelectedCategories(transactionCategories);
+            })
+            .catch(err => console.error('Failed to load data:', err))
+            .finally(() => setIsLoading(false));
+    }, []);
 
-        // Update account balances reactively and generate notification
-        setAccounts(prevAccounts => {
-            const updatedAccounts = prevAccounts.map(acc => {
-                if (newTxn.category === "Transfers" || newTxn.description.includes("Payment to") || newTxn.description.includes("Transfer to")) {
-                    const amount = Math.abs(newTxn.amount);
-                    if (newTxn.type === "debit" && acc.type === "checking") {
-                        return { ...acc, balance: acc.balance - amount };
+    const handleTransferComplete = async (newTxn) => {
+        try {
+            // Persist transaction to MongoDB
+            const saved = await createTransaction(newTxn);
+            setAllTransactions(prev => [saved, ...prev]);
+
+            // Update account balances in DB and local state
+            const updatedAccounts = await Promise.all(
+                accounts.map(async (acc) => {
+                    if (newTxn.category === "Transfers" || newTxn.description.includes("Payment to") || newTxn.description.includes("Transfer to")) {
+                        const amount = Math.abs(newTxn.amount);
+                        if (newTxn.type === "debit" && acc.type === "checking") {
+                            return await updateAccountBalance(acc.id, -amount);
+                        }
+                        if (newTxn.type === "credit" && acc.type === "checking") {
+                            return await updateAccountBalance(acc.id, amount);
+                        }
                     }
-                    if (newTxn.type === "credit" && acc.type === "checking") {
-                        return { ...acc, balance: acc.balance + amount };
-                    }
-                }
-                return acc;
-            });
+                    return acc;
+                })
+            );
+            setAccounts(updatedAccounts);
 
-            // Generate a notification after balance update
+            // Generate notification
             const checkingAcc = updatedAccounts.find(a => a.type === "checking");
             const availableBalance = checkingAcc ? checkingAcc.balance : null;
             const amount = Math.abs(newTxn.amount);
             const isDebit = newTxn.type === "debit";
-            const newNotif = {
+            setNotifications(prev => [{
                 id: Date.now(),
                 icon: isDebit ? "💸" : "💰",
                 title: isDebit ? "Amount Debited" : "Amount Credited",
@@ -531,11 +586,10 @@ export default function Dashboard() {
                     : `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} credited · Available: $${availableBalance != null ? availableBalance.toLocaleString("en-US", { minimumFractionDigits: 2 }) : "—"}`,
                 time: "Just now",
                 isRead: false,
-            };
-            setNotifications(prev => [newNotif, ...prev]);
-
-            return updatedAccounts;
-        });
+            }, ...prev]);
+        } catch (err) {
+            console.error('Transfer failed:', err);
+        }
     };
 
     useEffect(() => {
@@ -591,7 +645,7 @@ export default function Dashboard() {
                     onTransferComplete={handleTransferComplete}
                     accounts={accounts}
                 />;
-            case "accounts": return <AccountsPage globalSearchQuery={globalSearchQuery} accounts={accounts} />;
+            case "accounts": return <AccountsPage globalSearchQuery={globalSearchQuery} accounts={accounts} allTransactions={allTransactions} />;
             case "fd": return <FDManager />;
             case "transfers": return <TransfersPage globalSearchQuery={globalSearchQuery} allTransactions={allTransactions} onTransferComplete={handleTransferComplete} />;
             case "analytics": return <AnalyticsPage transactions={allTransactions} />;
