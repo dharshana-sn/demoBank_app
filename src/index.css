@@ -305,3 +305,17 @@ body {
   border-top: 1px solid var(--gray-200);
   margin: 20px 0;
 }
+
+#print-logo {
+  display: none;
+}
+
+@media print {
+  #print-logo {
+    display: block !important;
+    width: 220px;
+    margin: -60px auto -60px auto;
+    clip-path: inset(32% 0 32% 0);
+    filter: brightness(1.15) contrast(1.8);
+  }
+}

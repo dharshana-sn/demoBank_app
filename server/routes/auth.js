@@ -49,4 +49,29 @@ router.post('/oauth-callback', async (req, res) => {
     }
 });
 
+// Captcha Generation Route (Image Text Puzzle)
+router.get('/captcha', async (req, res) => {
+    try {
+        const { CaptchaGenerator } = await import('captcha-canvas');
+        const captchaOptions = new CaptchaGenerator()
+            .setDimension(150, 240) // height, width to match ui proportionally
+            .setCaptcha({ size: 40, color: "#054279" }) // Navy blue text
+            .setDecoy({ opacity: 0.4 })
+            .setTrace({ color: "#054279", size: 2 }); // Navy trace
+
+        const buffer = await captchaOptions.generate();
+        
+        // We send the expected text back for frontend validation (since it's a demo)
+        // In production, we'd store this securely in session/redis
+        res.json({
+            image: `data:image/png;base64,${buffer.toString('base64')}`,
+            instruction: "Enter the text shown in the image",
+            text: captchaOptions.text
+        });
+    } catch (err) {
+        console.error("Captcha error:", err);
+        res.status(500).json({ error: "Failed to generate captcha" });
+    }
+});
+
 export default router;

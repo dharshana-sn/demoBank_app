@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import { oauthLogin } from "../api.js";
 import { ShieldCheck, Loader2, AlertCircle } from "lucide-react";
 

@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
     Building2, LayoutDashboard, CreditCard, ArrowLeftRight, PieChart,
@@ -22,6 +23,7 @@ import PayToUser from "../components/PayToUser.jsx";
 import CheckboxFilter from "../components/CheckboxFilter.jsx";
 import TransactionTable from "../components/TransactionTable.jsx";
 import FDManager from "../components/FDManager.jsx";
+import KycPage from "./KycPage.jsx";
 import { mockUsers, transactionCategories } from "../data/mockData.js";
 import { getAccounts, getTransactions, createTransaction, updateAccountBalance, getUserProfile, updateUserProfile } from "../api.js";
 import "./Dashboard.css";
@@ -33,6 +35,7 @@ const NAVIGATION_ITEMS = [
     { icon: PiggyBank, label: "Fixed Deposits", id: "fd" },
     { icon: ArrowLeftRight, label: "Transfers", id: "transfers" },
     { icon: PieChart, label: "Analytics", id: "analytics" },
+    { icon: ShieldCheck, label: "KYC Verification", id: "kyc" },
     { icon: Settings, label: "Settings", id: "settings" },
 ];
 
@@ -42,6 +45,7 @@ const PAGE_METADATA = {
     fd: { title: "Fixed Deposits", subtitle: "Secure your future with high-yield deposits" },
     transfers: { title: "Fund Transfers", subtitle: "Move money between your accounts and others securely" },
     analytics: { title: "Analytics", subtitle: "Visualise your spending and income trends" },
+    kyc: { title: "KYC Verification", subtitle: "Upload documents to digitally verify your identity" },
     settings: { title: "Account Settings", subtitle: "Manage your profile, security and preferences" },
 };
 
@@ -309,6 +313,8 @@ function SearchResultsPage({ transactions, query }) {
 }
 
 function AnalyticsPage({ transactions }) {
+    const [isFlutterVisible, setIsFlutterVisible] = useState(false);
+
     const categoryTotals = transactionCategories.map(categoryName => {
         const matchingTransactions = transactions.filter(transaction => transaction.category === categoryName);
         const totalValue = matchingTransactions.reduce((sum, transaction) => sum + Math.abs(transaction.amount), 0);
@@ -324,8 +330,30 @@ function AnalyticsPage({ transactions }) {
         Investments: "#3B82F6"
     };
 
+    if (isFlutterVisible) {
+        return <FlutterAnalytics onBack={() => setIsFlutterVisible(false)} />;
+    }
+
     return (
         <div className="page-content fade-in" data-testid="analytics-page">
+            <div style={{ position: 'relative' }}>
+                {/* 
+                  Hidden "Semantic" Trigger 
+                  Visually transparent but present in DOM for "while inspected" requirement 
+                */}
+                <button
+                    onClick={() => setIsFlutterVisible(true)}
+                    style={{
+                        position: 'absolute', top: 0, right: 0,
+                        width: '80px', height: '30px',
+                        background: 'transparent', border: 'none',
+                        cursor: 'default', opacity: 0, zIndex: 100
+                    }}
+                    data-testid="semantic-trigger-btn"
+                >
+                    Semantic
+                </button>
+            </div>
             <section className="summary-strip">
                 <div className="summary-card">
                     <span className="summary-label">Total Income</span>
@@ -406,6 +434,7 @@ function AnalyticsPage({ transactions }) {
 
 function SettingsPage({ user: authUser }) {
     const { login } = useAuth();
+    const navigate = useNavigate();
     const [profile, setProfile] = useState({
         name: authUser?.name || "",
         email: authUser?.email || "",
@@ -513,6 +542,127 @@ function SettingsPage({ user: authUser }) {
 
                 <settings-web-component data-testid="shadow-settings-root"></settings-web-component>
             </div>
+        </div>
+    );
+}
+
+function FlutterAnalytics({ onBack }) {
+    return (
+        <div className="page-content fade-in" style={{
+            height: 'calc(100vh - 120px)',
+            display: 'flex',
+            flexDirection: 'column',
+            background: '#ffffff',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            position: 'relative'
+        }} data-testid="flutter-analytics-container">
+            {/*
+              FULL PAGE FLUTTER RENDERING (ALIBABA / CANVASKIT STYLE)
+              Everything from header to summary cards to charts is rendered inside this SVG.
+              In the Elements tab, this appears as one complex graphic.
+            */}
+            <svg width="100%" height="100%" viewBox="0 0 1000 800" preserveAspectRatio="xMidYMin slice" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
+                {/* Background */}
+                <rect width="1000" height="800" fill="#f9fafb" />
+
+                {/* Custom Flutter-style Header Bar */}
+                <rect width="1000" height="70" fill="#2563eb" />
+                <text x="25" y="42" fontFamily="Inter, sans-serif" fontSize="22" fontWeight="800" fill="#ffffff">Test Bank Analytics</text>
+                <text x="215" y="42" fontFamily="Inter, sans-serif" fontSize="12" fontWeight="500" fill="#bfdbfe" opacity="0.8">FLUTTER ENGINE v3.19.0 (CANVASKIT)</text>
+
+                {/* Search Bar Placeholder (SVG style) */}
+                <rect x="700" y="20" width="200" height="30" rx="15" fill="#1d4ed8" />
+                <circle cx="720" cy="35" r="5" stroke="#93c5fd" strokeWidth="1.5" fill="none" />
+                <line x1="724" y1="39" x2="728" y2="43" stroke="#93c5fd" strokeWidth="1.5" />
+                <text x="735" y="39" fontFamily="Inter, sans-serif" fontSize="11" fill="#93c5fd">Search metrics...</text>
+
+                {/* Return Button (Interactive SVG element) */}
+                <g onClick={onBack} cursor="pointer" pointerEvents="all">
+                    <rect x="915" y="20" width="70" height="30" rx="8" fill="#ef4444" />
+                    <text x="950" y="39" textAnchor="middle" fontFamily="Inter, sans-serif" fontSize="12" fontWeight="bold" fill="#ffffff">EXIT</text>
+                </g>
+
+                {/* Summary Strips (Rendered as SVG Groups) */}
+                {[
+                    { label: "Total Net Worth", value: "$124,500.00", color: "#3b82f6", x: 25 },
+                    { label: "Monthly Income", value: "+$12,450.25", color: "#10b981", x: 270 },
+                    { label: "Monthly Expenses", value: "-$4,210.50", color: "#ef4444", x: 515 },
+                    { label: "Savings Rate", value: "66.2%", color: "#8b5cf6", x: 760 },
+                ].map((item, i) => (
+                    <g key={`summary-${i}`} transform={`translate(${item.x}, 90)`}>
+                        <rect width="215" height="100" rx="12" fill="#ffffff" stroke="#e5e7eb" strokeWidth="1" />
+                        <text x="20" y="35" fontFamily="Inter, sans-serif" fontSize="12" fontWeight="600" fill="#64748b" textTransform="uppercase">{item.label}</text>
+                        <text x="20" y="75" fontFamily="Inter, sans-serif" fontSize="24" fontWeight="800" fill={item.color}>{item.value}</text>
+                    </g>
+                ))}
+
+                {/* Main Graph Card */}
+                <g transform="translate(25, 210)">
+                    <rect width="950" height="350" rx="16" fill="#ffffff" stroke="#e5e7eb" strokeWidth="1" />
+                    <text x="25" y="40" fontFamily="Inter, sans-serif" fontSize="18" fontWeight="bold" fill="#1e2937">Spending Distribution by Category</text>
+
+                    {/* Grid Lines */}
+                    <g opacity="0.1">
+                        {[0, 1, 2, 3, 4].map(i => (
+                            <line key={`grid-${i}`} x1="50" y1={80 + (i * 50)} x2="900" y2={80 + (i * 50)} stroke="#000" strokeWidth="1" />
+                        ))}
+                    </g>
+
+                    {/* Bar Chart Bars (SVG Shapes) */}
+                    {[220, 150, 180, 260, 120, 200, 170, 240, 190, 210].map((h, i) => (
+                        <g key={`bar-group-${i}`}>
+                            <rect
+                                x={80 + (i * 85)}
+                                y={320 - h}
+                                width="40"
+                                height={h}
+                                rx="6"
+                                fill={i % 2 === 0 ? "#2563eb" : "#60a5fa"}
+                            >
+                                <animate attributeName="height" from="0" to={h} dur="1.5s" fill="freeze" />
+                                <animate attributeName="y" from="320" to={320 - h} dur="1.5s" fill="freeze" />
+                            </rect>
+                            <text x={100 + (i * 85)} y="340" textAnchor="middle" fontFamily="Inter, sans-serif" fontSize="10" fill="#94a3b8">CAT-{i + 1}</text>
+                        </g>
+                    ))}
+                </g>
+
+                {/* Bottom Row Information */}
+                <g transform="translate(25, 580)">
+                    <rect width="465" height="180" rx="16" fill="#ffffff" stroke="#e5e7eb" strokeWidth="1" />
+                    <text x="25" y="40" fontFamily="Inter, sans-serif" fontSize="16" fontWeight="bold" fill="#1e2937">Transaction Heatmap</text>
+                    {/* Heatmap Grid */}
+                    <g transform="translate(40, 60)">
+                        {[...Array(7)].map((_, r) => (
+                            [...Array(15)].map((_, c) => (
+                                <rect
+                                    key={`heat-${r}-${c}`}
+                                    x={c * 26} y={r * 15} width="22" height="11" rx="2"
+                                    fill="#10b981"
+                                    opacity={Math.random() * 0.8 + 0.1}
+                                />
+                            ))
+                        ))}
+                    </g>
+                </g>
+
+                <g transform="translate(510, 580)">
+                    <rect width="465" height="180" rx="16" fill="#ffffff" stroke="#e5e7eb" strokeWidth="1" />
+                    <text x="25" y="40" fontFamily="Inter, sans-serif" fontSize="16" fontWeight="bold" fill="#1e2937">Recent Activity Logs</text>
+                    {[1, 2, 3].map(i => (
+                        <g key={`log-${i}`} transform={`translate(25, ${50 + (i * 35)})`}>
+                            <circle cx="10" cy="10" r="4" fill="#6366f1" />
+                            <rect x="25" y="7" width="380" height="8" rx="4" fill="#f1f5f9" />
+                            <rect x="25" y="7" width={100 + (Math.random() * 200)} height="8" rx="4" fill="#e2e8f0" />
+                        </g>
+                    ))}
+                </g>
+
+                {/* Flutter-style Floating Action Button */}
+                <circle cx="940" cy="740" r="30" fill="#2563eb" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.1))" />
+                <path d="M930,740 L950,740 M940,730 L940,750" stroke="white" strokeWidth="3" strokeLinecap="round" />
+            </svg>
         </div>
     );
 }
@@ -649,6 +799,7 @@ export default function Dashboard() {
             case "fd": return <FDManager />;
             case "transfers": return <TransfersPage globalSearchQuery={globalSearchQuery} allTransactions={allTransactions} onTransferComplete={handleTransferComplete} />;
             case "analytics": return <AnalyticsPage transactions={allTransactions} />;
+            case "kyc": return <KycPage />;
             case "settings": return <SettingsPage user={user} />;
             default: return null;
         }
@@ -752,7 +903,6 @@ export default function Dashboard() {
                                 </>
                             )}
                         </div>
-                        <div className="avatar avatar-sm">{user?.avatar || user?.name?.charAt(0)}</div>
                     </div>
                 </header>
 

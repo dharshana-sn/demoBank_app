@@ -136,14 +136,11 @@ export default function TransactionTable({ transactions, globalSearch }) {
     const isDateFiltered = dateFrom || dateTo;
 
     return (
-        <div className="card" data-testid="transaction-table-section">
-            <div className="card-header">
-                <h2 className="card-title">Transaction History</h2>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span className="badge badge-blue" data-testid="txn-count">
-                        {sortedTransactions.length} records
-                    </span>
-                </div>
+        <div className="transaction-table-container" data-testid="transaction-table-section">
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "12px" }}>
+                <span className="badge badge-blue" data-testid="txn-count">
+                    {sortedTransactions.length} records
+                </span>
             </div>
 
             {/* Date Range Filter */}

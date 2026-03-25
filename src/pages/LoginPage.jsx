@@ -9,7 +9,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { Eye, EyeOff, Building2, ShieldCheck, AlertCircle } from "lucide-react";
+import { getCaptcha } from "../api.js";
+import { Eye, EyeOff, Building2, ShieldCheck, AlertCircle, RefreshCcw } from "lucide-react";
 import "./LoginPage.css";
 
 const DEMO_CREDENTIALS = { email: "testUser@gmail.com", password: "password123" };
@@ -23,6 +24,11 @@ export default function LoginPage() {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [authErrorMessage, setAuthErrorMessage] = useState("");
+    
+    // Captcha state
+    const [showCaptcha, setShowCaptcha] = useState(false);
+    const [captchaData, setCaptchaData] = useState(null);
+    const [captchaError, setCaptchaError] = useState("");
 
     const validateForm = () => {
         const errorsFound = {};
@@ -45,15 +51,17 @@ export default function LoginPage() {
         setAuthErrorMessage("");
     };
 
-    const handleCredentialSubmit = async (event) => {
-        event.preventDefault();
-
-        const errors = validateForm();
-        if (Object.keys(errors).length > 0) {
-            setFormErrors(errors);
-            return;
+    const refreshCaptcha = async () => {
+        try {
+            const data = await getCaptcha();
+            setCaptchaData(data);
+            setCaptchaError("");
+        } catch (err) {
+            setAuthErrorMessage("Failed to refresh captcha");
         }
+    };
 
+    const executeLogin = async () => {
         setIsSubmitting(true);
         // Simulate a network delay for a more realistic feel
         await new Promise(resolve => setTimeout(resolve, 900));
@@ -68,8 +76,55 @@ export default function LoginPage() {
             navigate("/dashboard");
         } else {
             setAuthErrorMessage("Invalid email or password. Use testUser@gmail.com / password123");
+            setShowCaptcha(false);
         }
         setIsSubmitting(false);
+    };
+
+    const [captchaInput, setCaptchaInput] = useState("");
+
+    const handleCaptchaSubmit = async (e) => {
+        e.preventDefault();
+        if (!captchaData || !captchaInput) {
+            setCaptchaError("Please enter the text from the image.");
+            return;
+        }
+
+        if (captchaInput.toLowerCase() === captchaData.text.toLowerCase()) {
+            setCaptchaError("");
+            await executeLogin();
+        } else {
+            setCaptchaError("Incorrect text. Please try again.");
+            setCaptchaInput("");
+            await refreshCaptcha();
+        }
+    };
+
+    const handleCredentialSubmit = async (event) => {
+        event.preventDefault();
+
+        const errors = validateForm();
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            return;
+        }
+
+        if (!showCaptcha) {
+            setIsSubmitting(true);
+            try {
+                const data = await getCaptcha();
+                setCaptchaData(data);
+                setShowCaptcha(true);
+                setCaptchaError("");
+                setCaptchaInput("");
+            } catch (err) {
+                setAuthErrorMessage("Failed to load captcha. Please try again.");
+            }
+            setIsSubmitting(false);
+            return;
+        }
+
+        await handleCaptchaSubmit(event);
     };
 
     const startOAuthFlow = (providerName) => {
@@ -196,6 +251,39 @@ export default function LoginPage() {
                                 </label>
                                 <a href="#" className="forgot-link" data-testid="link-forgot-password">Forgot password?</a>
                             </div>
+
+                            {showCaptcha && captchaData && (
+                                <div className="form-group captcha-group fade-in" style={{ marginTop: '16px', marginBottom: '8px', padding: '16px', background: 'rgba(5, 66, 121, 0.05)', borderRadius: '12px', border: '1px solid rgba(5, 66, 121, 0.1)' }}>
+                                    <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        Security Check
+                                        <button type="button" onClick={refreshCaptcha} title="Refresh Options" style={{ background: 'none', border: 'none', color: '#054279', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s', fontSize: '0.8rem', gap: '4px' }}>
+                                            <RefreshCcw size={14} /> Refresh
+                                        </button>
+                                    </label>
+                                    <p style={{ fontSize: '0.9rem', marginBottom: '12px', color: '#054279', fontWeight: 500 }}>
+                                        {captchaData.instruction || "Enter the text shown in the image"}
+                                    </p>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '8px', alignItems: 'center' }}>
+                                        <div style={{ background: '#fff', padding: '8px', borderRadius: '8px', border: '1px solid #e1e4e8', display: 'inline-block', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                                            <img 
+                                                src={captchaData.image} 
+                                                alt="Security CAPTCHA" 
+                                                style={{ height: '120px', width: '240px', display: 'block' }} 
+                                            />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={captchaInput}
+                                            onChange={(e) => setCaptchaInput(e.target.value)}
+                                            placeholder="Enter captcha text"
+                                            className="form-input"
+                                            style={{ textAlign: 'center', letterSpacing: '2px', fontWeight: 'bold' }}
+                                            data-testid="input-captcha"
+                                        />
+                                    </div>
+                                    {captchaError && <span className="form-error" style={{ display: 'block', marginTop: '6px', textAlign: 'center' }}>{captchaError}</span>}
+                                </div>
+                            )}
 
                             <button
                                 type="submit"

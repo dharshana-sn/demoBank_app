@@ -4,8 +4,9 @@
  * Base URL is /api (proxied to Express server by Vite).
  */
 
-const PROD_URL = 'https://demobank-app-backend.onrender.com/api';
-const BASE = import.meta.env.DEV ? '/api' : PROD_URL;
+// const PROD_URL = 'https://demobank-app-backend.onrender.com/api';
+// const BASE = import.meta.env.DEV ? '/api' : PROD_URL;
+const BASE = '/api';
 
 async function request(path, options = {}) {
     const res = await fetch(`${BASE}${path}`, {
@@ -46,3 +47,26 @@ export const updateUserProfile = (id, data) =>
 // ── Auth ──────────────────────────────────────
 export const oauthLogin = (provider, code) =>
     request('/auth/oauth-callback', { method: 'POST', body: { provider, code } });
+export const getCaptcha = () => request('/auth/captcha');
+
+// ── KYC ───────────────────────────────────────
+export const uploadKycDocument = async (documentType, file) => {
+    const formData = new FormData();
+    formData.append('documentType', documentType);
+    formData.append('document', file);
+
+    const res = await fetch(`${BASE}/kyc/upload`, {
+        method: 'POST',
+        // Omit Content-Type so fetch can set the correct multipart boundary
+        body: formData,
+    });
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error || 'Upload failed');
+    }
+    return res.json();
+};
+
+export const getKycStatus = () => request('/kyc/status');
+export const deleteKycDocument = (type) => request(`/kyc/document/${type}`, { method: 'DELETE' });
