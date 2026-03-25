@@ -6,14 +6,66 @@
  * Supports both standard email/password credentials and mock OAuth flows.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { getCaptcha } from "../api.js";
 import { Eye, EyeOff, Building2, ShieldCheck, AlertCircle, RefreshCcw } from "lucide-react";
 import "./LoginPage.css";
 
 const DEMO_CREDENTIALS = { email: "testUser@gmail.com", password: "password123" };
+
+function generateFrontendCaptcha() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 150;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#f0f4f8';
+    ctx.fillRect(0, 0, 300, 150);
+
+    // Add some noise lines
+    for (let i = 0; i < 7; i++) {
+        ctx.strokeStyle = `rgba(5, 66, 121, 0.15)`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * 300, Math.random() * 150);
+        ctx.lineTo(Math.random() * 300, Math.random() * 150);
+        ctx.stroke();
+    }
+
+    const shapes = [
+        { name: 'Red Square', draw: (x, y) => { ctx.fillStyle = '#ef4444'; ctx.fillRect(x-30, y-30, 60, 60); } },
+        { name: 'Blue Circle', draw: (x, y) => { ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(x, y, 32, 0, Math.PI*2); ctx.fill(); } },
+        { name: 'Green Triangle', draw: (x, y) => { ctx.fillStyle = '#10b981'; ctx.beginPath(); ctx.moveTo(x, y-35); ctx.lineTo(x-35, y+30); ctx.lineTo(x+35, y+30); ctx.fill(); } }
+    ];
+
+    // Shuffle shapes
+    shapes.sort(() => Math.random() - 0.5);
+
+    const positions = [
+        { x: 50, y: 75, box: { x1: 10, x2: 90, y1: 35, y2: 115 } },
+        { x: 150, y: 75, box: { x1: 110, x2: 190, y1: 35, y2: 115 } },
+        { x: 250, y: 75, box: { x1: 210, x2: 290, y1: 35, y2: 115 } }
+    ];
+
+    const renderedShapes = [];
+    for (let i = 0; i < 3; i++) {
+        const shape = shapes[i];
+        const pos = positions[i];
+        shape.draw(pos.x, pos.y);
+        renderedShapes.push({ name: shape.name, box: pos.box });
+    }
+
+    // Pick target
+    const target = renderedShapes[Math.floor(Math.random() * renderedShapes.length)];
+
+    return {
+        image: canvas.toDataURL(),
+        instruction: `Click on the ${target.name}`,
+        targetBox: target.box
+    };
+}
 
 export default function LoginPage() {
     const { login } = useAuth();
@@ -52,13 +104,13 @@ export default function LoginPage() {
     };
 
     const refreshCaptcha = async () => {
-        try {
-            const data = await getCaptcha();
-            setCaptchaData(data);
-            setCaptchaError("");
-        } catch (err) {
-            setAuthErrorMessage("Failed to refresh captcha");
-        }
+        setIsSubmitting(true);
+        // Simulate slight delay to make it feel secure
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const data = generateFrontendCaptcha();
+        setCaptchaData(data);
+        setCaptchaError("");
+        setIsSubmitting(false);
     };
 
     const executeLogin = async () => {
@@ -115,14 +167,11 @@ export default function LoginPage() {
 
         if (!showCaptcha) {
             setIsSubmitting(true);
-            try {
-                const data = await getCaptcha();
-                setCaptchaData(data);
-                setShowCaptcha(true);
-                setCaptchaError("");
-            } catch (err) {
-                setAuthErrorMessage("Failed to load captcha. Please try again.");
-            }
+            await new Promise(resolve => setTimeout(resolve, 400));
+            const data = generateFrontendCaptcha();
+            setCaptchaData(data);
+            setShowCaptcha(true);
+            setCaptchaError("");
             setIsSubmitting(false);
             return;
         }
