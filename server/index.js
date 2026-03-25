@@ -40,7 +40,7 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use(express.static(path.join(__dirname, '../dist')));
 
 // Catch-all route to serve the React application for unhandled non-API routes
-app.get('*', (req, res) => {
+app.use((req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
