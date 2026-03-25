@@ -1,5 +1,6 @@
 import express from 'express';
 import User from '../models/User.js';
+import svgCaptcha from 'svg-captcha';
 
 const router = express.Router();
 
@@ -49,24 +50,39 @@ router.post('/oauth-callback', async (req, res) => {
     }
 });
 
-// Captcha Generation Route (Image Text Puzzle)
+// Captcha Generation Route (SVG Shape Puzzle)
 router.get('/captcha', async (req, res) => {
     try {
-        const { CaptchaGenerator } = await import('captcha-canvas');
-        const captchaOptions = new CaptchaGenerator()
-            .setDimension(150, 240) // height, width to match ui proportionally
-            .setCaptcha({ size: 40, color: "#054279" }) // Navy blue text
-            .setDecoy({ opacity: 0.4 })
-            .setTrace({ color: "#054279", size: 2 }); // Navy trace
-
-        const buffer = await captchaOptions.generate();
+        const shapes = [
+            { type: 'circle', color: '#ef4444', name: 'Red Circle', render: (x, y) => `<circle cx="${x}" cy="${y}" r="30" fill="#ef4444" />`, box: (x, y) => ({x1: x-30, y1: y-30, x2: x+30, y2: y+30}) },
+            { type: 'square', color: '#3b82f6', name: 'Blue Square', render: (x, y) => `<rect x="${x-30}" y="${y-30}" width="60" height="60" fill="#3b82f6" rx="8" />`, box: (x, y) => ({x1: x-30, y1: y-30, x2: x+30, y2: y+30}) },
+            { type: 'triangle', color: '#22c55e', name: 'Green Triangle', render: (x, y) => `<polygon points="${x},${y-30} ${x+35},${y+30} ${x-35},${y+30}" fill="#22c55e" stroke-linejoin="round" />`, box: (x, y) => ({x1: x-35, y1: y-30, x2: x+35, y2: y+30}) }
+        ];
         
-        // We send the expected text back for frontend validation (since it's a demo)
-        // In production, we'd store this securely in session/redis
+        // Shuffle shapes
+        shapes.sort(() => Math.random() - 0.5);
+        
+        const positions = [{x: 50, y: 75}, {x: 150, y: 75}, {x: 250, y: 75}];
+        
+        let svgContent = `<svg width="300" height="150" xmlns="http://www.w3.org/2000/svg">`;
+        svgContent += `<rect width="100%" height="100%" fill="#f8fafc" rx="12" />`;
+        
+        const renderedShapes = [];
+        for (let i = 0; i < 3; i++) {
+            const shape = shapes[i];
+            const pos = positions[i];
+            svgContent += shape.render(pos.x, pos.y);
+            renderedShapes.push({ ...shape, box: shape.box(pos.x, pos.y) });
+        }
+        
+        svgContent += `</svg>`;
+        
+        const targetShape = renderedShapes[Math.floor(Math.random() * renderedShapes.length)];
+        
         res.json({
-            image: `data:image/png;base64,${buffer.toString('base64')}`,
-            instruction: "Enter the text shown in the image",
-            text: captchaOptions.text
+            image: `data:image/svg+xml;base64,${Buffer.from(svgContent).toString('base64')}`,
+            instruction: `Click on the ${targetShape.name}`,
+            targetBox: targetShape.box
         });
     } catch (err) {
         console.error("Captcha error:", err);

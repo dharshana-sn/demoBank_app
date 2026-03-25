@@ -314,6 +314,14 @@ function SearchResultsPage({ transactions, query }) {
 
 function AnalyticsPage({ transactions }) {
     const [isFlutterVisible, setIsFlutterVisible] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 10000);
+        return () => clearTimeout(timer);
+    }, []);
 
     const categoryTotals = transactionCategories.map(categoryName => {
         const matchingTransactions = transactions.filter(transaction => transaction.category === categoryName);
@@ -329,6 +337,30 @@ function AnalyticsPage({ transactions }) {
         Transfers: "#8B5CF6", Bills: "#F59E0B", Shopping: "#EC4899", Dining: "#14B8A6",
         Investments: "#3B82F6"
     };
+
+    if (isLoading) {
+        return (
+            <div className="page-content fade-in" data-testid="analytics-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: '400px', flexDirection: 'column' }}>
+                <div style={{
+                    border: '4px solid rgba(0, 0, 0, 0.1)',
+                    borderLeftColor: 'var(--blue-600)',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    animation: 'spin 1s linear infinite'
+                }}></div>
+                <p style={{ marginTop: '16px', color: 'var(--gray-600)', fontWeight: 500 }}>Analyzing your data...</p>
+                <style>
+                    {`
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                    `}
+                </style>
+            </div>
+        );
+    }
 
     if (isFlutterVisible) {
         return <FlutterAnalytics onBack={() => setIsFlutterVisible(false)} />;

@@ -81,21 +81,25 @@ export default function LoginPage() {
         setIsSubmitting(false);
     };
 
-    const [captchaInput, setCaptchaInput] = useState("");
+    const handleCaptchaClick = async (e) => {
+        if (!captchaData || !captchaData.targetBox) return;
 
-    const handleCaptchaSubmit = async (e) => {
-        e.preventDefault();
-        if (!captchaData || !captchaInput) {
-            setCaptchaError("Please enter the text from the image.");
-            return;
-        }
-
-        if (captchaInput.toLowerCase() === captchaData.text.toLowerCase()) {
+        const rect = e.target.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Map display size (240x120) to actual SVG size (300x150)
+        const scaleX = 300 / rect.width;
+        const scaleY = 150 / rect.height;
+        const trueX = x * scaleX;
+        const trueY = y * scaleY;
+        
+        const box = captchaData.targetBox;
+        if (trueX >= box.x1 && trueX <= box.x2 && trueY >= box.y1 && trueY <= box.y2) {
             setCaptchaError("");
             await executeLogin();
         } else {
-            setCaptchaError("Incorrect text. Please try again.");
-            setCaptchaInput("");
+            setCaptchaError("Incorrect shape clicked. Please try again.");
             await refreshCaptcha();
         }
     };
@@ -116,7 +120,6 @@ export default function LoginPage() {
                 setCaptchaData(data);
                 setShowCaptcha(true);
                 setCaptchaError("");
-                setCaptchaInput("");
             } catch (err) {
                 setAuthErrorMessage("Failed to load captcha. Please try again.");
             }
@@ -124,7 +127,7 @@ export default function LoginPage() {
             return;
         }
 
-        await handleCaptchaSubmit(event);
+        setCaptchaError(`Please follow the instructions: ${captchaData.instruction || "Select the requested shape"}`);
     };
 
     const startOAuthFlow = (providerName) => {
@@ -261,25 +264,17 @@ export default function LoginPage() {
                                         </button>
                                     </label>
                                     <p style={{ fontSize: '0.9rem', marginBottom: '12px', color: '#054279', fontWeight: 500 }}>
-                                        {captchaData.instruction || "Enter the text shown in the image"}
+                                        {captchaData.instruction || "Select the requested shape"}
                                     </p>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '8px', alignItems: 'center' }}>
-                                        <div style={{ background: '#fff', padding: '8px', borderRadius: '8px', border: '1px solid #e1e4e8', display: 'inline-block', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+                                        <div style={{ background: '#fff', padding: '8px', borderRadius: '8px', border: '1px solid #e1e4e8', display: 'inline-block', cursor: 'crosshair', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                                             <img 
                                                 src={captchaData.image} 
                                                 alt="Security CAPTCHA" 
+                                                onClick={handleCaptchaClick}
                                                 style={{ height: '120px', width: '240px', display: 'block' }} 
                                             />
                                         </div>
-                                        <input
-                                            type="text"
-                                            value={captchaInput}
-                                            onChange={(e) => setCaptchaInput(e.target.value)}
-                                            placeholder="Enter captcha text"
-                                            className="form-input"
-                                            style={{ textAlign: 'center', letterSpacing: '2px', fontWeight: 'bold' }}
-                                            data-testid="input-captcha"
-                                        />
                                     </div>
                                     {captchaError && <span className="form-error" style={{ display: 'block', marginTop: '6px', textAlign: 'center' }}>{captchaError}</span>}
                                 </div>
