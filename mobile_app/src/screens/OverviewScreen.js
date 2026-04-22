@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View, Text, ScrollView, StyleSheet, TouchableOpacity,
     ActivityIndicator, RefreshControl
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -27,7 +28,7 @@ export default function OverviewScreen({ navigation }) {
 
     const styles = getStyles(C);
 
-    const load = async () => {
+    const load = useCallback(async () => {
         try {
             const [accs, txns] = await Promise.all([getAccounts(), getTransactions()]);
             setAccounts(accs);
@@ -38,9 +39,15 @@ export default function OverviewScreen({ navigation }) {
             setIsLoading(false);
             setRefreshing(false);
         }
-    };
+    }, []);
 
-    useEffect(() => { load(); }, []);
+    useFocusEffect(
+        useCallback(() => {
+            load();
+        }, [load])
+    );
+
+    useEffect(() => { load(); }, [load]);
 
     const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
     const totalIncome = transactions.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0);

@@ -4,7 +4,7 @@ import {
     TouchableOpacity, Alert, ActivityIndicator
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { getAccounts, createTransaction, updateAccountBalance } from '../api/api';
+import { getAccounts, createTransaction, updateAccountBalance, getTransactions } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -37,17 +37,49 @@ export default function TransfersScreen({ navigation, route }) {
         }, [route.params])
     );
 
-    useEffect(() => {
-        getAccounts()
-            .then(accs => {
-                setAccounts(accs);
-                if (accs.length >= 2) {
-                    setForm(f => ({ ...f, from: accs[0].id, to: accs[1].id }));
-                }
-            })
-            .catch(console.error)
-            .finally(() => setPageLoading(false));
+    const loadData = useCallback(async () => {
+        setPageLoading(true);
+        try {
+            const [accs, txns] = await Promise.all([
+                getAccounts(),
+                getTransactions({ category: 'Transfers' }),
+            ]);
+            setAccounts(accs);
+            if (accs.length >= 2) {
+                setForm(f => ({ ...f, from: accs[0].id, to: accs[1].id }));
+            }
+            // Sort by date descending and show last 20 transfers
+            const transfers = txns
+                .filter(t => t.category === 'Transfers')
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 20);
+            setRecentTransfers(transfers);
+        } catch (err) {
+            console.error('Failed to load transfers:', err);
+        } finally {
+            setPageLoading(false);
+        }
     }, []);
+
+    // Reload every time the screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            const { scannedRecipient, scannedAmount, scannedNote } = route.params || {};
+            if (scannedRecipient) {
+                setActiveTab('pay');
+                setPayForm(f => ({
+                    ...f,
+                    recipient: scannedRecipient,
+                    amount: scannedAmount || f.amount,
+                    note: scannedNote || f.note,
+                }));
+                navigation.setParams({ scannedRecipient: undefined, scannedAmount: undefined, scannedNote: undefined });
+            }
+            loadData();
+        }, [route.params, loadData])
+    );
+
+    useEffect(() => { loadData(); }, []);
 
     const handleTransfer = async () => {
         if (!form.amount || isNaN(parseFloat(form.amount))) {
@@ -69,8 +101,8 @@ export default function TransfersScreen({ navigation, route }) {
             };
             await createTransaction(txn);
             await updateAccountBalance(form.from, -amt);
-            setRecentTransfers(prev => [{ ...txn, id: Date.now() }, ...prev]);
             setForm(f => ({ ...f, amount: '', description: '' }));
+            await loadData(); // Refresh history from server
             Alert.alert('✅ Success', `$${amt.toFixed(2)} transferred successfully!`);
         } catch (err) {
             Alert.alert('Error', err.message);
@@ -94,8 +126,8 @@ export default function TransfersScreen({ navigation, route }) {
                 customerId: payForm.recipient,
             };
             await createTransaction(txn);
-            setRecentTransfers(prev => [{ ...txn, id: Date.now() }, ...prev]);
             setPayForm({ recipient: '', amount: '', note: '' });
+            await loadData(); // Refresh history from server
             Alert.alert('✅ Success', `Payment of $${amt.toFixed(2)} sent!`);
         } catch (err) {
             Alert.alert('Error', err.message);
@@ -266,7 +298,7 @@ export default function TransfersScreen({ navigation, route }) {
 
             {recentTransfers.length > 0 && (
                 <View style={[styles.card, { marginTop: SPACING.md }]}>
-                    <Text style={styles.cardTitle}>This Session's Transfers</Text>
+                    <Text style={styles.cardTitle}>Transfer History</Text>
                     {recentTransfers.map((t, i) => (
                         <View key={t.id} style={[styles.txRow, i < recentTransfers.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}>
                             <Text style={{ fontSize: 20, marginRight: 10 }}>💸</Text>

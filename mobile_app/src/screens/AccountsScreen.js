@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View, Text, ScrollView, StyleSheet, TouchableOpacity,
     ActivityIndicator, RefreshControl
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { getAccounts, getTransactions } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
@@ -18,16 +19,22 @@ export default function AccountsScreen({ navigation }) {
 
     const styles = getStyles(C);
 
-    const load = async () => {
+    const load = useCallback(async () => {
         try {
             const [accs, txns] = await Promise.all([getAccounts(), getTransactions()]);
             setAccounts(accs);
             setTransactions(txns);
         } catch (e) { console.error(e); }
         finally { setLoading(false); setRefreshing(false); }
-    };
+    }, []);
 
-    useEffect(() => { load(); }, []);
+    useFocusEffect(
+        useCallback(() => {
+            load();
+        }, [load])
+    );
+
+    useEffect(() => { load(); }, [load]);
 
     if (loading) return (
         <View style={styles.center}><ActivityIndicator size="large" color={C.primary} /></View>
