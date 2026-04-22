@@ -7,7 +7,7 @@
 // - Local dev: 'http://10.0.2.2:5001/api' for Android emulator
 // - Local dev: 'http://localhost:5001/api' for iOS simulator
 // - Production: 'https://demobank-app-backend.onrender.com/api'
-export const BASE_URL = 'http://10.0.2.2:5001/api';
+export const BASE_URL = 'http://192.168.22.89:5001/api';
 
 export const checkHealth = async () => {
     const controller = new AbortController();

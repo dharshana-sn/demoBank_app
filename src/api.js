@@ -6,7 +6,7 @@
 
 // const PROD_URL = 'https://demobank-app-backend.onrender.com/api';
 // const BASE = import.meta.env.DEV ? '/api' : PROD_URL;
-const BASE = '/api';
+const BASE = 'http://192.168.22.89:5001/api';
 
 export const checkHealth = async () => {
     const controller = new AbortController();
