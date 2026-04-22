@@ -4,7 +4,8 @@ import {
     TouchableOpacity, Alert, ActivityIndicator
 } from 'react-native';
 import { getFixedDeposits, createFixedDeposit } from '../api/api';
-import { COLORS, FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
+import { useTheme } from '../context/ThemeContext';
+import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const TENURE_OPTIONS = [
@@ -16,11 +17,14 @@ const TENURE_OPTIONS = [
 ];
 
 export default function FixedDepositsScreen({ navigation }) {
+    const { C } = useTheme();
     const [deposits, setDeposits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ amount: '', tenure: 12 });
+
+    const styles = getStyles(C);
     const selectedTenure = TENURE_OPTIONS.find(t => t.value === form.tenure) || TENURE_OPTIONS[2];
 
     useEffect(() => {
@@ -76,7 +80,7 @@ export default function FixedDepositsScreen({ navigation }) {
     const totalFDValue = deposits.reduce((s, d) => s + (d.principal || 0), 0);
 
     if (loading) return (
-        <View style={styles.center}><ActivityIndicator size="large" color={COLORS.primary} /></View>
+        <View style={styles.center}><ActivityIndicator size="large" color={C.primary} /></View>
     );
 
     return (
@@ -91,8 +95,7 @@ export default function FixedDepositsScreen({ navigation }) {
                 </TouchableOpacity>
             </View>
 
-            {/* Header Banner */}
-            <LinearGradient colors={[COLORS.gradStart, COLORS.gradEnd]} style={styles.banner}>
+            <LinearGradient colors={[C.gradStart, C.gradEnd]} style={styles.banner}>
                 <View>
                     <Text style={styles.bannerLabel}>Total FD Value</Text>
                     <Text style={styles.bannerValue}>${totalFDValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
@@ -103,7 +106,6 @@ export default function FixedDepositsScreen({ navigation }) {
                 </View>
             </LinearGradient>
 
-            {/* Rate Table */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>🏦 Current Interest Rates</Text>
                 {TENURE_OPTIONS.map(opt => (
@@ -116,13 +118,8 @@ export default function FixedDepositsScreen({ navigation }) {
                 ))}
             </View>
 
-            {/* Open New FD */}
-            <TouchableOpacity
-                style={styles.createBtn}
-                onPress={() => setShowForm(p => !p)}
-                activeOpacity={0.85}
-            >
-                <LinearGradient colors={[COLORS.gradStart, COLORS.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.createBtnInner}>
+            <TouchableOpacity style={styles.createBtn} onPress={() => setShowForm(p => !p)} activeOpacity={0.85}>
+                <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.createBtnInner}>
                     <Text style={styles.createBtnText}>{showForm ? '✕ Cancel' : '+ Open New Fixed Deposit'}</Text>
                 </LinearGradient>
             </TouchableOpacity>
@@ -134,7 +131,7 @@ export default function FixedDepositsScreen({ navigation }) {
                     <TextInput
                         style={styles.input}
                         placeholder="e.g. 5000"
-                        placeholderTextColor={COLORS.textLight}
+                        placeholderTextColor={C.textLight}
                         value={form.amount}
                         onChangeText={v => setForm(f => ({ ...f, amount: v }))}
                         keyboardType="numeric"
@@ -166,11 +163,11 @@ export default function FixedDepositsScreen({ navigation }) {
                             </View>
                             <View style={styles.previewRow}>
                                 <Text style={styles.previewLabel}>Interest ({selectedTenure.rate}%)</Text>
-                                <Text style={[styles.previewValue, { color: COLORS.success }]}>+${interestEarned()}</Text>
+                                <Text style={[styles.previewValue, { color: C.success }]}>+${interestEarned()}</Text>
                             </View>
-                            <View style={[styles.previewRow, { borderTopWidth: 1, borderTopColor: COLORS.border, marginTop: 8, paddingTop: 8 }]}>
+                            <View style={[styles.previewRow, { borderTopWidth: 1, borderTopColor: C.border, marginTop: 8, paddingTop: 8 }]}>
                                 <Text style={[styles.previewLabel, { ...FONTS.bold }]}>Maturity Amount</Text>
-                                <Text style={[styles.previewValue, { color: COLORS.primary, fontSize: 16 }]}>${maturityAmount()}</Text>
+                                <Text style={[styles.previewValue, { color: C.primary, fontSize: 16 }]}>${maturityAmount()}</Text>
                             </View>
                         </View>
                     )}
@@ -181,14 +178,13 @@ export default function FixedDepositsScreen({ navigation }) {
                         disabled={submitting}
                         activeOpacity={0.85}
                     >
-                        <LinearGradient colors={[COLORS.gradStart, COLORS.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.submitBtnInner}>
+                        <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.submitBtnInner}>
                             {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Create Fixed Deposit</Text>}
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
             )}
 
-            {/* Existing FDs */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Your Fixed Deposits</Text>
                 {deposits.length === 0 ? (
@@ -203,7 +199,7 @@ export default function FixedDepositsScreen({ navigation }) {
                                 <Text style={styles.fdTenure}>{d.tenure} months · {d.rate}% p.a.</Text>
                             </View>
                             <View style={[styles.fdStatusBadge, { backgroundColor: d.status === 'active' ? '#D1FAE5' : '#FEE2E2' }]}>
-                                <Text style={[styles.fdStatusText, { color: d.status === 'active' ? COLORS.success : COLORS.danger }]}>
+                                <Text style={[styles.fdStatusText, { color: d.status === 'active' ? C.success : C.danger }]}>
                                     {d.status?.charAt(0).toUpperCase() + d.status?.slice(1)}
                                 </Text>
                             </View>
@@ -221,76 +217,65 @@ export default function FixedDepositsScreen({ navigation }) {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.bg },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    topBar: { 
-        paddingHorizontal: SPACING.md, 
-        paddingTop: 20, 
-        paddingBottom: 12, 
-        backgroundColor: COLORS.card, 
-        borderBottomWidth: 1, 
-        borderBottomColor: COLORS.border,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-    },
-    homeBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#F1F5F9',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.border,
-    },
-    pageTitle: { ...FONTS.bold, fontSize: 22, color: COLORS.text },
-    pageSub: { ...FONTS.regular, fontSize: 13, color: COLORS.textMuted, marginTop: 2 },
-    banner: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 20, paddingHorizontal: SPACING.lg },
-    bannerLabel: { ...FONTS.regular, color: 'rgba(255,255,255,0.75)', fontSize: 12, marginBottom: 4 },
-    bannerValue: { ...FONTS.extraBold, color: '#fff', fontSize: 24 },
-    card: { backgroundColor: COLORS.card, marginHorizontal: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.md, ...SHADOWS.sm },
-    cardTitle: { ...FONTS.bold, fontSize: 15, color: COLORS.text, marginBottom: 14 },
-    rateRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-    rateTenure: { ...FONTS.medium, fontSize: 14, color: COLORS.text },
-    rateBadge: { backgroundColor: '#EFF6FF', paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full },
-    rateBadgeText: { ...FONTS.bold, fontSize: 13, color: COLORS.primary },
-    createBtn: { marginHorizontal: SPACING.md, borderRadius: RADIUS.md, overflow: 'hidden', marginBottom: SPACING.md },
-    createBtnInner: { paddingVertical: 14, alignItems: 'center' },
-    createBtnText: { ...FONTS.bold, fontSize: 15, color: '#fff' },
-    fieldLabel: { ...FONTS.semiBold, fontSize: 13, color: COLORS.text, marginBottom: 8, marginTop: 12 },
-    input: {
-        borderWidth: 1.5, borderColor: COLORS.border, borderRadius: RADIUS.md,
-        paddingHorizontal: 14, paddingVertical: 12,
-        fontSize: 15, color: COLORS.text, backgroundColor: '#F8FAFC',
-    },
-    tenureGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    tenureOption: {
-        paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.md,
-        backgroundColor: '#F1F5F9', borderWidth: 1.5, borderColor: COLORS.border,
-        alignItems: 'center',
-    },
-    tenureSelected: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-    tenureText: { ...FONTS.semiBold, fontSize: 12, color: COLORS.text },
-    tenureRate: { ...FONTS.regular, fontSize: 11, color: COLORS.textMuted, marginTop: 2 },
-    previewBox: { backgroundColor: '#F8FAFC', borderRadius: RADIUS.md, padding: 14, marginTop: 16, borderWidth: 1, borderColor: COLORS.border },
-    previewTitle: { ...FONTS.semiBold, fontSize: 13, color: COLORS.text, marginBottom: 10 },
-    previewRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
-    previewLabel: { ...FONTS.regular, fontSize: 13, color: COLORS.textMuted },
-    previewValue: { ...FONTS.semiBold, fontSize: 13, color: COLORS.text },
-    submitBtn: { borderRadius: RADIUS.md, overflow: 'hidden', marginTop: 16 },
-    submitBtnInner: { paddingVertical: 15, alignItems: 'center' },
-    submitBtnText: { ...FONTS.bold, fontSize: 15, color: '#fff' },
-    section: { paddingHorizontal: SPACING.md },
-    sectionTitle: { ...FONTS.semiBold, fontSize: 15, color: COLORS.text, marginBottom: 12 },
-    fdCard: { backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.sm, ...SHADOWS.sm },
-    fdCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    fdAmount: { ...FONTS.extraBold, fontSize: 20, color: COLORS.primary },
-    fdTenure: { ...FONTS.regular, fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
-    fdStatusBadge: { borderRadius: RADIUS.full, paddingHorizontal: 12, paddingVertical: 4 },
-    fdStatusText: { ...FONTS.bold, fontSize: 12 },
-    fdDates: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: COLORS.border },
-    fdDate: { ...FONTS.regular, fontSize: 12, color: COLORS.textMuted },
-    emptyText: { ...FONTS.regular, color: COLORS.textMuted, textAlign: 'center', padding: 24 },
-});
+function getStyles(C) {
+    return StyleSheet.create({
+        container: { flex: 1, backgroundColor: C.bg },
+        center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
+        topBar: {
+            paddingHorizontal: SPACING.md, paddingTop: 20, paddingBottom: 12,
+            backgroundColor: C.card, borderBottomWidth: 1, borderBottomColor: C.border,
+            flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
+        },
+        homeBtn: {
+            width: 40, height: 40, borderRadius: 20, backgroundColor: C.bg,
+            justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: C.border,
+        },
+        pageTitle: { ...FONTS.bold, fontSize: 22, color: C.text },
+        pageSub: { ...FONTS.regular, fontSize: 13, color: C.textMuted, marginTop: 2 },
+        banner: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 20, paddingHorizontal: SPACING.lg },
+        bannerLabel: { ...FONTS.regular, color: 'rgba(255,255,255,0.75)', fontSize: 12, marginBottom: 4 },
+        bannerValue: { ...FONTS.extraBold, color: '#fff', fontSize: 24 },
+        card: { backgroundColor: C.card, marginHorizontal: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.md, ...SHADOWS.sm },
+        cardTitle: { ...FONTS.bold, fontSize: 15, color: C.text, marginBottom: 14 },
+        rateRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
+        rateTenure: { ...FONTS.medium, fontSize: 14, color: C.text },
+        rateBadge: { backgroundColor: C.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full },
+        rateBadgeText: { ...FONTS.bold, fontSize: 13, color: C.primary },
+        createBtn: { marginHorizontal: SPACING.md, borderRadius: RADIUS.md, overflow: 'hidden', marginBottom: SPACING.md },
+        createBtnInner: { paddingVertical: 14, alignItems: 'center' },
+        createBtnText: { ...FONTS.bold, fontSize: 15, color: '#fff' },
+        fieldLabel: { ...FONTS.semiBold, fontSize: 13, color: C.text, marginBottom: 8, marginTop: 12 },
+        input: {
+            borderWidth: 1.5, borderColor: C.border, borderRadius: RADIUS.md,
+            paddingHorizontal: 14, paddingVertical: 12,
+            fontSize: 15, color: C.text, backgroundColor: C.bg,
+        },
+        tenureGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+        tenureOption: {
+            paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.md,
+            backgroundColor: C.bg, borderWidth: 1.5, borderColor: C.border, alignItems: 'center',
+        },
+        tenureSelected: { backgroundColor: C.primary, borderColor: C.primary },
+        tenureText: { ...FONTS.semiBold, fontSize: 12, color: C.text },
+        tenureRate: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginTop: 2 },
+        previewBox: { backgroundColor: C.bg, borderRadius: RADIUS.md, padding: 14, marginTop: 16, borderWidth: 1, borderColor: C.border },
+        previewTitle: { ...FONTS.semiBold, fontSize: 13, color: C.text, marginBottom: 10 },
+        previewRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
+        previewLabel: { ...FONTS.regular, fontSize: 13, color: C.textMuted },
+        previewValue: { ...FONTS.semiBold, fontSize: 13, color: C.text },
+        submitBtn: { borderRadius: RADIUS.md, overflow: 'hidden', marginTop: 16 },
+        submitBtnInner: { paddingVertical: 15, alignItems: 'center' },
+        submitBtnText: { ...FONTS.bold, fontSize: 15, color: '#fff' },
+        section: { paddingHorizontal: SPACING.md },
+        sectionTitle: { ...FONTS.semiBold, fontSize: 15, color: C.text, marginBottom: 12 },
+        fdCard: { backgroundColor: C.card, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.sm, ...SHADOWS.sm },
+        fdCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+        fdAmount: { ...FONTS.extraBold, fontSize: 20, color: C.primary },
+        fdTenure: { ...FONTS.regular, fontSize: 12, color: C.textMuted, marginTop: 2 },
+        fdStatusBadge: { borderRadius: RADIUS.full, paddingHorizontal: 12, paddingVertical: 4 },
+        fdStatusText: { ...FONTS.bold, fontSize: 12 },
+        fdDates: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: C.border },
+        fdDate: { ...FONTS.regular, fontSize: 12, color: C.textMuted },
+        emptyText: { ...FONTS.regular, color: C.textMuted, textAlign: 'center', padding: 24 },
+    });
+}

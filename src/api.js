@@ -8,6 +8,19 @@
 // const BASE = import.meta.env.DEV ? '/api' : PROD_URL;
 const BASE = '/api';
 
+export const checkHealth = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    try {
+        const res = await fetch(`${BASE}/health`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        return res.ok;
+    } catch (e) {
+        clearTimeout(timeoutId);
+        return false;
+    }
+};
+
 async function request(path, options = {}) {
     const res = await fetch(`${BASE}${path}`, {
         headers: { 'Content-Type': 'application/json', ...options.headers },

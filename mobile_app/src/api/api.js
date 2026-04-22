@@ -9,17 +9,47 @@
 // - Production: 'https://demobank-app-backend.onrender.com/api'
 export const BASE_URL = 'http://10.0.2.2:5001/api';
 
-async function request(path, options = {}) {
-    const res = await fetch(`${BASE_URL}${path}`, {
-        headers: { 'Content-Type': 'application/json', ...options.headers },
-        ...options,
-        body: options.body ? JSON.stringify(options.body) : undefined,
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(err.error || 'API error');
+export const checkHealth = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout for health check
+    try {
+        const res = await fetch(`${BASE_URL}/health`, { 
+            method: 'GET',
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return res.ok;
+    } catch (err) {
+        clearTimeout(timeoutId);
+        return false;
     }
-    return res.json();
+};
+
+async function request(path, options = {}) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    try {
+        const res = await fetch(`${BASE_URL}${path}`, {
+            headers: { 'Content-Type': 'application/json', ...options.headers },
+            ...options,
+            signal: controller.signal,
+            body: options.body ? JSON.stringify(options.body) : undefined,
+        });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: res.statusText }));
+            throw new Error(err.error || 'API error');
+        }
+        return res.json();
+    } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+            throw new Error('Request timed out. Please check your server.');
+        }
+        throw err;
+    }
 }
 
 // ── Accounts ──────────────────────────────────

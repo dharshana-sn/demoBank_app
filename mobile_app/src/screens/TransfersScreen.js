@@ -5,19 +5,22 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { getAccounts, createTransaction, updateAccountBalance } from '../api/api';
-import { COLORS, FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
+import { useTheme } from '../context/ThemeContext';
+import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function TransfersScreen({ navigation, route }) {
+    const { C } = useTheme();
     const [accounts, setAccounts] = useState([]);
     const [form, setForm] = useState({ from: '', to: '', amount: '', description: '' });
     const [payForm, setPayForm] = useState({ recipient: '', amount: '', note: '' });
     const [loading, setLoading] = useState(false);
     const [pageLoading, setPageLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('internal'); // 'internal' | 'pay'
+    const [activeTab, setActiveTab] = useState('internal');
     const [recentTransfers, setRecentTransfers] = useState([]);
 
-    // Pre-fill form when returning from QR scanner
+    const styles = getStyles(C);
+
     useFocusEffect(
         useCallback(() => {
             const { scannedRecipient, scannedAmount, scannedNote } = route.params || {};
@@ -29,7 +32,6 @@ export default function TransfersScreen({ navigation, route }) {
                     amount: scannedAmount || f.amount,
                     note: scannedNote || f.note,
                 }));
-                // clear params so re-focus doesn't re-apply
                 navigation.setParams({ scannedRecipient: undefined, scannedAmount: undefined, scannedNote: undefined });
             }
         }, [route.params])
@@ -59,7 +61,6 @@ export default function TransfersScreen({ navigation, route }) {
         setLoading(true);
         try {
             const amt = parseFloat(form.amount);
-            const fromAcc = accounts.find(a => a.id === form.from);
             const txn = {
                 description: form.description || `Transfer to ${form.to}`,
                 amount: -amt, type: 'debit', category: 'Transfers',
@@ -104,7 +105,7 @@ export default function TransfersScreen({ navigation, route }) {
     };
 
     if (pageLoading) return (
-        <View style={styles.center}><ActivityIndicator size="large" color={COLORS.primary} /></View>
+        <View style={styles.center}><ActivityIndicator size="large" color={C.primary} /></View>
     );
 
     return (
@@ -146,7 +147,6 @@ export default function TransfersScreen({ navigation, route }) {
                 </TouchableOpacity>
             </View>
 
-            {/* Internal transfer form */}
             {activeTab === 'internal' && (
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Transfer Between Accounts</Text>
@@ -182,7 +182,7 @@ export default function TransfersScreen({ navigation, route }) {
                     <TextInput
                         style={styles.input}
                         placeholder="0.00"
-                        placeholderTextColor={COLORS.textLight}
+                        placeholderTextColor={C.textLight}
                         value={form.amount}
                         onChangeText={v => setForm(f => ({ ...f, amount: v }))}
                         keyboardType="numeric"
@@ -191,7 +191,7 @@ export default function TransfersScreen({ navigation, route }) {
                     <TextInput
                         style={styles.input}
                         placeholder="e.g. Monthly savings"
-                        placeholderTextColor={COLORS.textLight}
+                        placeholderTextColor={C.textLight}
                         value={form.description}
                         onChangeText={v => setForm(f => ({ ...f, description: v }))}
                     />
@@ -201,46 +201,36 @@ export default function TransfersScreen({ navigation, route }) {
                         disabled={loading}
                         activeOpacity={0.85}
                     >
-                        <LinearGradient colors={[COLORS.gradStart, COLORS.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.submitBtnInner}>
+                        <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.submitBtnInner}>
                             {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Transfer Now</Text>}
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
             )}
 
-            {/* Pay to user form */}
             {activeTab === 'pay' && (
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Pay to Another User</Text>
-
-                    {/* QR Scan Button */}
                     <TouchableOpacity
                         style={styles.qrScanBtn}
                         onPress={() => navigation.navigate('QRScanner')}
                         activeOpacity={0.8}
                     >
-                        <LinearGradient
-                            colors={[COLORS.gradStart, COLORS.gradEnd]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={styles.qrScanBtnInner}
-                        >
+                        <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.qrScanBtnInner}>
                             <Text style={{ fontSize: 20, marginRight: 8 }}>📷</Text>
                             <Text style={styles.qrScanBtnText}>Scan QR Code</Text>
                         </LinearGradient>
                     </TouchableOpacity>
-
                     <View style={styles.orDivider}>
                         <View style={styles.orLine} />
                         <Text style={styles.orText}>or enter manually</Text>
                         <View style={styles.orLine} />
                     </View>
-
                     <Text style={styles.fieldLabel}>Recipient ID / Name</Text>
                     <TextInput
                         style={styles.input}
                         placeholder="e.g. CUST002"
-                        placeholderTextColor={COLORS.textLight}
+                        placeholderTextColor={C.textLight}
                         value={payForm.recipient}
                         onChangeText={v => setPayForm(f => ({ ...f, recipient: v }))}
                     />
@@ -248,7 +238,7 @@ export default function TransfersScreen({ navigation, route }) {
                     <TextInput
                         style={styles.input}
                         placeholder="0.00"
-                        placeholderTextColor={COLORS.textLight}
+                        placeholderTextColor={C.textLight}
                         value={payForm.amount}
                         onChangeText={v => setPayForm(f => ({ ...f, amount: v }))}
                         keyboardType="numeric"
@@ -257,7 +247,7 @@ export default function TransfersScreen({ navigation, route }) {
                     <TextInput
                         style={styles.input}
                         placeholder="e.g. Rent payment"
-                        placeholderTextColor={COLORS.textLight}
+                        placeholderTextColor={C.textLight}
                         value={payForm.note}
                         onChangeText={v => setPayForm(f => ({ ...f, note: v }))}
                     />
@@ -267,25 +257,24 @@ export default function TransfersScreen({ navigation, route }) {
                         disabled={loading}
                         activeOpacity={0.85}
                     >
-                        <LinearGradient colors={[COLORS.gradStart, COLORS.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.submitBtnInner}>
+                        <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.submitBtnInner}>
                             {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Send Payment</Text>}
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
             )}
 
-            {/* Transfer History */}
             {recentTransfers.length > 0 && (
                 <View style={[styles.card, { marginTop: SPACING.md }]}>
                     <Text style={styles.cardTitle}>This Session's Transfers</Text>
                     {recentTransfers.map((t, i) => (
-                        <View key={t.id} style={[styles.txRow, i < recentTransfers.length - 1 && { borderBottomWidth: 1, borderBottomColor: COLORS.border }]}>
+                        <View key={t.id} style={[styles.txRow, i < recentTransfers.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}>
                             <Text style={{ fontSize: 20, marginRight: 10 }}>💸</Text>
                             <View style={{ flex: 1 }}>
                                 <Text style={styles.txDesc}>{t.description}</Text>
                                 <Text style={styles.txMeta}>{t.date}</Text>
                             </View>
-                            <Text style={{ ...FONTS.bold, color: COLORS.danger }}>
+                            <Text style={{ ...FONTS.bold, color: C.danger }}>
                                 -${Math.abs(t.amount).toFixed(2)}
                             </Text>
                         </View>
@@ -298,63 +287,53 @@ export default function TransfersScreen({ navigation, route }) {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.bg },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    qrScanBtn: { borderRadius: RADIUS.md, overflow: 'hidden', marginBottom: 4 },
-    qrScanBtnInner: { flexDirection: 'row', paddingVertical: 14, alignItems: 'center', justifyContent: 'center' },
-    qrScanBtnText: { ...FONTS.bold, color: '#fff', fontSize: 15 },
-    orDivider: { flexDirection: 'row', alignItems: 'center', marginVertical: 14, gap: 8 },
-    orLine: { flex: 1, height: 1, backgroundColor: COLORS.border },
-    orText: { ...FONTS.medium, fontSize: 12, color: COLORS.textMuted },
-    topBar: { 
-        paddingHorizontal: SPACING.md, 
-        paddingTop: 20, 
-        paddingBottom: 12, 
-        backgroundColor: COLORS.card, 
-        borderBottomWidth: 1, 
-        borderBottomColor: COLORS.border,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-    },
-    homeBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#F1F5F9',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.border,
-    },
-    pageTitle: { ...FONTS.bold, fontSize: 22, color: COLORS.text },
-    pageSub: { ...FONTS.regular, fontSize: 13, color: COLORS.textMuted, marginTop: 2 },
-    statsRow: { flexDirection: 'row', gap: SPACING.sm, padding: SPACING.md },
-    statCard: { flex: 1, backgroundColor: COLORS.card, borderRadius: RADIUS.md, padding: 14, ...SHADOWS.sm },
-    statLabel: { ...FONTS.regular, fontSize: 11, color: COLORS.textMuted, marginBottom: 4 },
-    statValue: { ...FONTS.bold, fontSize: 18, color: COLORS.primary },
-    tabsRow: { flexDirection: 'row', marginHorizontal: SPACING.md, marginBottom: SPACING.md, borderRadius: RADIUS.md, overflow: 'hidden', backgroundColor: COLORS.border },
-    tab: { flex: 1, paddingVertical: 10, alignItems: 'center' },
-    tabActive: { backgroundColor: COLORS.primary },
-    tabText: { ...FONTS.medium, fontSize: 13, color: COLORS.textMuted },
-    tabTextActive: { color: '#fff' },
-    card: { backgroundColor: COLORS.card, marginHorizontal: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.md, ...SHADOWS.sm },
-    cardTitle: { ...FONTS.bold, fontSize: 16, color: COLORS.text, marginBottom: 16 },
-    fieldLabel: { ...FONTS.semiBold, fontSize: 13, color: COLORS.text, marginBottom: 6, marginTop: 12 },
-    pickerBox: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    accOption: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full, backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: COLORS.border },
-    accOptionSelected: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-    accOptionText: { ...FONTS.medium, fontSize: 12, color: COLORS.text },
-    input: {
-        borderWidth: 1.5, borderColor: COLORS.border, borderRadius: RADIUS.md,
-        paddingHorizontal: 14, paddingVertical: 12,
-        fontSize: 15, color: COLORS.text, backgroundColor: '#F8FAFC',
-    },
-    submitBtn: { borderRadius: RADIUS.md, overflow: 'hidden', marginTop: 20 },
-    submitBtnInner: { paddingVertical: 15, alignItems: 'center' },
-    submitBtnText: { ...FONTS.bold, fontSize: 15, color: '#fff' },
-    txRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
-    txDesc: { ...FONTS.semiBold, fontSize: 13, color: COLORS.text },
-    txMeta: { ...FONTS.regular, fontSize: 11, color: COLORS.textMuted, marginTop: 2 },
-});
+function getStyles(C) {
+    return StyleSheet.create({
+        container: { flex: 1, backgroundColor: C.bg },
+        center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
+        qrScanBtn: { borderRadius: RADIUS.md, overflow: 'hidden', marginBottom: 4 },
+        qrScanBtnInner: { flexDirection: 'row', paddingVertical: 14, alignItems: 'center', justifyContent: 'center' },
+        qrScanBtnText: { ...FONTS.bold, color: '#fff', fontSize: 15 },
+        orDivider: { flexDirection: 'row', alignItems: 'center', marginVertical: 14, gap: 8 },
+        orLine: { flex: 1, height: 1, backgroundColor: C.border },
+        orText: { ...FONTS.medium, fontSize: 12, color: C.textMuted },
+        topBar: {
+            paddingHorizontal: SPACING.md, paddingTop: 20, paddingBottom: 12,
+            backgroundColor: C.card, borderBottomWidth: 1, borderBottomColor: C.border,
+            flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
+        },
+        homeBtn: {
+            width: 40, height: 40, borderRadius: 20, backgroundColor: C.bg,
+            justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: C.border,
+        },
+        pageTitle: { ...FONTS.bold, fontSize: 22, color: C.text },
+        pageSub: { ...FONTS.regular, fontSize: 13, color: C.textMuted, marginTop: 2 },
+        statsRow: { flexDirection: 'row', gap: SPACING.sm, padding: SPACING.md },
+        statCard: { flex: 1, backgroundColor: C.card, borderRadius: RADIUS.md, padding: 14, ...SHADOWS.sm },
+        statLabel: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginBottom: 4 },
+        statValue: { ...FONTS.bold, fontSize: 18, color: C.primary },
+        tabsRow: { flexDirection: 'row', marginHorizontal: SPACING.md, marginBottom: SPACING.md, borderRadius: RADIUS.md, overflow: 'hidden', backgroundColor: C.border },
+        tab: { flex: 1, paddingVertical: 10, alignItems: 'center' },
+        tabActive: { backgroundColor: C.primary },
+        tabText: { ...FONTS.medium, fontSize: 13, color: C.textMuted },
+        tabTextActive: { color: '#fff' },
+        card: { backgroundColor: C.card, marginHorizontal: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.md, ...SHADOWS.sm },
+        cardTitle: { ...FONTS.bold, fontSize: 16, color: C.text, marginBottom: 16 },
+        fieldLabel: { ...FONTS.semiBold, fontSize: 13, color: C.text, marginBottom: 6, marginTop: 12 },
+        pickerBox: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+        accOption: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full, backgroundColor: C.bg, borderWidth: 1, borderColor: C.border },
+        accOptionSelected: { backgroundColor: C.primary, borderColor: C.primary },
+        accOptionText: { ...FONTS.medium, fontSize: 12, color: C.text },
+        input: {
+            borderWidth: 1.5, borderColor: C.border, borderRadius: RADIUS.md,
+            paddingHorizontal: 14, paddingVertical: 12,
+            fontSize: 15, color: C.text, backgroundColor: C.bg,
+        },
+        submitBtn: { borderRadius: RADIUS.md, overflow: 'hidden', marginTop: 20 },
+        submitBtnInner: { paddingVertical: 15, alignItems: 'center' },
+        submitBtnText: { ...FONTS.bold, fontSize: 15, color: '#fff' },
+        txRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+        txDesc: { ...FONTS.semiBold, fontSize: 13, color: C.text },
+        txMeta: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginTop: 2 },
+    });
+}

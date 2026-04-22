@@ -3,7 +3,8 @@ import {
     View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl, Dimensions
 } from 'react-native';
 import { getTransactions } from '../api/api';
-import { COLORS, FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
+import { useTheme } from '../context/ThemeContext';
+import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 
 const CATEGORY_COLORS = {
     Salary: '#10B981', Deposits: '#3B82F6', Withdrawals: '#EF4444',
@@ -21,9 +22,12 @@ const MONTHLY_DATA = [
 const { width } = Dimensions.get('window');
 
 export default function AnalyticsScreen({ navigation }) {
+    const { C } = useTheme();
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+
+    const styles = getStyles(C);
 
     const load = async () => {
         try {
@@ -37,7 +41,7 @@ export default function AnalyticsScreen({ navigation }) {
 
     if (loading) return (
         <View style={styles.center}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
+            <ActivityIndicator size="large" color={C.primary} />
             <Text style={styles.loadingText}>Analyzing your data...</Text>
         </View>
     );
@@ -47,7 +51,6 @@ export default function AnalyticsScreen({ navigation }) {
     const netSavings = totalIncome - totalExpense;
     const savingsRate = totalIncome > 0 ? ((netSavings / totalIncome) * 100).toFixed(1) : '0.0';
 
-    // Category breakdown
     const categories = Object.keys(CATEGORY_COLORS);
     const categoryTotals = categories.map(cat => {
         const matching = transactions.filter(t => t.category === cat);
@@ -60,7 +63,7 @@ export default function AnalyticsScreen({ navigation }) {
         <ScrollView
             style={styles.container}
             showsVerticalScrollIndicator={false}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={COLORS.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={C.primary} />}
         >
             <View style={styles.topBar}>
                 <View>
@@ -75,10 +78,10 @@ export default function AnalyticsScreen({ navigation }) {
             {/* Summary Strip */}
             <View style={styles.summaryGrid}>
                 {[
-                    { label: 'Total Income', value: `$${totalIncome.toLocaleString()}`, color: COLORS.success },
-                    { label: 'Total Expenses', value: `-$${totalExpense.toLocaleString()}`, color: COLORS.danger },
-                    { label: 'Net Savings', value: `$${netSavings.toLocaleString()}`, color: COLORS.primary },
-                    { label: 'Savings Rate', value: `${savingsRate}%`, color: COLORS.purple },
+                    { label: 'Total Income', value: `$${totalIncome.toLocaleString()}`, color: C.success },
+                    { label: 'Total Expenses', value: `-$${totalExpense.toLocaleString()}`, color: C.danger },
+                    { label: 'Net Savings', value: `$${netSavings.toLocaleString()}`, color: C.primary },
+                    { label: 'Savings Rate', value: `${savingsRate}%`, color: C.purple },
                 ].map(item => (
                     <View key={item.label} style={styles.summaryCard}>
                         <Text style={styles.summaryLabel}>{item.label}</Text>
@@ -99,7 +102,7 @@ export default function AnalyticsScreen({ navigation }) {
                         <View style={styles.barTrack}>
                             <View style={[styles.barFill, {
                                 width: `${(total / maxTotal) * 100}%`,
-                                backgroundColor: CATEGORY_COLORS[cat] || COLORS.accent,
+                                backgroundColor: CATEGORY_COLORS[cat] || C.accent,
                             }]} />
                         </View>
                     </View>
@@ -115,16 +118,16 @@ export default function AnalyticsScreen({ navigation }) {
                         <View key={month} style={styles.monthRow}>
                             <Text style={styles.monthLabel}>{month}</Text>
                             <View style={styles.monthVals}>
-                                <Text style={[styles.monthVal, { color: COLORS.success }]}>+${income.toLocaleString()}</Text>
-                                <Text style={[styles.monthVal, { color: COLORS.danger }]}>-${expense.toLocaleString()}</Text>
-                                <Text style={[styles.monthVal, { color: COLORS.primary }]}>=${net.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+                                <Text style={[styles.monthVal, { color: C.success }]}>+${income.toLocaleString()}</Text>
+                                <Text style={[styles.monthVal, { color: C.danger }]}>-${expense.toLocaleString()}</Text>
+                                <Text style={[styles.monthVal, { color: C.primary }]}>=${net.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
                             </View>
                         </View>
                     );
                 })}
             </View>
 
-            {/* Mini bar chart visualization */}
+            {/* Income vs Expenses bars */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>📈 Income vs Expenses</Text>
                 {MONTHLY_DATA.map(({ month, income, expense }) => {
@@ -134,42 +137,42 @@ export default function AnalyticsScreen({ navigation }) {
                     return (
                         <View key={month} style={{ marginBottom: 16 }}>
                             <Text style={styles.barLabel}>{month}</Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 }}>
-                                <View style={[styles.miniBar, { width: incomeW, backgroundColor: COLORS.success }]} />
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                                <View style={[styles.miniBar, { width: incomeW, backgroundColor: C.success }]} />
                             </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 }}>
-                                <View style={[styles.miniBar, { width: expenseW, backgroundColor: COLORS.danger }]} />
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                                <View style={[styles.miniBar, { width: expenseW, backgroundColor: C.danger }]} />
                             </View>
                             <View style={{ flexDirection: 'row', gap: 16, marginTop: 4 }}>
-                                <Text style={{ ...FONTS.regular, fontSize: 11, color: COLORS.success }}>● Income: ${income.toLocaleString()}</Text>
-                                <Text style={{ ...FONTS.regular, fontSize: 11, color: COLORS.danger }}>● Expenses: ${expense.toLocaleString()}</Text>
+                                <Text style={{ ...FONTS.regular, fontSize: 11, color: C.success }}>● Income: ${income.toLocaleString()}</Text>
+                                <Text style={{ ...FONTS.regular, fontSize: 11, color: C.danger }}>● Expenses: ${expense.toLocaleString()}</Text>
                             </View>
                         </View>
                     );
                 })}
             </View>
 
-            {/* Transactions count by type */}
+            {/* Transaction Breakdown */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>🔢 Transaction Breakdown</Text>
                 <View style={styles.typeRow}>
                     <View style={[styles.typeCard, { backgroundColor: '#D1FAE5' }]}>
                         <Text style={styles.typeIcon}>💰</Text>
-                        <Text style={[styles.typeCount, { color: COLORS.success }]}>
+                        <Text style={[styles.typeCount, { color: C.success }]}>
                             {transactions.filter(t => t.type === 'credit').length}
                         </Text>
                         <Text style={styles.typeLabel}>Credits</Text>
                     </View>
                     <View style={[styles.typeCard, { backgroundColor: '#FEE2E2' }]}>
                         <Text style={styles.typeIcon}>💸</Text>
-                        <Text style={[styles.typeCount, { color: COLORS.danger }]}>
+                        <Text style={[styles.typeCount, { color: C.danger }]}>
                             {transactions.filter(t => t.type === 'debit').length}
                         </Text>
                         <Text style={styles.typeLabel}>Debits</Text>
                     </View>
                     <View style={[styles.typeCard, { backgroundColor: '#EDE9FE' }]}>
                         <Text style={styles.typeIcon}>📋</Text>
-                        <Text style={[styles.typeCount, { color: COLORS.purple }]}>
+                        <Text style={[styles.typeCount, { color: C.purple }]}>
                             {transactions.length}
                         </Text>
                         <Text style={styles.typeLabel}>Total</Text>
@@ -182,53 +185,43 @@ export default function AnalyticsScreen({ navigation }) {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.bg },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.bg, gap: 12 },
-    loadingText: { ...FONTS.medium, color: COLORS.textMuted, marginTop: 8 },
-    topBar: { 
-        paddingHorizontal: SPACING.md, 
-        paddingTop: 20, 
-        paddingBottom: 12, 
-        backgroundColor: COLORS.card, 
-        borderBottomWidth: 1, 
-        borderBottomColor: COLORS.border,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-    },
-    homeBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#F1F5F9',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.border,
-    },
-    pageTitle: { ...FONTS.bold, fontSize: 22, color: COLORS.text },
-    pageSub: { ...FONTS.regular, fontSize: 13, color: COLORS.textMuted, marginTop: 2 },
-    summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, padding: SPACING.md },
-    summaryCard: { width: '47%', backgroundColor: COLORS.card, borderRadius: RADIUS.md, padding: 14, ...SHADOWS.sm },
-    summaryLabel: { ...FONTS.regular, fontSize: 11, color: COLORS.textMuted, marginBottom: 4 },
-    summaryValue: { ...FONTS.bold, fontSize: 18 },
-    card: { backgroundColor: COLORS.card, marginHorizontal: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.md, ...SHADOWS.sm },
-    cardTitle: { ...FONTS.bold, fontSize: 15, color: COLORS.text, marginBottom: 16 },
-    barRow: { marginBottom: 14 },
-    barMeta: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
-    barLabel: { ...FONTS.semiBold, fontSize: 13, color: COLORS.text },
-    barCount: { ...FONTS.regular, fontSize: 11, color: COLORS.textMuted },
-    barTrack: { height: 10, backgroundColor: '#F1F5F9', borderRadius: 5, overflow: 'hidden' },
-    barFill: { height: '100%', borderRadius: 5 },
-    monthRow: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-    monthLabel: { ...FONTS.semiBold, fontSize: 13, color: COLORS.text, marginBottom: 6 },
-    monthVals: { flexDirection: 'row', gap: 12 },
-    monthVal: { ...FONTS.bold, fontSize: 13 },
-    miniBar: { height: 8, borderRadius: 4 },
-    typeRow: { flexDirection: 'row', gap: 12 },
-    typeCard: { flex: 1, borderRadius: RADIUS.md, padding: 14, alignItems: 'center' },
-    typeIcon: { fontSize: 24, marginBottom: 6 },
-    typeCount: { ...FONTS.extraBold, fontSize: 24 },
-    typeLabel: { ...FONTS.medium, fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
-});
+function getStyles(C) {
+    return StyleSheet.create({
+        container: { flex: 1, backgroundColor: C.bg },
+        center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg, gap: 12 },
+        loadingText: { ...FONTS.medium, color: C.textMuted, marginTop: 8 },
+        topBar: {
+            paddingHorizontal: SPACING.md, paddingTop: 20, paddingBottom: 12,
+            backgroundColor: C.card, borderBottomWidth: 1, borderBottomColor: C.border,
+            flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
+        },
+        homeBtn: {
+            width: 40, height: 40, borderRadius: 20, backgroundColor: C.bg,
+            justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: C.border,
+        },
+        pageTitle: { ...FONTS.bold, fontSize: 22, color: C.text },
+        pageSub: { ...FONTS.regular, fontSize: 13, color: C.textMuted, marginTop: 2 },
+        summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, padding: SPACING.md },
+        summaryCard: { width: '47%', backgroundColor: C.card, borderRadius: RADIUS.md, padding: 14, ...SHADOWS.sm },
+        summaryLabel: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginBottom: 4 },
+        summaryValue: { ...FONTS.bold, fontSize: 18 },
+        card: { backgroundColor: C.card, marginHorizontal: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.md, ...SHADOWS.sm },
+        cardTitle: { ...FONTS.bold, fontSize: 15, color: C.text, marginBottom: 16 },
+        barRow: { marginBottom: 14 },
+        barMeta: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
+        barLabel: { ...FONTS.semiBold, fontSize: 13, color: C.text },
+        barCount: { ...FONTS.regular, fontSize: 11, color: C.textMuted },
+        barTrack: { height: 10, backgroundColor: C.border, borderRadius: 5, overflow: 'hidden' },
+        barFill: { height: '100%', borderRadius: 5 },
+        monthRow: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
+        monthLabel: { ...FONTS.semiBold, fontSize: 13, color: C.text, marginBottom: 6 },
+        monthVals: { flexDirection: 'row', gap: 12 },
+        monthVal: { ...FONTS.bold, fontSize: 13 },
+        miniBar: { height: 8, borderRadius: 4 },
+        typeRow: { flexDirection: 'row', gap: 12 },
+        typeCard: { flex: 1, borderRadius: RADIUS.md, padding: 14, alignItems: 'center' },
+        typeIcon: { fontSize: 24, marginBottom: 6 },
+        typeCount: { ...FONTS.extraBold, fontSize: 24 },
+        typeLabel: { ...FONTS.medium, fontSize: 12, color: C.textMuted, marginTop: 2 },
+    });
+}

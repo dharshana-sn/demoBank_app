@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import LoginScreen from './src/screens/LoginScreen';
 import OverviewScreen from './src/screens/OverviewScreen';
 import AccountsScreen from './src/screens/AccountsScreen';
@@ -31,15 +32,16 @@ const TAB_ICONS = {
 };
 
 function DashboardTabs() {
+    const { C } = useTheme();
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
                 headerShown: false,
-                tabBarActiveTintColor: COLORS.primary,
-                tabBarInactiveTintColor: COLORS.textLight,
+                tabBarActiveTintColor: C.primary,
+                tabBarInactiveTintColor: C.textLight,
                 tabBarStyle: {
-                    backgroundColor: '#FFFFFF',
-                    borderTopColor: COLORS.border,
+                    backgroundColor: C.card,
+                    borderTopColor: C.border,
                     borderTopWidth: 1,
                     height: 70,
                     paddingBottom: 10,
@@ -77,6 +79,7 @@ function DashboardTabs() {
 
 function RootNavigator() {
     const { isAuthenticated, restoreUser } = useAuth();
+    const { C } = useTheme();
     const [isRestoring, setIsRestoring] = useState(true);
 
     useEffect(() => {
@@ -85,10 +88,10 @@ function RootNavigator() {
 
     if (isRestoring) {
         return (
-            <View style={styles.splashContainer}>
+            <View style={[styles.splashContainer, { backgroundColor: C.primary }]}>
                 <Text style={styles.splashLogo}>🏦</Text>
                 <Text style={styles.splashTitle}>DemoBank</Text>
-                <ActivityIndicator color={COLORS.primary} style={{ marginTop: 24 }} />
+                <ActivityIndicator color="#fff" style={{ marginTop: 24 }} />
             </View>
         );
     }
@@ -114,9 +117,11 @@ function RootNavigator() {
 export default function App() {
     return (
         <AuthProvider>
-            <NavigationContainer>
-                <RootNavigator />
-            </NavigationContainer>
+            <ThemeProvider>
+                <NavigationContainer>
+                    <RootNavigator />
+                </NavigationContainer>
+            </ThemeProvider>
         </AuthProvider>
     );
 }
@@ -124,7 +129,6 @@ export default function App() {
 const styles = StyleSheet.create({
     splashContainer: {
         flex: 1,
-        backgroundColor: COLORS.primary,
         justifyContent: 'center',
         alignItems: 'center',
     },

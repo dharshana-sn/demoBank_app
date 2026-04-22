@@ -1,4 +1,25 @@
 // Design tokens for the DemoBank mobile app
+export const DARK_COLORS = {
+    primary: '#3B82F6',
+    primaryDark: '#1D4ED8',
+    primaryLight: '#60A5FA',
+    accent: '#60A5FA',
+    success: '#10B981',
+    danger: '#EF4444',
+    warning: '#F59E0B',
+    purple: '#8B5CF6',
+    white: '#FFFFFF',
+    black: '#000000',
+    bg: '#0F172A',
+    card: '#1E293B',
+    border: '#334155',
+    text: '#F1F5F9',
+    textMuted: '#94A3B8',
+    textLight: '#64748B',
+    gradStart: '#1D4ED8',
+    gradEnd: '#3B82F6',
+};
+
 export const COLORS = {
     primary: '#054279',
     primaryDark: '#032d52',

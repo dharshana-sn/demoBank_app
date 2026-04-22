@@ -4,15 +4,19 @@ import {
     ActivityIndicator, RefreshControl
 } from 'react-native';
 import { getAccounts, getTransactions } from '../api/api';
-import { COLORS, FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
+import { useTheme } from '../context/ThemeContext';
+import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 
 const ACCOUNT_COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 
 export default function AccountsScreen({ navigation }) {
+    const { C } = useTheme();
     const [accounts, setAccounts] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+
+    const styles = getStyles(C);
 
     const load = async () => {
         try {
@@ -26,14 +30,14 @@ export default function AccountsScreen({ navigation }) {
     useEffect(() => { load(); }, []);
 
     if (loading) return (
-        <View style={styles.center}><ActivityIndicator size="large" color={COLORS.primary} /></View>
+        <View style={styles.center}><ActivityIndicator size="large" color={C.primary} /></View>
     );
 
     return (
         <ScrollView
             style={styles.container}
             showsVerticalScrollIndicator={false}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={COLORS.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={C.primary} />}
         >
             <View style={styles.topBar}>
                 <View>
@@ -62,7 +66,7 @@ export default function AccountsScreen({ navigation }) {
                                 </View>
                             </View>
                             <View style={styles.accountCardRight}>
-                                <Text style={[styles.accBalance, { color: isNeg ? COLORS.danger : COLORS.success }]}>
+                                <Text style={[styles.accBalance, { color: isNeg ? C.danger : C.success }]}>
                                     {isNeg ? '-' : '+'}${Math.abs(acc.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                 </Text>
                                 <Text style={styles.accStatus}>Active</Text>
@@ -92,7 +96,7 @@ export default function AccountsScreen({ navigation }) {
                     {transactions.length === 0
                         ? <Text style={styles.emptyText}>No transactions found</Text>
                         : transactions.slice(0, 20).map((t, i) => (
-                            <View key={t._id || i} style={[styles.txRow, i < transactions.length - 1 && { borderBottomWidth: 1, borderBottomColor: COLORS.border }]}>
+                            <View key={t._id || i} style={[styles.txRow, i < transactions.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}>
                                 <View style={[styles.txIcon, { backgroundColor: t.type === 'credit' ? '#D1FAE5' : '#FEE2E2' }]}>
                                     <Text style={{ fontSize: 14 }}>{t.type === 'credit' ? '📈' : '📉'}</Text>
                                 </View>
@@ -101,11 +105,11 @@ export default function AccountsScreen({ navigation }) {
                                     <Text style={styles.txMeta}>{t.category} · {t.date}</Text>
                                 </View>
                                 <View style={{ alignItems: 'flex-end' }}>
-                                    <Text style={[styles.txAmount, { color: t.type === 'credit' ? COLORS.success : COLORS.danger }]}>
+                                    <Text style={[styles.txAmount, { color: t.type === 'credit' ? C.success : C.danger }]}>
                                         {t.type === 'credit' ? '+' : '-'}${Math.abs(t.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                     </Text>
                                     <Text style={[styles.txStatus, {
-                                        color: t.status === 'Completed' ? COLORS.success : t.status === 'Pending' ? COLORS.warning : COLORS.danger
+                                        color: t.status === 'Completed' ? C.success : t.status === 'Pending' ? C.warning : C.danger
                                     }]}>{t.status}</Text>
                                 </View>
                             </View>
@@ -119,58 +123,47 @@ export default function AccountsScreen({ navigation }) {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.bg },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.bg },
-    topBar: { 
-        paddingHorizontal: SPACING.md, 
-        paddingTop: 20, 
-        paddingBottom: 12, 
-        backgroundColor: COLORS.card, 
-        borderBottomWidth: 1, 
-        borderBottomColor: COLORS.border,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-    },
-    homeBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#F1F5F9',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: COLORS.border,
-    },
-    pageTitle: { ...FONTS.bold, fontSize: 22, color: COLORS.text },
-    pageSub: { ...FONTS.regular, fontSize: 13, color: COLORS.textMuted, marginTop: 2 },
-    section: { paddingHorizontal: SPACING.md, marginTop: SPACING.md },
-    sectionTitle: { ...FONTS.semiBold, fontSize: 15, color: COLORS.text, marginBottom: SPACING.sm },
-    accountCard: {
-        backgroundColor: COLORS.card, borderRadius: RADIUS.lg,
-        padding: SPACING.md, marginBottom: SPACING.sm,
-        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        borderLeftWidth: 4, ...SHADOWS.sm,
-    },
-    accountCardLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-    accIcon: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
-    accIconText: { fontSize: 18 },
-    accName: { ...FONTS.semiBold, fontSize: 14, color: COLORS.text },
-    accNum: { ...FONTS.regular, fontSize: 11, color: COLORS.textMuted, marginTop: 2 },
-    accountCardRight: { alignItems: 'flex-end' },
-    accBalance: { ...FONTS.bold, fontSize: 15 },
-    accStatus: { ...FONTS.regular, fontSize: 11, color: COLORS.success, marginTop: 2 },
-    summaryRow: { flexDirection: 'row', gap: SPACING.sm, paddingHorizontal: SPACING.md, marginTop: SPACING.sm },
-    summaryCard: { flex: 1, backgroundColor: COLORS.card, borderRadius: RADIUS.md, padding: 14, ...SHADOWS.sm },
-    summaryLabel: { ...FONTS.regular, fontSize: 11, color: COLORS.textMuted, marginBottom: 4 },
-    summaryValue: { ...FONTS.bold, fontSize: 16, color: COLORS.primary },
-    card: { backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: SPACING.md, ...SHADOWS.sm },
-    emptyText: { ...FONTS.regular, color: COLORS.textMuted, textAlign: 'center', padding: 24 },
-    txRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 12 },
-    txIcon: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
-    txDesc: { ...FONTS.semiBold, fontSize: 13, color: COLORS.text },
-    txMeta: { ...FONTS.regular, fontSize: 11, color: COLORS.textMuted, marginTop: 1 },
-    txAmount: { ...FONTS.bold, fontSize: 13 },
-    txStatus: { ...FONTS.medium, fontSize: 10, marginTop: 2 },
-});
+function getStyles(C) {
+    return StyleSheet.create({
+        container: { flex: 1, backgroundColor: C.bg },
+        center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
+        topBar: {
+            paddingHorizontal: SPACING.md, paddingTop: 20, paddingBottom: 12,
+            backgroundColor: C.card, borderBottomWidth: 1, borderBottomColor: C.border,
+            flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
+        },
+        homeBtn: {
+            width: 40, height: 40, borderRadius: 20, backgroundColor: C.bg,
+            justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: C.border,
+        },
+        pageTitle: { ...FONTS.bold, fontSize: 22, color: C.text },
+        pageSub: { ...FONTS.regular, fontSize: 13, color: C.textMuted, marginTop: 2 },
+        section: { paddingHorizontal: SPACING.md, marginTop: SPACING.md },
+        sectionTitle: { ...FONTS.semiBold, fontSize: 15, color: C.text, marginBottom: SPACING.sm },
+        accountCard: {
+            backgroundColor: C.card, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.sm,
+            flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+            borderLeftWidth: 4, ...SHADOWS.sm,
+        },
+        accountCardLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+        accIcon: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+        accIconText: { fontSize: 18 },
+        accName: { ...FONTS.semiBold, fontSize: 14, color: C.text },
+        accNum: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginTop: 2 },
+        accountCardRight: { alignItems: 'flex-end' },
+        accBalance: { ...FONTS.bold, fontSize: 15 },
+        accStatus: { ...FONTS.regular, fontSize: 11, color: C.success, marginTop: 2 },
+        summaryRow: { flexDirection: 'row', gap: SPACING.sm, paddingHorizontal: SPACING.md, marginTop: SPACING.sm },
+        summaryCard: { flex: 1, backgroundColor: C.card, borderRadius: RADIUS.md, padding: 14, ...SHADOWS.sm },
+        summaryLabel: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginBottom: 4 },
+        summaryValue: { ...FONTS.bold, fontSize: 16, color: C.primary },
+        card: { backgroundColor: C.card, borderRadius: RADIUS.lg, padding: SPACING.md, ...SHADOWS.sm },
+        emptyText: { ...FONTS.regular, color: C.textMuted, textAlign: 'center', padding: 24 },
+        txRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 12 },
+        txIcon: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+        txDesc: { ...FONTS.semiBold, fontSize: 13, color: C.text },
+        txMeta: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginTop: 1 },
+        txAmount: { ...FONTS.bold, fontSize: 13 },
+        txStatus: { ...FONTS.medium, fontSize: 10, marginTop: 2 },
+    });
+}

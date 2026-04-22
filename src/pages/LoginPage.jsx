@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { Eye, EyeOff, Building2, ShieldCheck, AlertCircle /*, RefreshCcw */ } from "lucide-react";
+import { checkHealth } from "../api.js";
 import "./LoginPage.css";
 
 const DEMO_CREDENTIALS = { email: "testUser@gmail.com", password: "password123" };
@@ -119,7 +120,17 @@ export default function LoginPage() {
 
     const executeLogin = async () => {
         setIsSubmitting(true);
-        // Simulate a network delay for a more realistic feel
+        setAuthErrorMessage("");
+
+        // 1. Check if backend is reachable
+        const isUp = await checkHealth();
+        if (!isUp) {
+            setAuthErrorMessage("Something went wrong. Server is unreachable. Please try again later.");
+            setIsSubmitting(false);
+            return;
+        }
+
+        // 2. Simulate a network delay for a more realistic feel
         await new Promise(resolve => setTimeout(resolve, 900));
 
         if (formData.email === DEMO_CREDENTIALS.email && formData.password === DEMO_CREDENTIALS.password) {

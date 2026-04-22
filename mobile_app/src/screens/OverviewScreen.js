@@ -5,8 +5,9 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { getAccounts, getTransactions } from '../api/api';
-import { COLORS, FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
+import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 
 const INITIAL_NOTIFICATIONS = [
     { id: 1, icon: '💰', title: 'Salary Deposited', message: '+$5,200.00 credited to Checking', time: '2 hrs ago', unread: true },
@@ -14,34 +15,17 @@ const INITIAL_NOTIFICATIONS = [
     { id: 3, icon: '✅', title: 'Transfer Completed', message: '$500 moved to Savings Account', time: 'Yesterday', unread: false },
 ];
 
-function SummaryCard({ label, value, color }) {
-    return (
-        <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>{label}</Text>
-            <Text style={[styles.summaryValue, color && { color }]}>{value}</Text>
-        </View>
-    );
-}
-
-function QuickAction({ icon, label, onPress }) {
-    return (
-        <TouchableOpacity style={styles.quickAction} onPress={onPress} activeOpacity={0.75}>
-            <View style={styles.quickActionIcon}>
-                <Text style={{ fontSize: 22 }}>{icon}</Text>
-            </View>
-            <Text style={styles.quickActionLabel}>{label}</Text>
-        </TouchableOpacity>
-    );
-}
-
 export default function OverviewScreen({ navigation }) {
     const { user } = useAuth();
+    const { C } = useTheme();
     const [accounts, setAccounts] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [showNotifs, setShowNotifs] = useState(false);
     const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+
+    const styles = getStyles(C);
 
     const load = async () => {
         try {
@@ -67,7 +51,7 @@ export default function OverviewScreen({ navigation }) {
     if (isLoading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
+                <ActivityIndicator size="large" color={C.primary} />
                 <Text style={styles.loadingText}>Loading your dashboard...</Text>
             </View>
         );
@@ -77,10 +61,10 @@ export default function OverviewScreen({ navigation }) {
         <ScrollView
             style={styles.container}
             showsVerticalScrollIndicator={false}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={COLORS.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={C.primary} />}
         >
             {/* Header */}
-            <LinearGradient colors={[COLORS.gradStart, COLORS.gradEnd]} style={styles.header}>
+            <LinearGradient colors={[C.gradStart, C.gradEnd]} style={styles.header}>
                 <View style={styles.headerRow}>
                     <View>
                         <Text style={styles.greeting}>Good day,</Text>
@@ -105,7 +89,7 @@ export default function OverviewScreen({ navigation }) {
                     <View style={styles.balanceRow}>
                         <View style={styles.balanceSub}>
                             <Text style={styles.balanceSubLabel}>Income</Text>
-                            <Text style={[styles.balanceSubValue, { color: COLORS.success }]}>+${totalIncome.toLocaleString()}</Text>
+                            <Text style={[styles.balanceSubValue, { color: C.success }]}>+${totalIncome.toLocaleString()}</Text>
                         </View>
                         <View style={[styles.balanceSub, { borderLeftWidth: 1, borderLeftColor: 'rgba(255,255,255,0.2)', paddingLeft: 20 }]}>
                             <Text style={styles.balanceSubLabel}>Expenses</Text>
@@ -139,19 +123,37 @@ export default function OverviewScreen({ navigation }) {
 
             {/* Summary Strip */}
             <View style={styles.summaryStrip}>
-                <SummaryCard label="Active Accounts" value={accounts.length.toString()} />
-                <SummaryCard label="Transactions" value={transactions.length.toString()} />
-                <SummaryCard label="Net Savings" value={`$${(totalIncome - totalExpenses).toLocaleString()}`} color={COLORS.success} />
+                <View style={styles.summaryCard}>
+                    <Text style={styles.summaryLabel}>Active Accounts</Text>
+                    <Text style={styles.summaryValue}>{accounts.length.toString()}</Text>
+                </View>
+                <View style={styles.summaryCard}>
+                    <Text style={styles.summaryLabel}>Transactions</Text>
+                    <Text style={styles.summaryValue}>{transactions.length.toString()}</Text>
+                </View>
+                <View style={styles.summaryCard}>
+                    <Text style={styles.summaryLabel}>Net Savings</Text>
+                    <Text style={[styles.summaryValue, { color: C.success }]}>{`$${(totalIncome - totalExpenses).toLocaleString()}`}</Text>
+                </View>
             </View>
 
             {/* Quick Actions */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Quick Actions</Text>
                 <View style={styles.quickActionsRow}>
-                    <QuickAction icon="💸" label="Transfer" onPress={() => navigation.navigate('Transfers')} />
-                    <QuickAction icon="📊" label="Analytics" onPress={() => navigation.navigate('Analytics')} />
-                    <QuickAction icon="🏦" label="Accounts" onPress={() => navigation.navigate('Accounts')} />
-                    <QuickAction icon="💳" label="Fixed Dep." onPress={() => navigation.navigate('Fixed Deposits')} />
+                    {[
+                        { icon: '💸', label: 'Transfer', screen: 'Transfers' },
+                        { icon: '📊', label: 'Analytics', screen: 'Analytics' },
+                        { icon: '🏦', label: 'Accounts', screen: 'Accounts' },
+                        { icon: '💳', label: 'Fixed Dep.', screen: 'Fixed Deposits' },
+                    ].map(action => (
+                        <TouchableOpacity key={action.label} style={styles.quickAction} onPress={() => navigation.navigate(action.screen)} activeOpacity={0.75}>
+                            <View style={styles.quickActionIcon}>
+                                <Text style={{ fontSize: 22 }}>{action.icon}</Text>
+                            </View>
+                            <Text style={styles.quickActionLabel}>{action.label}</Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
             </View>
 
@@ -175,7 +177,7 @@ export default function OverviewScreen({ navigation }) {
                                     <Text style={styles.txnDesc} numberOfLines={1}>{t.description}</Text>
                                     <Text style={styles.txnMeta}>{t.category} · {t.date}</Text>
                                 </View>
-                                <Text style={[styles.txnAmount, { color: t.type === 'credit' ? COLORS.success : COLORS.danger }]}>
+                                <Text style={[styles.txnAmount, { color: t.type === 'credit' ? C.success : C.danger }]}>
                                     {t.type === 'credit' ? '+' : '-'}${Math.abs(t.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                 </Text>
                             </View>
@@ -187,7 +189,7 @@ export default function OverviewScreen({ navigation }) {
             {/* Month Highlights */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Monthly Highlight</Text>
-                <View style={[styles.card, { backgroundColor: COLORS.primary }]}>
+                <View style={[styles.card, { backgroundColor: C.primary }]}>
                     <Text style={{ ...FONTS.semiBold, color: 'rgba(255,255,255,0.75)', fontSize: 12, marginBottom: 4 }}>February 2026</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                         <View>
@@ -207,62 +209,57 @@ export default function OverviewScreen({ navigation }) {
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.bg },
-    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.bg },
-    loadingText: { ...FONTS.medium, color: COLORS.textMuted, marginTop: 12 },
-    header: { paddingTop: 56, paddingBottom: 30, paddingHorizontal: SPACING.lg },
-    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: SPACING.lg },
-    greeting: { ...FONTS.regular, color: 'rgba(255,255,255,0.75)', fontSize: 14 },
-    userName: { ...FONTS.bold, color: '#fff', fontSize: 20 },
-    notifBtn: { position: 'relative', padding: 8, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: RADIUS.md },
-    badge: {
-        position: 'absolute', top: 4, right: 4,
-        backgroundColor: COLORS.danger, borderRadius: 10,
-        width: 18, height: 18, justifyContent: 'center', alignItems: 'center',
-    },
-    badgeText: { ...FONTS.bold, color: '#fff', fontSize: 10 },
-    balanceCard: {
-        backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: RADIUS.lg,
-        padding: SPACING.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
-    },
-    balanceLabel: { ...FONTS.medium, color: 'rgba(255,255,255,0.75)', fontSize: 13, marginBottom: 4 },
-    balanceAmount: { ...FONTS.extraBold, color: '#fff', fontSize: 34, marginBottom: 16 },
-    balanceRow: { flexDirection: 'row', gap: 20 },
-    balanceSub: {},
-    balanceSubLabel: { ...FONTS.regular, color: 'rgba(255,255,255,0.65)', fontSize: 12 },
-    balanceSubValue: { ...FONTS.bold, fontSize: 16 },
-    notifPanel: { backgroundColor: COLORS.card, marginHorizontal: SPACING.md, marginTop: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.md, ...SHADOWS.sm },
-    notifItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-    notifTitle: { ...FONTS.semiBold, fontSize: 13, color: COLORS.text },
-    notifMsg: { ...FONTS.regular, fontSize: 12, color: COLORS.textMuted, marginTop: 1 },
-    notifTime: { ...FONTS.regular, fontSize: 11, color: COLORS.textLight, marginTop: 2 },
-    unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.accent, marginLeft: 8 },
-    summaryStrip: { flexDirection: 'row', gap: SPACING.sm, paddingHorizontal: SPACING.md, marginTop: SPACING.md },
-    summaryCard: {
-        flex: 1, backgroundColor: COLORS.card, borderRadius: RADIUS.md,
-        padding: 12, ...SHADOWS.sm, alignItems: 'center',
-    },
-    summaryLabel: { ...FONTS.regular, fontSize: 11, color: COLORS.textMuted, textAlign: 'center', marginBottom: 4 },
-    summaryValue: { ...FONTS.bold, fontSize: 16, color: COLORS.text },
-    section: { paddingHorizontal: SPACING.md, marginTop: SPACING.lg },
-    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.sm },
-    sectionTitle: { ...FONTS.semiBold, fontSize: 16, color: COLORS.text, marginBottom: SPACING.sm },
-    seeAll: { ...FONTS.medium, fontSize: 13, color: COLORS.accent },
-    card: { backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: SPACING.md, ...SHADOWS.sm },
-    emptyText: { ...FONTS.regular, fontSize: 14, color: COLORS.textMuted, textAlign: 'center', padding: 20 },
-    txnRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 12 },
-    txnRowBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.border },
-    txnIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-    txnDesc: { ...FONTS.semiBold, fontSize: 13, color: COLORS.text },
-    txnMeta: { ...FONTS.regular, fontSize: 11, color: COLORS.textMuted, marginTop: 2 },
-    txnAmount: { ...FONTS.bold, fontSize: 13 },
-    quickActionsRow: { flexDirection: 'row', justifyContent: 'space-between' },
-    quickAction: { alignItems: 'center', flex: 1 },
-    quickActionIcon: {
-        width: 56, height: 56, borderRadius: RADIUS.md,
-        backgroundColor: COLORS.card, justifyContent: 'center', alignItems: 'center',
-        ...SHADOWS.sm, marginBottom: 6,
-    },
-    quickActionLabel: { ...FONTS.medium, fontSize: 11, color: COLORS.textMuted, textAlign: 'center' },
-});
+function getStyles(C) {
+    return StyleSheet.create({
+        container: { flex: 1, backgroundColor: C.bg },
+        loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
+        loadingText: { ...FONTS.medium, color: C.textMuted, marginTop: 12 },
+        header: { paddingTop: 56, paddingBottom: 30, paddingHorizontal: SPACING.lg },
+        headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: SPACING.lg },
+        greeting: { ...FONTS.regular, color: 'rgba(255,255,255,0.75)', fontSize: 14 },
+        userName: { ...FONTS.bold, color: '#fff', fontSize: 20 },
+        notifBtn: { position: 'relative', padding: 8, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: RADIUS.md },
+        badge: {
+            position: 'absolute', top: 4, right: 4,
+            backgroundColor: C.danger, borderRadius: 10,
+            width: 18, height: 18, justifyContent: 'center', alignItems: 'center',
+        },
+        badgeText: { ...FONTS.bold, color: '#fff', fontSize: 10 },
+        balanceCard: {
+            backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: RADIUS.lg,
+            padding: SPACING.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+        },
+        balanceLabel: { ...FONTS.medium, color: 'rgba(255,255,255,0.75)', fontSize: 13, marginBottom: 4 },
+        balanceAmount: { ...FONTS.extraBold, color: '#fff', fontSize: 34, marginBottom: 16 },
+        balanceRow: { flexDirection: 'row', gap: 20 },
+        balanceSub: {},
+        balanceSubLabel: { ...FONTS.regular, color: 'rgba(255,255,255,0.65)', fontSize: 12 },
+        balanceSubValue: { ...FONTS.bold, fontSize: 16 },
+        notifPanel: { backgroundColor: C.card, marginHorizontal: SPACING.md, marginTop: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.md, ...SHADOWS.sm },
+        notifItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
+        notifTitle: { ...FONTS.semiBold, fontSize: 13, color: C.text },
+        notifMsg: { ...FONTS.regular, fontSize: 12, color: C.textMuted, marginTop: 1 },
+        notifTime: { ...FONTS.regular, fontSize: 11, color: C.textLight, marginTop: 2 },
+        unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.accent, marginLeft: 8 },
+        summaryStrip: { flexDirection: 'row', gap: SPACING.sm, paddingHorizontal: SPACING.md, marginTop: SPACING.md },
+        summaryCard: { flex: 1, backgroundColor: C.card, borderRadius: RADIUS.md, padding: 12, ...SHADOWS.sm, alignItems: 'center' },
+        summaryLabel: { ...FONTS.regular, fontSize: 11, color: C.textMuted, textAlign: 'center', marginBottom: 4 },
+        summaryValue: { ...FONTS.bold, fontSize: 16, color: C.text },
+        section: { paddingHorizontal: SPACING.md, marginTop: SPACING.lg },
+        sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.sm },
+        sectionTitle: { ...FONTS.semiBold, fontSize: 16, color: C.text, marginBottom: SPACING.sm },
+        seeAll: { ...FONTS.medium, fontSize: 13, color: C.accent },
+        card: { backgroundColor: C.card, borderRadius: RADIUS.lg, padding: SPACING.md, ...SHADOWS.sm },
+        emptyText: { ...FONTS.regular, fontSize: 14, color: C.textMuted, textAlign: 'center', padding: 20 },
+        txnRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 12 },
+        txnRowBorder: { borderBottomWidth: 1, borderBottomColor: C.border },
+        txnIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+        txnDesc: { ...FONTS.semiBold, fontSize: 13, color: C.text },
+        txnMeta: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginTop: 2 },
+        txnAmount: { ...FONTS.bold, fontSize: 13 },
+        quickActionsRow: { flexDirection: 'row', justifyContent: 'space-between' },
+        quickAction: { alignItems: 'center', flex: 1 },
+        quickActionIcon: { width: 56, height: 56, borderRadius: RADIUS.md, backgroundColor: C.card, justifyContent: 'center', alignItems: 'center', ...SHADOWS.sm, marginBottom: 6 },
+        quickActionLabel: { ...FONTS.medium, fontSize: 11, color: C.textMuted, textAlign: 'center' },
+    });
+}

@@ -1,13 +1,21 @@
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform, Alert } from 'react-native';
 
+const isExpoGo = Constants.executionEnvironment === 'storeClient';
+
 export async function registerForPushNotificationsAsync() {
+    if (isExpoGo) {
+        console.warn('Push notifications are not supported in Expo Go. Use a production build.');
+        return null;
+    }
+
     if (!Device.isDevice) {
         console.warn('Push Notifications are only supported on physical devices.');
         return null;
     }
+
+    const Notifications = require('expo-notifications');
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
@@ -22,16 +30,13 @@ export async function registerForPushNotificationsAsync() {
         return null;
     }
 
-    // Replace project ID if needed from app.json
     const projectId = Constants?.expoConfig?.extra?.eas?.projectId;
     if (!projectId) {
         console.error('Project ID not found in app.config.js or app.json');
     }
 
     try {
-        const token = (await Notifications.getExpoPushTokenAsync({
-            projectId: projectId,
-        })).data;
+        const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
         console.log('Expo Push Token:', token);
 
         if (Platform.OS === 'android') {
@@ -50,6 +55,9 @@ export async function registerForPushNotificationsAsync() {
 }
 
 export function setupNotificationHandler() {
+    if (isExpoGo) return;
+
+    const Notifications = require('expo-notifications');
     Notifications.setNotificationHandler({
         handleNotification: async () => ({
             shouldShowAlert: true,
