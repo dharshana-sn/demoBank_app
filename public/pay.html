@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DemoBank — Pay Now</title>
+    <meta name="description" content="Pay securely via DemoBank. Scan QR or click to open the app." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --blue-dark: #1e3a5f;
+            --blue:      #2563eb;
+            --blue-mid:  #3b82f6;
+            --blue-light:#eff6ff;
+            --green:     #10b981;
+            --gray-50:   #f8fafc;
+            --gray-100:  #f1f5f9;
+            --gray-300:  #cbd5e1;
+            --gray-500:  #64748b;
+            --gray-700:  #334155;
+            --gray-900:  #0f172a;
+            --radius:    16px;
+            --shadow:    0 24px 64px rgba(30, 64, 175, 0.18);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 45%, #1e40af 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+            overflow-x: hidden;
+        }
+
+        /* Animated blobs */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.25;
+            animation: drift 12s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .blob-1 { width: 500px; height: 500px; background: #3b82f6; top: -150px; left: -150px; animation-delay: 0s; }
+        .blob-2 { width: 400px; height: 400px; background: #10b981; bottom: -100px; right: -100px; animation-delay: 4s; }
+        .blob-3 { width: 300px; height: 300px; background: #8b5cf6; top: 40%; left: 60%; animation-delay: 8s; }
+
+        @keyframes drift {
+            from { transform: translate(0, 0) scale(1); }
+            to   { transform: translate(30px, 20px) scale(1.07); }
+        }
+
+        /* Main card */
+        .card {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 28px;
+            padding: 40px 36px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        /* Bank logo */
+        .logo-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #1e3a5f, #2563eb);
+            padding: 10px 22px;
+            border-radius: 99px;
+            margin-bottom: 28px;
+        }
+        .logo-icon { font-size: 1.4rem; }
+        .logo-text {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.04em;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: var(--gray-900);
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+        h1 span { color: var(--blue); }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        /* CTA Button */
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 14px;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+            margin-bottom: 20px;
+            cursor: pointer;
+            border: none;
+        }
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(37, 99, 235, 0.5);
+        }
+        .cta-btn:active { transform: translateY(0); }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+            color: var(--gray-300);
+            font-size: 0.8rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--gray-100);
+        }
+
+        /* Features grid */
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+        .feature {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-100);
+            border-radius: 12px;
+            padding: 12px 10px;
+            text-align: center;
+        }
+        .feature-icon { font-size: 1.3rem; margin-bottom: 4px; }
+        .feature-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+        .feature-desc {
+            font-size: 0.7rem;
+            color: var(--gray-500);
+            margin-top: 2px;
+        }
+
+        /* Trust badges */
+        .trust-strip {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-100);
+            flex-wrap: wrap;
+        }
+        .trust-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.73rem;
+            font-weight: 600;
+            color: var(--gray-500);
+        }
+        .trust-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+        /* Pulse animation for button icon */
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .pulse { animation: pulse 2s ease-in-out infinite; }
+
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            animation: float linear infinite;
+        }
+        @keyframes float {
+            from { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            to   { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <!-- Floating particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Main card -->
+    <div class="card">
+        <!-- Logo -->
+        <div class="logo-wrap">
+            <span class="logo-icon">🏦</span>
+            <span class="logo-text">DemoBank</span>
+        </div>
+
+        <h1>Pay with <span>DemoBank</span></h1>
+        <p class="subtitle">
+            Fast, secure, and instant payments.<br/>
+            Login to send money in seconds.
+        </p>
+
+        <!-- Main CTA -->
+        <a href="/" class="cta-btn" id="payNowBtn">
+            <span class="pulse">💳</span>
+            Open App &amp; Pay Now
+        </a>
+
+        <div class="divider">Why DemoBank?</div>
+
+        <!-- Features -->
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-label">Instant Transfer</div>
+                <div class="feature-desc">Money moves in real-time</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-label">Bank-Grade Security</div>
+                <div class="feature-desc">256-bit encryption</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">💸</div>
+                <div class="feature-label">Zero Fees</div>
+                <div class="feature-desc">No hidden charges</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📱</div>
+                <div class="feature-label">Any Device</div>
+                <div class="feature-desc">Web &amp; mobile ready</div>
+            </div>
+        </div>
+
+        <!-- Trust badges -->
+        <div class="trust-strip">
+            <span class="trust-badge"><span class="trust-dot"></span> Secure</span>
+            <span class="trust-badge"><span class="trust-dot"></span> Verified</span>
+            <span class="trust-badge"><span class="trust-dot"></span> Encrypted</span>
+            <span class="trust-badge"><span class="trust-dot"></span> Instant</span>
+        </div>
+    </div>
+
+    <script>
+        // Spawn floating particles
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 18; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            const size = Math.random() * 14 + 4;
+            p.style.cssText = `
+                width: ${size}px; height: ${size}px;
+                left: ${Math.random() * 100}%;
+                animation-duration: ${Math.random() * 12 + 8}s;
+                animation-delay: ${Math.random() * 10}s;
+            `;
+            container.appendChild(p);
+        }
+    </script>
+</body>
+</html>

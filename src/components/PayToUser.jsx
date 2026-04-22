@@ -11,6 +11,7 @@ import { createPortal } from "react-dom";
 import { mockUsers } from "../data/mockData.js";
 import { createTransaction } from "../api.js";
 import { Send, CheckCircle2, X, Users } from "lucide-react";
+import PayQRCode from "./PayQRCode.jsx";
 import "./PayToUser.css";
 
 export default function PayToUser({ onPaymentComplete }) {
@@ -215,6 +216,7 @@ export default function PayToUser({ onPaymentComplete }) {
             )}
 
             {confirmModal}
+            <PayQRCode />
         </div>
     );
 }

@@ -9,7 +9,8 @@ const userSchema = new mongoose.Schema({
     avatar: { type: String },
     provider: { type: String, default: 'local' },
     providerId: { type: String },
-    memberSince: { type: String, default: "2022" }
+    memberSince: { type: String, default: "2022" },
+    pushToken: { type: String }
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);

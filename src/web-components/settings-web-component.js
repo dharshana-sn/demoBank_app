@@ -1,4 +1,4 @@
-class SettingsWebComponent extends HTMLElement {
+  class SettingsWebComponent extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });

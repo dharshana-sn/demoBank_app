@@ -264,18 +264,18 @@
     <div class="index-row">
         <div class="index-card">
             <div class="index-label">S&amp;P 500</div>
-            <div class="index-value">5,137.08</div>
-            <div class="index-change up">▲ +0.8%</div>
+            <div class="index-value" id="val-sp500">5,137.08</div>
+            <div class="index-change up" id="chg-sp500">▲ +0.8%</div>
         </div>
         <div class="index-card">
             <div class="index-label">NASDAQ</div>
-            <div class="index-value">16,274.9</div>
-            <div class="index-change up">▲ +1.1%</div>
+            <div class="index-value" id="val-nasdaq">16,274.90</div>
+            <div class="index-change up" id="chg-nasdaq">▲ +1.1%</div>
         </div>
         <div class="index-card">
             <div class="index-label">FTSE 100</div>
-            <div class="index-value">7,640.33</div>
-            <div class="index-change down">▼ −0.2%</div>
+            <div class="index-value" id="val-ftse">7,640.33</div>
+            <div class="index-change down" id="chg-ftse">▼ −0.2%</div>
         </div>
     </div>
 
@@ -361,9 +361,9 @@
             { time: '15:30', val: 5137, delta: +0.5 },
         ];
 
-        const minVal = Math.min(...DATA.map(d => d.val));
-        const maxVal = Math.max(...DATA.map(d => d.val));
-        const range = maxVal - minVal || 1;
+        let minVal = Math.min(...DATA.map(d => d.val));
+        let maxVal = Math.max(...DATA.map(d => d.val));
+        let range = maxVal - minVal || 1;
 
         const chart = document.getElementById('chart');
         const rTime = document.getElementById('r-time');
@@ -371,23 +371,35 @@
 
         let activeBar = null;
 
-        DATA.forEach((d, i) => {
-            const heightPct = ((d.val - minVal) / range) * 75 + 20; // 20–95%
-            const bar = document.createElement('div');
-            bar.className = 'bar ' + (d.delta >= 0 ? 'positive' : 'negative');
-            bar.style.height = '0%';
-            bar.title = `${d.time} — ${d.val.toLocaleString()}`;
+        function renderBars(animate = true) {
+            chart.innerHTML = '';
+            minVal = Math.min(...DATA.map(d => d.val));
+            maxVal = Math.max(...DATA.map(d => d.val));
+            range = maxVal - minVal || 1;
 
-            // Animate in with stagger
-            setTimeout(() => {
-                bar.style.transition = 'height 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity .15s, background .15s, transform .15s';
-                bar.style.height = heightPct + '%';
-            }, i * 40);
+            DATA.forEach((d, i) => {
+                const heightPct = ((d.val - minVal) / range) * 75 + 20; // 20–95%
+                const bar = document.createElement('div');
+                bar.className = 'bar ' + (d.delta >= 0 ? 'positive' : 'negative');
+                bar.style.height = animate ? '0%' : heightPct + '%';
+                bar.title = `${d.time} — ${d.val.toLocaleString()}`;
 
-            bar.addEventListener('mouseenter', () => highlight(bar, d));
-            bar.addEventListener('click', () => highlight(bar, d));
-            chart.appendChild(bar);
-        });
+                if (animate) {
+                    setTimeout(() => {
+                        bar.style.transition = 'height 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity .15s, background .15s, transform .15s';
+                        bar.style.height = heightPct + '%';
+                    }, i * 40);
+                }
+
+                bar.addEventListener('mouseenter', () => highlight(bar, d));
+                bar.addEventListener('click', () => highlight(bar, d));
+                chart.appendChild(bar);
+            });
+
+            // Start with last bar highlighted
+            const lastBar = chart.lastElementChild;
+            if (lastBar) highlight(lastBar, DATA[DATA.length - 1]);
+        }
 
         function highlight(bar, d) {
             if (activeBar) activeBar.classList.remove('active');
@@ -399,9 +411,42 @@
             rVal.style.color = d.delta >= 0 ? 'var(--green)' : 'var(--red)';
         }
 
-        // Start with last bar highlighted
-        const lastBar = chart.lastElementChild;
-        if (lastBar) setTimeout(() => highlight(lastBar, DATA[DATA.length - 1]), 700);
+        renderBars(true);
+
+        // Dynamic updates every 10 seconds
+        setInterval(() => {
+            // Update 3 Index Cards dynamically
+            const indices = [
+                { id: 'sp500', base: 5137.08 },
+                { id: 'nasdaq', base: 16274.90 },
+                { id: 'ftse', base: 7640.33 }
+            ];
+
+            indices.forEach(idx => {
+                const isUp = Math.random() > 0.4;
+                const changePct = (Math.random() * 0.8 - 0.2).toFixed(2); // slightly volatile
+                const newVal = (idx.base * (1 + parseFloat(changePct) / 100)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                
+                document.getElementById(`val-${idx.id}`).textContent = newVal;
+                const chgEl = document.getElementById(`chg-${idx.id}`);
+                const finalChg = parseFloat(changePct) >= 0;
+                chgEl.textContent = `${finalChg ? '▲ +' : '▼ '}${changePct}%`;
+                chgEl.className = `index-change ${finalChg ? 'up' : 'down'}`;
+            });
+
+            // Update 4th data point - the Chart
+            const lastData = DATA[DATA.length - 1];
+            const newDelta = (Math.random() * 1.6 - 0.8).toFixed(1);
+            const nextVal = Math.round(lastData.val + parseFloat(newDelta) * 15);
+            
+            const now = new Date();
+            const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            
+            DATA.push({ time: timeStr, val: nextVal, delta: parseFloat(newDelta) });
+            DATA.shift(); // remove oldest point to keep chart size same
+
+            renderBars(false); // Re-render without stagger animation to smoothly update
+        }, 10000);
     </script>
 </body>
 

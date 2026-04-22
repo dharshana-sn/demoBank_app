@@ -7,14 +7,14 @@
  * the user's selection in the sidebar.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
     Building2, LayoutDashboard, CreditCard, ArrowLeftRight, PieChart,
     Settings, LogOut, Bell, Menu, X, ShieldCheck, Lock, Globe,
     TrendingUp, TrendingDown, Wallet, PiggyBank, BarChart3, User, Mail, Phone, MapPin,
-    Download
+    Download, FileSpreadsheet
 } from "lucide-react";
 import GlobalSearch from "../components/GlobalSearch.jsx";
 import AccountCards from "../components/AccountCards.jsx";
@@ -49,8 +49,31 @@ const PAGE_METADATA = {
     settings: { title: "Account Settings", subtitle: "Manage your profile, security and preferences" },
 };
 
+const handleDownloadCSV = (transactions, filename) => {
+    const headers = ["Date", "Description", "Category", "Amount", "Status", "Type"];
+    const rows = transactions.map(t => [
+        t.date,
+        `"${t.description}"`,
+        t.category,
+        t.amount.toFixed(2),
+        t.status,
+        t.type
+    ]);
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+};
+
 function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategories, onCategoryChange, onTransferComplete, accounts }) {
     const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+    const tableRef = useRef(null);
 
     return (
         <>
@@ -113,15 +136,25 @@ function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategor
                 <div className="card">
                     <div className="card-header">
                         <h2 className="card-title">Transaction History</h2>
-                        <button
-                            className="btn btn-outline btn-sm btn-download"
-                            onClick={() => window.print()}
-                            title="Download transaction statement as PDF"
-                        >
-                            <Download size={14} /> Download PDF
-                        </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                                className="btn btn-outline btn-sm btn-download"
+                                onClick={() => window.print()}
+                                title="Download transaction statement as PDF"
+                            >
+                                <Download size={14} /> Download PDF
+                            </button>
+                            <button
+                                className="btn btn-outline btn-sm btn-download"
+                                onClick={() => handleDownloadCSV(tableRef.current?.getFilteredData() || filteredTransactions, `transactions_overview_${new Date().toISOString().split("T")[0]}.csv`)}
+                                title="Download transaction statement as Excel"
+                            >
+                                <FileSpreadsheet size={14} /> Download Excel
+                            </button>
+                        </div>
                     </div>
                     <TransactionTable
+                        ref={tableRef}
                         transactions={filteredTransactions}
                         globalSearch={globalSearchQuery}
                     />
@@ -132,6 +165,7 @@ function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategor
 }
 
 function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
+    const tableRef = useRef(null);
     const filteredTransactions = allTransactions.filter(transaction => {
         const query = globalSearchQuery.toLowerCase();
         return !query ||
@@ -158,6 +192,13 @@ function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
                                 title="Download account statement"
                             >
                                 <Download size={14} /> Download PDF
+                            </button>
+                            <button
+                                className="btn btn-outline btn-sm btn-download"
+                                onClick={() => handleDownloadCSV(filteredTransactions, `account_statement_${new Date().toISOString().split("T")[0]}.csv`)}
+                                title="Download account statement as Excel"
+                            >
+                                <FileSpreadsheet size={14} /> Download Excel
                             </button>
                             <span className="badge badge-blue">4 Accounts</span>
                         </div>
@@ -197,12 +238,19 @@ function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
                             >
                                 <Download size={14} /> Download PDF
                             </button>
+                            <button
+                                className="btn btn-outline btn-sm btn-download"
+                                onClick={() => handleDownloadCSV(tableRef.current?.getFilteredData() || filteredTransactions, `recent_transactions_${new Date().toISOString().split("T")[0]}.csv`)}
+                                title="Download transaction list as Excel"
+                            >
+                                <FileSpreadsheet size={14} /> Download Excel
+                            </button>
                             {globalSearchQuery && (
                                 <span className="badge badge-blue">🔍 "{globalSearchQuery}" — {filteredTransactions.length} results</span>
                             )}
                         </div>
                     </div>
-                    <TransactionTable transactions={filteredTransactions} globalSearch={globalSearchQuery} />
+                    <TransactionTable ref={tableRef} transactions={filteredTransactions} globalSearch={globalSearchQuery} />
                 </div>
             </section>
         </div>
@@ -210,6 +258,7 @@ function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
 }
 
 function TransfersPage({ globalSearchQuery, allTransactions, onTransferComplete }) {
+    const tableRef = useRef(null);
     const query = globalSearchQuery.toLowerCase();
     const transferHistory = allTransactions
         .filter(transaction => transaction.category === "Transfers")
@@ -282,12 +331,19 @@ function TransfersPage({ globalSearchQuery, allTransactions, onTransferComplete 
                             >
                                 <Download size={14} /> Download PDF
                             </button>
+                            <button
+                                className="btn btn-outline btn-sm btn-download"
+                                onClick={() => handleDownloadCSV(tableRef.current?.getFilteredData() || transferHistory, `transfer_history_${new Date().toISOString().split("T")[0]}.csv`)}
+                                title="Download transfer history as Excel"
+                            >
+                                <FileSpreadsheet size={14} /> Download Excel
+                            </button>
                             {globalSearchQuery && (
                                 <span className="badge badge-blue">🔍 {transferHistory.length} results</span>
                             )}
                         </div>
                     </div>
-                    <TransactionTable transactions={transferHistory} globalSearch={globalSearchQuery} />
+                    <TransactionTable ref={tableRef} transactions={transferHistory} globalSearch={globalSearchQuery} />
                 </div>
             </div>
         </div>

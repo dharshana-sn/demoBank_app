@@ -6,7 +6,7 @@
  * real-time search highlighting for filtered results, and date range filtering.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, forwardRef, useImperativeHandle } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, CalendarRange, X } from "lucide-react";
 import "./TransactionTable.css";
 
@@ -32,7 +32,7 @@ function getHighlightedText(fullText, searchQuery) {
     );
 }
 
-export default function TransactionTable({ transactions, globalSearch }) {
+const TransactionTable = forwardRef(({ transactions, globalSearch }, ref) => {
     const [currentSortKey, setCurrentSortKey] = useState("date");
     const [sortDirection, setSortDirection] = useState("desc");
     const [currentPage, setCurrentPage] = useState(1);
@@ -89,6 +89,10 @@ export default function TransactionTable({ transactions, globalSearch }) {
             return 0;
         });
     }, [transactions, currentSortKey, sortDirection, dateFrom, dateTo]);
+
+    useImperativeHandle(ref, () => ({
+        getFilteredData: () => sortedTransactions
+    }));
 
     const totalPagesCount = Math.ceil(sortedTransactions.length / TRANSACTIONS_PER_PAGE);
     const currentPageTransactions = sortedTransactions.slice(
@@ -305,4 +309,6 @@ export default function TransactionTable({ transactions, globalSearch }) {
             )}
         </div>
     );
-}
+});
+
+export default TransactionTable;

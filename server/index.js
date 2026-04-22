@@ -10,6 +10,8 @@ import fixedDepositRoutes from './routes/fixedDeposits.js';
 import userRoutes from './routes/users.js';
 import authRoutes from './routes/auth.js';
 import kycRoutes from './routes/kyc.js';
+import User from './models/User.js';
+import { sendPushNotification } from './utils/notify.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,8 +38,28 @@ app.use('/api/kyc', kycRoutes);
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
+// Send push notification (Test)
+app.post('/api/notify', async (req, res) => {
+    const { userId, title, body, data } = req.body;
+    try {
+        const user = await User.findOne({ id: userId });
+        if (!user || !user.pushToken) {
+            return res.status(404).json({ error: 'User or Push Token not found' });
+        }
+        await sendPushNotification(user.pushToken, { title, body, data });
+        res.json({ status: 'sent' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Serve frontend in production
 app.use(express.static(path.join(__dirname, '../dist')));
+
+// Serve the payment landing page
+app.get('/pay', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/pay.html'));
+});
 
 // Catch-all route to serve the React application for unhandled non-API routes
 app.use((req, res) => {
@@ -45,5 +67,5 @@ app.use((req, res) => {
 });
 
 connectDB().then(() => {
-    app.listen(PORT, () => console.log(`DemoBank API running on http://localhost:${PORT}`));
+    app.listen(PORT, '0.0.0.0', () => console.log(`DemoBank API running on http://0.0.0.0:${PORT}`));
 });
