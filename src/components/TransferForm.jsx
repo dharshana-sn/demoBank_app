@@ -89,8 +89,8 @@ export default function TransferForm({ onTransferComplete }) {
         setIsProcessing(false);
 
         // Create a new transaction for the transfer history
-        const fromAccount = mockAccounts.find(a => a.id === transferFormData.from);
-        const toAccount = mockAccounts.find(a => a.id === transferFormData.to);
+        const fromAccount = accounts.find(a => a.id === transferFormData.from);
+        const toAccount = accounts.find(a => a.id === transferFormData.to);
         const newTransaction = {
             id: `txn-tf-${Date.now()}`,
             customerId: "CID-101",

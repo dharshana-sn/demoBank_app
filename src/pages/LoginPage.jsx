@@ -9,11 +9,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { Eye, EyeOff, Building2, ShieldCheck, AlertCircle, RefreshCcw } from "lucide-react";
+import { Eye, EyeOff, Building2, ShieldCheck, AlertCircle /*, RefreshCcw */ } from "lucide-react";
 import "./LoginPage.css";
 
 const DEMO_CREDENTIALS = { email: "testUser@gmail.com", password: "password123" };
 
+/*
 function generateFrontendCaptcha() {
     const canvas = document.createElement('canvas');
     canvas.width = 300;
@@ -66,6 +67,7 @@ function generateFrontendCaptcha() {
         targetBox: target.box
     };
 }
+*/
 
 export default function LoginPage() {
     const { login } = useAuth();
@@ -78,9 +80,9 @@ export default function LoginPage() {
     const [authErrorMessage, setAuthErrorMessage] = useState("");
     
     // Captcha state
-    const [showCaptcha, setShowCaptcha] = useState(false);
-    const [captchaData, setCaptchaData] = useState(null);
-    const [captchaError, setCaptchaError] = useState("");
+    // const [showCaptcha, setShowCaptcha] = useState(false);
+    // const [captchaData, setCaptchaData] = useState(null);
+    // const [captchaError, setCaptchaError] = useState("");
 
     const validateForm = () => {
         const errorsFound = {};
@@ -103,6 +105,7 @@ export default function LoginPage() {
         setAuthErrorMessage("");
     };
 
+    /*
     const refreshCaptcha = async () => {
         setIsSubmitting(true);
         // Simulate slight delay to make it feel secure
@@ -112,6 +115,7 @@ export default function LoginPage() {
         setCaptchaError("");
         setIsSubmitting(false);
     };
+    */
 
     const executeLogin = async () => {
         setIsSubmitting(true);
@@ -128,11 +132,12 @@ export default function LoginPage() {
             navigate("/dashboard");
         } else {
             setAuthErrorMessage("Invalid email or password. Use testUser@gmail.com / password123");
-            setShowCaptcha(false);
+            // setShowCaptcha(false);
         }
         setIsSubmitting(false);
     };
 
+    /*
     const handleCaptchaClick = async (e) => {
         if (!captchaData || !captchaData.targetBox) return;
 
@@ -155,6 +160,7 @@ export default function LoginPage() {
             await refreshCaptcha();
         }
     };
+    */
 
     const handleCredentialSubmit = async (event) => {
         event.preventDefault();
@@ -165,18 +171,19 @@ export default function LoginPage() {
             return;
         }
 
-        if (!showCaptcha) {
-            setIsSubmitting(true);
-            await new Promise(resolve => setTimeout(resolve, 400));
-            const data = generateFrontendCaptcha();
-            setCaptchaData(data);
-            setShowCaptcha(true);
-            setCaptchaError("");
-            setIsSubmitting(false);
-            return;
-        }
+        await executeLogin();
+        // if (!showCaptcha) {
+        //     setIsSubmitting(true);
+        //     await new Promise(resolve => setTimeout(resolve, 400));
+        //     const data = generateFrontendCaptcha();
+        //     setCaptchaData(data);
+        //     setShowCaptcha(true);
+        //     setCaptchaError("");
+        //     setIsSubmitting(false);
+        //     return;
+        // }
 
-        setCaptchaError(`Please follow the instructions: ${captchaData.instruction || "Select the requested shape"}`);
+        // setCaptchaError(`Please follow the instructions: ${captchaData.instruction || "Select the requested shape"}`);
     };
 
     const startOAuthFlow = (providerName) => {
@@ -304,7 +311,7 @@ export default function LoginPage() {
                                 <a href="#" className="forgot-link" data-testid="link-forgot-password">Forgot password?</a>
                             </div>
 
-                            {showCaptcha && captchaData && (
+                            {/* {showCaptcha && captchaData && (
                                 <div className="form-group captcha-group fade-in" style={{ marginTop: '16px', marginBottom: '8px', padding: '16px', background: 'rgba(5, 66, 121, 0.05)', borderRadius: '12px', border: '1px solid rgba(5, 66, 121, 0.1)' }}>
                                     <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         Security Check
@@ -327,7 +334,7 @@ export default function LoginPage() {
                                     </div>
                                     {captchaError && <span className="form-error" style={{ display: 'block', marginTop: '6px', textAlign: 'center' }}>{captchaError}</span>}
                                 </div>
-                            )}
+                            )} */}
 
                             <button
                                 type="submit"

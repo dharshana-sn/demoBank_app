@@ -9,7 +9,6 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { mockUsers } from "../data/mockData.js";
-import { createTransaction } from "../api.js";
 import { Send, CheckCircle2, X, Users } from "lucide-react";
 import PayQRCode from "./PayQRCode.jsx";
 import "./PayToUser.css";
@@ -68,13 +67,10 @@ export default function PayToUser({ onPaymentComplete }) {
             note: note || ""
         };
 
-        try {
-            const saved = await createTransaction(newTransaction);
-            if (onPaymentComplete) onPaymentComplete(saved);
-        } catch (e) {
-            // Fallback: still notify parent with local data
-            if (onPaymentComplete) onPaymentComplete(newTransaction);
-        }
+        // Delegate persistence to the parent (Dashboard.handleTransferComplete)
+        // which calls createTransaction + updates account balances.
+        // DO NOT call createTransaction here — it would cause a double-save.
+        if (onPaymentComplete) onPaymentComplete(newTransaction);
 
         setIsProcessing(false);
         setShowConfirm(false);

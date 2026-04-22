@@ -788,10 +788,16 @@ export default function Dashboard() {
     }, []);
 
     const handleTransferComplete = async (newTxn) => {
+        // ── Optimistic update: show the transaction in the table IMMEDIATELY ──
+        const tempId = newTxn.id || `txn-optimistic-${Date.now()}`;
+        const optimisticTxn = { ...newTxn, id: tempId, _optimistic: true };
+        setAllTransactions(prev => [optimisticTxn, ...prev]);
+
         try {
             // Persist transaction to MongoDB
             const saved = await createTransaction(newTxn);
-            setAllTransactions(prev => [saved, ...prev]);
+            // Replace the optimistic entry with the server-saved version
+            setAllTransactions(prev => prev.map(t => t.id === tempId ? saved : t));
 
             // Update account balances in DB and local state
             const updatedAccounts = await Promise.all(
@@ -827,6 +833,8 @@ export default function Dashboard() {
             }, ...prev]);
         } catch (err) {
             console.error('Transfer failed:', err);
+            // Remove the optimistic transaction on failure
+            setAllTransactions(prev => prev.filter(t => t.id !== tempId));
         }
     };
 
