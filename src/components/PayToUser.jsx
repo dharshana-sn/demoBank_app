@@ -13,8 +13,9 @@ import { Send, CheckCircle2, X, Users } from "lucide-react";
 import PayQRCode from "./PayQRCode.jsx";
 import "./PayToUser.css";
 
-export default function PayToUser({ onPaymentComplete }) {
+export default function PayToUser({ onPaymentComplete, accounts = [] }) {
     const [selectedUser, setSelectedUser] = useState(null);
+    const [fromAccountId, setFromAccountId] = useState("");
     const [amount, setAmount] = useState("");
     const [note, setNote] = useState("");
     const [error, setError] = useState("");
@@ -22,6 +23,12 @@ export default function PayToUser({ onPaymentComplete }) {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+
+    useEffect(() => {
+        if (accounts.length > 0 && !fromAccountId) {
+            setFromAccountId(accounts[0].id);
+        }
+    }, [accounts]);
 
     // Lock body scroll when modal is open
     useEffect(() => {
@@ -45,8 +52,14 @@ export default function PayToUser({ onPaymentComplete }) {
     };
 
     const handleInitiatePayment = () => {
+        if (!fromAccountId) { setError("Please select an account to pay from"); return; }
         if (!selectedUser) { setError("Please select a recipient"); return; }
         if (!amount || isNaN(amount) || Number(amount) <= 0) { setError("Enter a valid amount"); return; }
+        const fromAcc = accounts.find(a => a.id === fromAccountId);
+        if (!fromAcc || fromAcc.balance < Number(amount)) {
+            setError(`Insufficient funds. Available: $${(fromAcc?.balance ?? 0).toFixed(2)}`);
+            return;
+        }
         setError("");
         setShowConfirm(true);
     };
@@ -59,12 +72,13 @@ export default function PayToUser({ onPaymentComplete }) {
             id: `txn-pay-${Date.now()}`,
             customerId: selectedUser.id,
             date: new Date().toISOString().split("T")[0],
-            description: `Payment to ${selectedUser.name}`,
+            description: note || `Payment to ${selectedUser.name}`,
             category: "Transfers",
             amount: -Number(amount),
             status: "Completed",
             type: "debit",
-            note: note || ""
+            note: note || "",
+            fromAccountId,
         };
 
         // Delegate persistence to the parent (Dashboard.handleTransferComplete)
@@ -138,6 +152,25 @@ export default function PayToUser({ onPaymentComplete }) {
                 <div className="ptu-success" data-testid="payment-success-msg">
                     <CheckCircle2 size={18} color="var(--success)" />
                     <span>Payment sent successfully! The transfer history has been updated.</span>
+                </div>
+            )}
+
+            {/* From Account */}
+            {accounts.length > 0 && (
+                <div className="form-group" style={{ marginBottom: "12px" }}>
+                    <label className="form-label">From Account</label>
+                    <select
+                        className="form-input form-select"
+                        value={fromAccountId}
+                        onChange={e => setFromAccountId(e.target.value)}
+                        data-testid="select-pay-from-account"
+                    >
+                        {accounts.map(acc => (
+                            <option key={acc.id} value={acc.id}>
+                                {acc.name} — ${acc.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                            </option>
+                        ))}
+                    </select>
                 </div>
             )}
 

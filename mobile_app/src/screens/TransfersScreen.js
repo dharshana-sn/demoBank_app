@@ -13,7 +13,7 @@ export default function TransfersScreen({ navigation, route }) {
     const { C } = useTheme();
     const [accounts, setAccounts] = useState([]);
     const [form, setForm] = useState({ from: '', to: '', amount: '', description: '' });
-    const [payForm, setPayForm] = useState({ recipient: '', amount: '', note: '' });
+    const [payForm, setPayForm] = useState({ from: '', recipient: '', amount: '', note: '' });
     const [loading, setLoading] = useState(false);
     const [pageLoading, setPageLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('internal');
@@ -42,15 +42,17 @@ export default function TransfersScreen({ navigation, route }) {
         try {
             const [accs, txns] = await Promise.all([
                 getAccounts(),
-                getTransactions({ category: 'Transfers' }),
+                getTransactions(),
             ]);
             setAccounts(accs);
             if (accs.length >= 2) {
                 setForm(f => ({ ...f, from: accs[0].id, to: accs[1].id }));
             }
-            // Sort by date descending and show last 20 transfers
+            if (accs.length >= 1) {
+                setPayForm(f => ({ ...f, from: f.from || accs[0].id }));
+            }
             const transfers = txns
-                .filter(t => t.category === 'Transfers')
+                .filter(t => t.category === 'Transfers' || t.category === 'Internal Transfer')
                 .sort((a, b) => new Date(b.date) - new Date(a.date))
                 .slice(0, 20);
             setRecentTransfers(transfers);
@@ -90,19 +92,29 @@ export default function TransfersScreen({ navigation, route }) {
             Alert.alert('Error', 'Source and destination accounts must be different.');
             return;
         }
+        const amt = parseFloat(form.amount);
+        const fromAccount = accounts.find(a => a.id === form.from);
+        if (!fromAccount || fromAccount.balance < amt) {
+            Alert.alert('Insufficient Funds', `Available balance: $${(fromAccount?.balance ?? 0).toFixed(2)}`);
+            return;
+        }
         setLoading(true);
         try {
-            const amt = parseFloat(form.amount);
+            const toAccount = accounts.find(a => a.id === form.to);
             const txn = {
-                description: form.description || `Transfer to ${form.to}`,
-                amount: -amt, type: 'debit', category: 'Transfers',
+                description: form.description || `Transfer to ${toAccount?.name || form.to}`,
+                amount: -amt, type: 'debit', category: 'Internal Transfer',
                 status: 'Completed', date: new Date().toISOString().split('T')[0],
                 customerId: 'CUST001',
+                accountId: form.from,
             };
             await createTransaction(txn);
-            await updateAccountBalance(form.from, -amt);
+            await Promise.all([
+                updateAccountBalance(form.from, -amt),
+                updateAccountBalance(form.to, +amt),
+            ]);
             setForm(f => ({ ...f, amount: '', description: '' }));
-            await loadData(); // Refresh history from server
+            await loadData();
             Alert.alert('✅ Success', `$${amt.toFixed(2)} transferred successfully!`);
         } catch (err) {
             Alert.alert('Error', err.message);
@@ -112,23 +124,40 @@ export default function TransfersScreen({ navigation, route }) {
     };
 
     const handlePay = async () => {
+        if (!payForm.from) {
+            Alert.alert('Error', 'Please select an account to pay from.');
+            return;
+        }
         if (!payForm.recipient || !payForm.amount || isNaN(parseFloat(payForm.amount))) {
             Alert.alert('Error', 'Please fill in recipient and amount.');
             return;
         }
+        const amt = parseFloat(payForm.amount);
+        const fromAccount = accounts.find(a => a.id === payForm.from);
+        if (!fromAccount || fromAccount.balance < amt) {
+            Alert.alert('Insufficient Funds', `Available balance: $${(fromAccount?.balance ?? 0).toFixed(2)}`);
+            return;
+        }
         setLoading(true);
         try {
-            const amt = parseFloat(payForm.amount);
+            const description = payForm.note
+                ? `Payment to ${payForm.recipient}: ${payForm.note}`
+                : `Payment to ${payForm.recipient}`;
             const txn = {
-                description: payForm.note || `Payment to ${payForm.recipient}`,
+                description,
                 amount: -amt, type: 'debit', category: 'Transfers',
                 status: 'Completed', date: new Date().toISOString().split('T')[0],
                 customerId: payForm.recipient,
+                accountId: payForm.from,
             };
             await createTransaction(txn);
-            setPayForm({ recipient: '', amount: '', note: '' });
-            await loadData(); // Refresh history from server
-            Alert.alert('✅ Success', `Payment of $${amt.toFixed(2)} sent!`);
+            await updateAccountBalance(payForm.from, -amt);
+            setPayForm(f => ({ from: f.from, recipient: '', amount: '', note: '' }));
+            await loadData();
+            Alert.alert(
+                '✅ Payment Sent',
+                `$${amt.toFixed(2)} sent to ${payForm.recipient} successfully!`
+            );
         } catch (err) {
             Alert.alert('Error', err.message);
         } finally {
@@ -192,6 +221,9 @@ export default function TransfersScreen({ navigation, route }) {
                             >
                                 <Text style={[styles.accOptionText, form.from === acc.id && { color: '#fff' }]}>
                                     {acc.name}
+                                </Text>
+                                <Text style={[styles.accBalanceText, form.from === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
+                                    ${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                 </Text>
                             </TouchableOpacity>
                         ))}
@@ -258,6 +290,23 @@ export default function TransfersScreen({ navigation, route }) {
                         <Text style={styles.orText}>or enter manually</Text>
                         <View style={styles.orLine} />
                     </View>
+                    <Text style={styles.fieldLabel}>From Account</Text>
+                    <View style={styles.pickerBox}>
+                        {accounts.map(acc => (
+                            <TouchableOpacity
+                                key={acc.id}
+                                style={[styles.accOption, payForm.from === acc.id && styles.accOptionSelected]}
+                                onPress={() => setPayForm(f => ({ ...f, from: acc.id }))}
+                            >
+                                <Text style={[styles.accOptionText, payForm.from === acc.id && { color: '#fff' }]}>
+                                    {acc.name}
+                                </Text>
+                                <Text style={[styles.accBalanceText, payForm.from === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
+                                    ${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
                     <Text style={styles.fieldLabel}>Recipient ID / Name</Text>
                     <TextInput
                         style={styles.input}
@@ -301,13 +350,17 @@ export default function TransfersScreen({ navigation, route }) {
                     <Text style={styles.cardTitle}>Transfer History</Text>
                     {recentTransfers.map((t, i) => (
                         <View key={t.id} style={[styles.txRow, i < recentTransfers.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}>
-                            <Text style={{ fontSize: 20, marginRight: 10 }}>💸</Text>
+                            <Text style={{ fontSize: 20, marginRight: 10 }}>
+                                {t.category === 'Internal Transfer' ? '🔄' : '💸'}
+                            </Text>
                             <View style={{ flex: 1 }}>
                                 <Text style={styles.txDesc}>{t.description}</Text>
-                                <Text style={styles.txMeta}>{t.date}</Text>
+                                <Text style={styles.txMeta}>
+                                    {t.category === 'Internal Transfer' ? 'Between Accounts' : 'Payment'} · {t.date}
+                                </Text>
                             </View>
-                            <Text style={{ ...FONTS.bold, color: C.danger }}>
-                                -${Math.abs(t.amount).toFixed(2)}
+                            <Text style={{ ...FONTS.bold, color: t.category === 'Internal Transfer' ? C.textMuted : (t.type === 'credit' ? C.success : C.danger) }}>
+                                {t.category === 'Internal Transfer' ? '↔' : (t.type === 'credit' ? '+' : '-')}${Math.abs(t.amount).toFixed(2)}
                             </Text>
                         </View>
                     ))}
@@ -356,6 +409,7 @@ function getStyles(C) {
         accOption: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full, backgroundColor: C.bg, borderWidth: 1, borderColor: C.border },
         accOptionSelected: { backgroundColor: C.primary, borderColor: C.primary },
         accOptionText: { ...FONTS.medium, fontSize: 12, color: C.text },
+        accBalanceText: { ...FONTS.regular, fontSize: 10, color: C.textMuted, marginTop: 1 },
         input: {
             borderWidth: 1.5, borderColor: C.border, borderRadius: RADIUS.md,
             paddingHorizontal: 14, paddingVertical: 12,

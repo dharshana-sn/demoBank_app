@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, ScrollView, StyleSheet, TouchableOpacity,
-    Alert, ActivityIndicator
+    Alert, ActivityIndicator, Linking
 } from 'react-native';
-import { getKycStatus, deleteKycDocument } from '../api/api';
+import * as DocumentPicker from 'expo-document-picker';
+import { getKycStatus, deleteKycDocument, uploadKycDocument, BASE_URL } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const DOCUMENT_TYPES = [
-    { id: 'passport', label: 'Passport', icon: '📔', desc: 'Upload your valid passport' },
-    { id: 'driving_license', label: "Driver's License", icon: '🪪', desc: 'Upload your driver\'s license' },
-    { id: 'national_id', label: 'National ID Card', icon: '🆔', desc: 'Upload a government-issued ID' },
-    { id: 'utility_bill', label: 'Utility Bill', icon: '📄', desc: 'Proof of address document' },
+    { id: 'aadhar', label: 'Aadhaar Card', icon: '🪪', desc: 'Upload your Aadhaar card' },
+    { id: 'pan', label: 'PAN Card', icon: '📔', desc: 'Upload your PAN card' },
+    { id: 'license', label: "Driver's License", icon: '🚗', desc: 'Upload your driver\'s license' },
 ];
 
 export default function KycScreen({ navigation }) {
@@ -20,6 +20,7 @@ export default function KycScreen({ navigation }) {
     const [kycStatus, setKycStatus] = useState(null);
     const [loading, setLoading] = useState(true);
     const [deleting, setDeleting] = useState(null);
+    const [uploading, setUploading] = useState(null);
 
     const styles = getStyles(C);
 
@@ -35,6 +36,41 @@ export default function KycScreen({ navigation }) {
     };
 
     useEffect(() => { load(); }, []);
+
+    const handleUpload = async (docType, isReplace = false) => {
+        try {
+            const result = await DocumentPicker.getDocumentAsync({
+                type: ['image/*', 'application/pdf'],
+                copyToCacheDirectory: true,
+            });
+            if (result.canceled) return;
+            const asset = result.assets[0];
+            setUploading(docType);
+            await uploadKycDocument(docType, asset.uri, asset.name, asset.mimeType || 'application/octet-stream');
+            await load();
+            Alert.alert('Success', isReplace ? 'Document updated successfully!' : 'Document uploaded successfully!');
+        } catch (err) {
+            Alert.alert('Upload Failed', err.message);
+        } finally {
+            setUploading(null);
+        }
+    };
+
+    const handleView = async (docType) => {
+        const filename = uploadedDocs[docType];
+        if (!filename) return;
+        const url = `${BASE_URL}/kyc/files/${filename}`;
+        try {
+            const supported = await Linking.canOpenURL(url);
+            if (supported) {
+                await Linking.openURL(url);
+            } else {
+                Alert.alert('Error', 'Cannot open document viewer.');
+            }
+        } catch {
+            Alert.alert('Error', 'Failed to open document.');
+        }
+    };
 
     const handleDelete = (docType) => {
         Alert.alert(
@@ -60,9 +96,9 @@ export default function KycScreen({ navigation }) {
         );
     };
 
-    const uploadedDocs = kycStatus?.documents || {};
-    const uploadedCount = Object.keys(uploadedDocs).filter(k => uploadedDocs[k]).length;
-    const isVerified = kycStatus?.verified;
+    const uploadedDocs = kycStatus || {};
+    const uploadedCount = Object.values(uploadedDocs).filter(Boolean).length;
+    const isVerified = uploadedCount === DOCUMENT_TYPES.length;
 
     if (loading) return (
         <View style={styles.center}><ActivityIndicator size="large" color={C.primary} /></View>
@@ -124,23 +160,44 @@ export default function KycScreen({ navigation }) {
                                         <Text style={styles.uploadedText}>✓ Uploaded</Text>
                                     </View>
                                     <TouchableOpacity
+                                        style={styles.viewBtn}
+                                        onPress={() => handleView(doc.id)}
+                                        disabled={uploading === doc.id || deleting === doc.id}
+                                    >
+                                        <Text style={styles.actionBtnText}>👁️</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.changeBtn}
+                                        onPress={() => handleUpload(doc.id, true)}
+                                        disabled={uploading === doc.id || deleting === doc.id}
+                                    >
+                                        {uploading === doc.id
+                                            ? <ActivityIndicator size="small" color={C.primary} />
+                                            : <Text style={styles.actionBtnText}>✏️</Text>
+                                        }
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
                                         style={styles.deleteBtn}
                                         onPress={() => handleDelete(doc.id)}
-                                        disabled={deleting === doc.id}
+                                        disabled={deleting === doc.id || uploading === doc.id}
                                     >
                                         {deleting === doc.id
                                             ? <ActivityIndicator size="small" color={C.danger} />
-                                            : <Text style={styles.deleteBtnText}>🗑️</Text>
+                                            : <Text style={styles.actionBtnText}>🗑️</Text>
                                         }
                                     </TouchableOpacity>
                                 </View>
                             ) : (
                                 <TouchableOpacity
                                     style={styles.uploadBtn}
-                                    onPress={() => Alert.alert('Upload', 'File upload requires camera/gallery access. Feature available on physical device.')}
+                                    onPress={() => handleUpload(doc.id)}
+                                    disabled={uploading === doc.id}
                                     activeOpacity={0.8}
                                 >
-                                    <Text style={styles.uploadBtnText}>Upload</Text>
+                                    {uploading === doc.id
+                                        ? <ActivityIndicator size="small" color="#fff" />
+                                        : <Text style={styles.uploadBtnText}>Upload</Text>
+                                    }
                                 </TouchableOpacity>
                             )}
                         </View>
@@ -197,8 +254,10 @@ function getStyles(C) {
         docActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
         uploadedBadge: { backgroundColor: '#D1FAE5', paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full },
         uploadedText: { ...FONTS.bold, fontSize: 11, color: C.success },
+        viewBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#DBEAFE', justifyContent: 'center', alignItems: 'center' },
+        changeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.bg, borderWidth: 1, borderColor: C.border, justifyContent: 'center', alignItems: 'center' },
         deleteBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#FEE2E2', justifyContent: 'center', alignItems: 'center' },
-        deleteBtnText: { fontSize: 16 },
+        actionBtnText: { fontSize: 16 },
         uploadBtn: { backgroundColor: C.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.md },
         uploadBtnText: { ...FONTS.bold, fontSize: 12, color: '#fff' },
         infoBox: { backgroundColor: C.card, marginHorizontal: SPACING.md, marginTop: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border },

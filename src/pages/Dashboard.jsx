@@ -71,8 +71,12 @@ const handleDownloadCSV = (transactions, filename) => {
     URL.revokeObjectURL(url);
 };
 
-function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategories, onCategoryChange, onTransferComplete, accounts }) {
+function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategories, onCategoryChange, onTransferComplete, accounts, allTransactions }) {
     const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+    const totalIncome = allTransactions.filter(t => t.type === "credit").reduce((s, t) => s + t.amount, 0);
+    const totalExpenses = Math.abs(
+        allTransactions.filter(t => t.type === "debit" && t.category !== "Internal Transfer").reduce((s, t) => s + t.amount, 0)
+    );
     const tableRef = useRef(null);
 
     return (
@@ -83,12 +87,12 @@ function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategor
                     <span className="summary-value">${totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="summary-card">
-                    <span className="summary-label">This Month Income</span>
-                    <span className="summary-value credit">+$10,025.45</span>
+                    <span className="summary-label">Total Income</span>
+                    <span className="summary-value credit">+${totalIncome.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="summary-card">
-                    <span className="summary-label">This Month Expenses</span>
-                    <span className="summary-value debit">-$3,592.97</span>
+                    <span className="summary-label">Total Expenses</span>
+                    <span className="summary-value debit">-${totalExpenses.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="summary-card">
                     <span className="summary-label">Active Accounts</span>
@@ -129,7 +133,7 @@ function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategor
                     selected={selectedCategories}
                     onChange={onCategoryChange}
                 />
-                <PayToUser onPaymentComplete={onTransferComplete} />
+                <PayToUser onPaymentComplete={onTransferComplete} accounts={accounts} />
             </div>
 
             <section className="section fade-in" style={{ animationDelay: "0.15s" }}>
@@ -218,7 +222,7 @@ function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
                                     <div className={`acc-det-bal ${isNegative ? "debit" : "credit"}`}>
                                         {isNegative ? "-" : "+"}${Math.abs(account.balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                     </div>
-                                    <button className="btn btn-secondary btn-sm" data-testid={`btn-manage-${account.id}`}>Manage</button>
+                                    {/* <button className="btn btn-secondary btn-sm" data-testid={`btn-manage-${account.id}`}>Manage</button> */}
                                 </div>
                             );
                         })}
@@ -257,11 +261,11 @@ function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
     );
 }
 
-function TransfersPage({ globalSearchQuery, allTransactions, onTransferComplete }) {
+function TransfersPage({ globalSearchQuery, allTransactions, onTransferComplete, accounts }) {
     const tableRef = useRef(null);
     const query = globalSearchQuery.toLowerCase();
     const transferHistory = allTransactions
-        .filter(transaction => transaction.category === "Transfers")
+        .filter(transaction => transaction.category === "Transfers" || transaction.category === "Internal Transfer")
         .filter(transaction => !query ||
             transaction.description.toLowerCase().includes(query) ||
             transaction.customerId.toLowerCase().includes(query) ||
@@ -315,7 +319,7 @@ function TransfersPage({ globalSearchQuery, allTransactions, onTransferComplete 
 
             <div className="two-col section fade-in" style={{ padding: "0 28px 20px" }}>
                 <TransferForm onTransferComplete={onTransferComplete} />
-                <PayToUser onPaymentComplete={onTransferComplete} />
+                <PayToUser onPaymentComplete={onTransferComplete} accounts={accounts} />
             </div>
 
             {/* Transfer Transaction Table */}
@@ -788,53 +792,52 @@ export default function Dashboard() {
     }, []);
 
     const handleTransferComplete = async (newTxn) => {
-        // ── Optimistic update: show the transaction in the table IMMEDIATELY ──
         const tempId = newTxn.id || `txn-optimistic-${Date.now()}`;
         const optimisticTxn = { ...newTxn, id: tempId, _optimistic: true };
         setAllTransactions(prev => [optimisticTxn, ...prev]);
 
+        let saved;
         try {
-            // Persist transaction to MongoDB
-            const saved = await createTransaction(newTxn);
-            // Replace the optimistic entry with the server-saved version
+            saved = await createTransaction(newTxn);
             setAllTransactions(prev => prev.map(t => t.id === tempId ? saved : t));
+        } catch (err) {
+            console.error('Transfer failed:', err);
+            setAllTransactions(prev => prev.filter(t => t.id !== tempId));
+            return;
+        }
 
-            // Update account balances in DB and local state
+        // Transaction saved — update balances separately so a balance error doesn't hide the saved transaction
+        try {
+            const amt = Math.abs(newTxn.amount);
+            const isInternal = newTxn.category === "Internal Transfer";
+
             const updatedAccounts = await Promise.all(
-                accounts.map(async (acc) => {
-                    if (newTxn.category === "Transfers" || newTxn.description.includes("Payment to") || newTxn.description.includes("Transfer to")) {
-                        const amount = Math.abs(newTxn.amount);
-                        if (newTxn.type === "debit" && acc.type === "checking") {
-                            return await updateAccountBalance(acc.id, -amount);
-                        }
-                        if (newTxn.type === "credit" && acc.type === "checking") {
-                            return await updateAccountBalance(acc.id, amount);
-                        }
+                accounts.map(acc => {
+                    if (isInternal) {
+                        if (acc.id === newTxn.fromAccountId) return updateAccountBalance(acc.id, -amt);
+                        if (acc.id === newTxn.toAccountId) return updateAccountBalance(acc.id, +amt);
+                    } else if (acc.id === newTxn.fromAccountId) {
+                        return updateAccountBalance(acc.id, -amt);
                     }
-                    return acc;
+                    return Promise.resolve(acc);
                 })
             );
             setAccounts(updatedAccounts);
 
-            // Generate notification
-            const checkingAcc = updatedAccounts.find(a => a.type === "checking");
-            const availableBalance = checkingAcc ? checkingAcc.balance : null;
-            const amount = Math.abs(newTxn.amount);
-            const isDebit = newTxn.type === "debit";
+            const fromAcc = updatedAccounts.find(a => a.id === newTxn.fromAccountId);
+            const availableBalance = fromAcc?.balance;
             setNotifications(prev => [{
                 id: Date.now(),
-                icon: isDebit ? "💸" : "💰",
-                title: isDebit ? "Amount Debited" : "Amount Credited",
-                message: isDebit
-                    ? `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} debited · Available: $${availableBalance != null ? availableBalance.toLocaleString("en-US", { minimumFractionDigits: 2 }) : "—"}`
-                    : `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })} credited · Available: $${availableBalance != null ? availableBalance.toLocaleString("en-US", { minimumFractionDigits: 2 }) : "—"}`,
+                icon: isInternal ? "🔄" : "💸",
+                title: isInternal ? "Transfer Completed" : "Amount Debited",
+                message: isInternal
+                    ? `$${amt.toLocaleString("en-US", { minimumFractionDigits: 2 })} moved between accounts`
+                    : `$${amt.toLocaleString("en-US", { minimumFractionDigits: 2 })} debited · Available: $${availableBalance != null ? availableBalance.toLocaleString("en-US", { minimumFractionDigits: 2 }) : "—"}`,
                 time: "Just now",
                 isRead: false,
             }, ...prev]);
         } catch (err) {
-            console.error('Transfer failed:', err);
-            // Remove the optimistic transaction on failure
-            setAllTransactions(prev => prev.filter(t => t.id !== tempId));
+            console.error('Balance update failed:', err);
         }
     };
 
@@ -890,10 +893,11 @@ export default function Dashboard() {
                     onCategoryChange={setSelectedCategories}
                     onTransferComplete={handleTransferComplete}
                     accounts={accounts}
+                    allTransactions={allTransactions}
                 />;
             case "accounts": return <AccountsPage globalSearchQuery={globalSearchQuery} accounts={accounts} allTransactions={allTransactions} />;
             case "fd": return <FDManager />;
-            case "transfers": return <TransfersPage globalSearchQuery={globalSearchQuery} allTransactions={allTransactions} onTransferComplete={handleTransferComplete} />;
+            case "transfers": return <TransfersPage globalSearchQuery={globalSearchQuery} allTransactions={allTransactions} onTransferComplete={handleTransferComplete} accounts={accounts} />;
             case "analytics": return <AnalyticsPage transactions={allTransactions} />;
             case "kyc": return <KycPage />;
             case "settings": return <SettingsPage user={user} />;
@@ -933,7 +937,7 @@ export default function Dashboard() {
                         <div className="user-name">{user?.name}</div>
                         <div className="user-email">{user?.email}</div>
                     </div>
-                    <button className="logout-btn" onClick={logout} data-testid="btn-logout" title="Sign Out">
+                    <button className="logout-btn sidebar-logout" onClick={logout} data-testid="btn-logout" title="Sign Out">
                         <LogOut size={18} />
                     </button>
                 </div>
@@ -999,6 +1003,15 @@ export default function Dashboard() {
                                 </>
                             )}
                         </div>
+                        <button 
+                            className="logout-btn topbar-logout" 
+                            onClick={logout} 
+                            data-testid="btn-logout-topbar" 
+                            title="Sign Out"
+                        >
+                            <LogOut size={18} />
+                            <span className="logout-text">Logout</span>
+                        </button>
                     </div>
                 </header>
 

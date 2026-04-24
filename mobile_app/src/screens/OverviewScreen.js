@@ -51,7 +51,11 @@ export default function OverviewScreen({ navigation }) {
 
     const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
     const totalIncome = transactions.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0);
-    const totalExpenses = Math.abs(transactions.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0));
+    const totalExpenses = Math.abs(
+        transactions
+            .filter(t => t.type === 'debit' && t.category !== 'Internal Transfer')
+            .reduce((s, t) => s + t.amount, 0)
+    );
     const unread = notifications.filter(n => n.unread).length;
     const recentTxns = transactions.slice(0, 5);
 

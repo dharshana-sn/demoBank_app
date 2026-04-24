@@ -81,31 +81,34 @@ export default function TransferForm({ onTransferComplete }) {
             return;
         }
 
-        setIsProcessing(true);
-        // Simulate a short network delay for realism
-        await new Promise(resolve => setTimeout(resolve, 1200));
-
-        setIsTransferSuccessful(true);
-        setIsProcessing(false);
-
-        // Create a new transaction for the transfer history
+        const amt = Number(transferFormData.amount);
         const fromAccount = accounts.find(a => a.id === transferFormData.from);
+        if (!fromAccount || fromAccount.balance < amt) {
+            setInputErrors(prev => ({ ...prev, amount: `Insufficient funds. Available: $${(fromAccount?.balance ?? 0).toFixed(2)}` }));
+            return;
+        }
+
+        setIsProcessing(true);
+
         const toAccount = accounts.find(a => a.id === transferFormData.to);
         const newTransaction = {
             id: `txn-tf-${Date.now()}`,
             customerId: "CID-101",
             date: new Date().toISOString().split("T")[0],
-            description: `Transfer: ${fromAccount?.name || "Account"} → ${toAccount?.name || "Account"}`,
-            category: "Transfers",
-            amount: -Number(transferFormData.amount),
+            description: transferFormData.note || `Transfer: ${fromAccount?.name} → ${toAccount?.name}`,
+            category: "Internal Transfer",
+            amount: -amt,
             status: "Completed",
             type: "debit",
-            note: transferFormData.note || ""
+            note: transferFormData.note || "",
+            fromAccountId: transferFormData.from,
+            toAccountId: transferFormData.to,
         };
 
-        if (onTransferComplete) onTransferComplete(newTransaction);
+        if (onTransferComplete) await onTransferComplete(newTransaction);
 
-        // Reset the form to its original blank state
+        setIsTransferSuccessful(true);
+        setIsProcessing(false);
         setTransferFormData({ from: "", to: "", amount: "", note: "", priority: "normal" });
     };
 

@@ -147,21 +147,50 @@ body.dark-mode {
 .logout-btn {
     background: rgba(255, 255, 255, 0.1);
     border: none;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
+    height: 38px;
+    border-radius: 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     color: rgba(255, 255, 255, 0.8);
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
+    gap: 8px;
+    padding: 0 10px;
+}
+
+.sidebar-logout {
+    width: 38px;
+    padding: 0;
+}
+
+.topbar-logout {
+    background: var(--gray-200);
+    color: var(--gray-600);
+    border: 1.5px solid var(--gray-200);
+    display: none; /* Hidden on desktop */
+}
+
+.logout-text {
+    font-size: 0.85rem;
+    font-weight: 600;
 }
 
 .logout-btn:hover {
-    background: rgba(239, 68, 68, 0.3);
-    color: white;
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+    transform: translateY(-1px);
+}
+
+.topbar-logout:hover {
+    background: #FEE2E2;
+    border-color: #FECACA;
+    color: var(--danger);
+}
+
+.logout-btn:active {
+    transform: translateY(0);
 }
 
 /* ── Avatar ────────────────────── */
@@ -603,6 +632,14 @@ body.dark-mode .glassmorphic {
 
     .sidebar-open {
         left: 0;
+    }
+
+    .topbar-logout {
+        display: flex; /* Show on mobile/tablet */
+    }
+
+    .sidebar-logout {
+        display: none; /* Hide in mobile sidebar to avoid duplication */
     }
 
     .sidebar-overlay {

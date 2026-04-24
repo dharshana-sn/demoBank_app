@@ -83,3 +83,28 @@ export const loginUser = (email, password) =>
 export const getKycStatus = () => request('/kyc/status');
 export const deleteKycDocument = (type) =>
     request(`/kyc/document/${type}`, { method: 'DELETE' });
+
+export const uploadKycDocument = async (type, fileUri, fileName, mimeType) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    try {
+        const formData = new FormData();
+        formData.append('document', { uri: fileUri, name: fileName, type: mimeType || 'application/octet-stream' });
+        formData.append('documentType', type);
+        const res = await fetch(`${BASE_URL}/kyc/upload`, {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: res.statusText }));
+            throw new Error(err.error || 'Upload failed');
+        }
+        return res.json();
+    } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') throw new Error('Upload timed out. Please try again.');
+        throw err;
+    }
+};
