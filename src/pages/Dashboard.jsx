@@ -23,7 +23,9 @@ import PayToUser from "../components/PayToUser.jsx";
 import CheckboxFilter from "../components/CheckboxFilter.jsx";
 import TransactionTable from "../components/TransactionTable.jsx";
 import FDManager from "../components/FDManager.jsx";
+import CreditCardPage from "../components/CreditCardPage.jsx";
 import KycPage from "./KycPage.jsx";
+import { StandardComboBox, SearchableComboBox, MultiSelectComboBox } from "../components/ComboBox.jsx";
 import { mockUsers, transactionCategories } from "../data/mockData.js";
 import { getAccounts, getTransactions, createTransaction, updateAccountBalance, getUserProfile, updateUserProfile } from "../api.js";
 import "./Dashboard.css";
@@ -31,8 +33,9 @@ import "../web-components/settings-web-component.js";
 
 const NAVIGATION_ITEMS = [
     { icon: LayoutDashboard, label: "Overview", id: "overview" },
-    { icon: CreditCard, label: "Accounts", id: "accounts" },
+    { icon: Wallet, label: "Accounts", id: "accounts" },
     { icon: PiggyBank, label: "Fixed Deposits", id: "fd" },
+    { icon: CreditCard, label: "Credit Cards", id: "credit-cards" },
     { icon: ArrowLeftRight, label: "Transfers", id: "transfers" },
     { icon: PieChart, label: "Analytics", id: "analytics" },
     { icon: ShieldCheck, label: "KYC Verification", id: "kyc" },
@@ -43,6 +46,7 @@ const PAGE_METADATA = {
     overview: { title: "Dashboard Overview", subtitle: "Your complete financial snapshot" },
     accounts: { title: "My Accounts", subtitle: "Manage and reorder your linked accounts" },
     fd: { title: "Fixed Deposits", subtitle: "Secure your future with high-yield deposits" },
+    "credit-cards": { title: "Credit Cards", subtitle: "Manage your plastic money and pay bills" },
     transfers: { title: "Fund Transfers", subtitle: "Move money between your accounts and others securely" },
     analytics: { title: "Analytics", subtitle: "Visualise your spending and income trends" },
     kyc: { title: "KYC Verification", subtitle: "Upload documents to digitally verify your identity" },
@@ -73,7 +77,9 @@ const handleDownloadCSV = (transactions, filename) => {
 
 function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategories, onCategoryChange, onTransferComplete, accounts, allTransactions }) {
     const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-    const totalIncome = allTransactions.filter(t => t.type === "credit").reduce((s, t) => s + t.amount, 0);
+    const totalIncome = allTransactions
+        .filter(t => t.type === "credit" && accounts.find(a => a.id === t.accountId)?.type !== 'credit')
+        .reduce((s, t) => s + t.amount, 0);
     const totalExpenses = Math.abs(
         allTransactions.filter(t => t.type === "debit" && t.category !== "Internal Transfer").reduce((s, t) => s + t.amount, 0)
     );
@@ -101,7 +107,7 @@ function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategor
             </section>
 
             <section className="section fade-in" style={{ animationDelay: "0.05s" }}>
-                <AccountCards accounts={accounts} />
+                <AccountCards accounts={accounts.filter(a => a.type !== 'credit')} />
             </section>
 
             <div className="two-col fade-in" style={{ animationDelay: "0.08s", alignItems: 'stretch' }}>
@@ -182,14 +188,14 @@ function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
     return (
         <div className="page-content fade-in" data-testid="accounts-page">
             <section className="section">
-                <AccountCards accounts={accounts} />
+                <AccountCards accounts={accounts.filter(a => a.type !== 'credit')} />
             </section>
 
             <section className="section">
                 <div className="card">
                     <div className="card-header">
                         <h2 className="card-title">Account Details</h2>
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        {/* <div style={{ display: 'flex', gap: '8px' }}>
                             <button
                                 className="btn btn-outline btn-sm btn-download"
                                 onClick={() => window.print()}
@@ -204,11 +210,11 @@ function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
                             >
                                 <FileSpreadsheet size={14} /> Download Excel
                             </button>
-                            <span className="badge badge-blue">4 Accounts</span>
-                        </div>
+                            <span className="badge badge-blue">{accounts.length} Accounts</span>
+                        </div> */}
                     </div>
                     <div className="account-details-grid">
-                        {accounts.map(account => {
+                        {accounts.filter(a => a.type !== 'credit').map(account => {
                             const isNegative = account.balance < 0;
                             return (
                                 <div key={account.id} className="account-detail-row" data-testid={`account-detail-${account.id}`}>
@@ -395,7 +401,7 @@ function AnalyticsPage({ transactions }) {
     const CATEGORY_COLORS = {
         Salary: "#10B981", Deposits: "#3B82F6", Withdrawals: "#EF4444",
         Transfers: "#8B5CF6", Bills: "#F59E0B", Shopping: "#EC4899", Dining: "#14B8A6",
-        Investments: "#3B82F6"
+        "Investments (FD)": "#3B82F6"
     };
 
     if (isLoading) {
@@ -533,7 +539,39 @@ function SettingsPage({ user: authUser }) {
         phone: "",
         address: ""
     });
+    
+    // ComboBox Demo states
+    const [standardComboVal, setStandardComboVal] = useState("usd");
+    const [searchComboVal, setSearchComboVal] = useState("us");
+    const [multiComboVal, setMultiComboVal] = useState(["email", "sms"]);
+
+    const comboOptions1 = [
+        { label: "US Dollar (USD)", value: "usd" },
+        { label: "Euro (EUR)", value: "eur" },
+        { label: "British Pound (GBP)", value: "gbp" },
+    ];
+    
+    const comboOptions2 = [
+        { label: "United States", value: "us" },
+        { label: "United Kingdom", value: "uk" },
+        { label: "Canada", value: "ca" },
+        { label: "Australia", value: "au" },
+        { label: "Germany", value: "de" },
+        { label: "France", value: "fr" },
+        { label: "Japan", value: "jp" },
+        { label: "India", value: "in" },
+        { label: "Brazil", value: "br" },
+        { label: "South Africa", value: "za" },
+    ];
+
+    const comboOptions3 = [
+        { label: "Email Notifications", value: "email" },
+        { label: "SMS Alerts", value: "sms" },
+        { label: "Push Notifications", value: "push" },
+        { label: "Monthly Newsletter", value: "news" },
+    ];
     const [isSaved, setIsSaved] = useState(false);
+    const [isPrefsSaved, setIsPrefsSaved] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -548,6 +586,12 @@ function SettingsPage({ user: authUser }) {
                         phone: data.phone || "",
                         address: data.address || ""
                     });
+                    // Load preferences if they exist
+                    if (data.preferences) {
+                        if (data.preferences.currency) setStandardComboVal(data.preferences.currency);
+                        if (data.preferences.branch) setSearchComboVal(data.preferences.branch);
+                        if (data.preferences.notifications) setMultiComboVal(data.preferences.notifications);
+                    }
                 } catch (err) {
                     console.error("Failed to fetch profile:", err);
                 } finally {
@@ -561,7 +605,14 @@ function SettingsPage({ user: authUser }) {
     const handleProfileUpdate = async (event) => {
         event.preventDefault();
         try {
-            const updated = await updateUserProfile("user-1", profile);
+            const updated = await updateUserProfile("user-1", {
+                ...profile,
+                preferences: {
+                    currency: standardComboVal,
+                    branch: searchComboVal,
+                    notifications: multiComboVal
+                }
+            });
             // Update auth context to keep sidebar/topbar in sync
             login({
                 ...authUser,
@@ -572,6 +623,24 @@ function SettingsPage({ user: authUser }) {
             setTimeout(() => setIsSaved(false), 3000);
         } catch (err) {
             alert("Failed to save profile: " + err.message);
+        }
+    };
+
+    const handlePreferencesSave = async (event) => {
+        event.preventDefault();
+        try {
+            await updateUserProfile("user-1", {
+                ...profile,
+                preferences: {
+                    currency: standardComboVal,
+                    branch: searchComboVal,
+                    notifications: multiComboVal
+                }
+            });
+            setIsPrefsSaved(true);
+            setTimeout(() => setIsPrefsSaved(false), 3000);
+        } catch (err) {
+            alert("Failed to save preferences: " + err.message);
         }
     };
 
@@ -630,6 +699,49 @@ function SettingsPage({ user: authUser }) {
                         The settings below are encapsulated within a <strong>Shadow Root (open)</strong>.
                         Standard CSS selectors and XPath from the document root will <strong>not</strong> work here.
                     </p>
+                </div>
+
+                <div className="card" style={{ marginBottom: "24px" }}>
+                    <div className="card-header">
+                        <h2 className="card-title">Preferences (ComboBox)</h2>
+                        <Settings size={20} color="var(--blue-600)" />
+                    </div>
+                    
+                    <form onSubmit={handlePreferencesSave}>
+                        {isPrefsSaved && (
+                            <div style={{ padding: "10px 14px", background: "#D1FAE5", border: "1px solid #6EE7B7", borderRadius: 8, color: "#065F46", fontSize: "0.85rem", marginBottom: 14 }}>
+                                ✅ Preferences saved successfully!
+                            </div>
+                        )}
+                        <div className="form-group">
+                            <label className="form-label">Standard ComboBox (Preferred Currency)</label>
+                            <StandardComboBox 
+                                options={comboOptions1}
+                                value={standardComboVal}
+                                onChange={setStandardComboVal}
+                            />
+                        </div>
+                        
+                        <div className="form-group" style={{ marginTop: "16px" }}>
+                            <label className="form-label">Searchable ComboBox (Primary Branch Location)</label>
+                            <SearchableComboBox 
+                                options={comboOptions2}
+                                value={searchComboVal}
+                                onChange={setSearchComboVal}
+                            />
+                        </div>
+
+                        <div className="form-group" style={{ marginTop: "16px", marginBottom: "24px" }}>
+                            <label className="form-label">Multi-Select ComboBox (Communication Preferences)</label>
+                            <MultiSelectComboBox 
+                                options={comboOptions3}
+                                values={multiComboVal}
+                                onChange={setMultiComboVal}
+                            />
+                        </div>
+
+                        <button type="submit" className="btn btn-primary" data-testid="btn-save-preferences">Save Preferences</button>
+                    </form>
                 </div>
 
                 <settings-web-component data-testid="shadow-settings-root"></settings-web-component>
@@ -803,13 +915,13 @@ export default function Dashboard() {
         } catch (err) {
             console.error('Transfer failed:', err);
             setAllTransactions(prev => prev.filter(t => t.id !== tempId));
-            return;
+            throw err; // Re-throw so caller knows it failed
         }
 
         // Transaction saved — update balances separately so a balance error doesn't hide the saved transaction
         try {
             const amt = Math.abs(newTxn.amount);
-            const isInternal = newTxn.category === "Internal Transfer";
+            const isInternal = newTxn.category === "Internal Transfer" || newTxn.category === "Credit Card" || newTxn.category === "Investments (FD)";
 
             const updatedAccounts = await Promise.all(
                 accounts.map(acc => {
@@ -838,6 +950,7 @@ export default function Dashboard() {
             }, ...prev]);
         } catch (err) {
             console.error('Balance update failed:', err);
+            throw err; // Re-throw
         }
     };
 
@@ -896,7 +1009,8 @@ export default function Dashboard() {
                     allTransactions={allTransactions}
                 />;
             case "accounts": return <AccountsPage globalSearchQuery={globalSearchQuery} accounts={accounts} allTransactions={allTransactions} />;
-            case "fd": return <FDManager />;
+            case "fd": return <FDManager accounts={accounts} onTransferComplete={handleTransferComplete} />;
+            case "credit-cards": return <CreditCardPage accounts={accounts} onTransferComplete={handleTransferComplete} onAccountsRefresh={setAccounts} />;
             case "transfers": return <TransfersPage globalSearchQuery={globalSearchQuery} allTransactions={allTransactions} onTransferComplete={handleTransferComplete} accounts={accounts} />;
             case "analytics": return <AnalyticsPage transactions={allTransactions} />;
             case "kyc": return <KycPage />;
@@ -1016,6 +1130,11 @@ export default function Dashboard() {
                 </header>
 
                 <div key={activeNavigationId}>
+                    <div className="print-only-header">
+                        <img src="/logo.png" alt="Bank Logo" className="print-logo" />
+                        <h1 className="print-title">Transaction Statement</h1>
+                        <p style={{ fontSize: '12px', color: '#666' }}>Generated on {new Date().toLocaleDateString()} · Test Bank Official Document</p>
+                    </div>
                     {renderDynamicPageContent()}
                 </div>
             </div>
