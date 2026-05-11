@@ -6,7 +6,8 @@
 
 // const PROD_URL = 'https://demobank-app-backend.onrender.com/api';
 // const BASE = import.meta.env.DEV ? '/api' : PROD_URL;
-const BASE = 'http://192.168.22.89:5001/api';
+const BASE = 'http://localhost:5001/api';
+// const BASE = 'http://192.168.22.89:5001/api';
 
 export const checkHealth = async () => {
     const controller = new AbortController();
@@ -27,17 +28,34 @@ async function request(path, options = {}) {
         ...options,
         body: options.body ? JSON.stringify(options.body) : undefined,
     });
+    
+    const contentType = res.headers.get('content-type');
     if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(err.error || 'API error');
+        if (contentType && contentType.includes('application/json')) {
+            const err = await res.json();
+            throw new Error(err.error || `Server error: ${res.status}`);
+        } else {
+            const text = await res.text();
+            throw new Error(`Server returned non-JSON error (${res.status}). Please check if the backend server is running.`);
+        }
     }
-    return res.json();
+
+    if (contentType && contentType.includes('application/json')) {
+        return res.json();
+    }
+    return { status: 'ok' };
 }
 
 // ── Accounts ──────────────────────────────────
 export const getAccounts = () => request('/accounts');
 export const updateAccountBalance = (id, delta) =>
     request(`/accounts/${id}/balance`, { method: 'PATCH', body: { delta } });
+export const updateAccount = (id, data) =>
+    request(`/accounts/${id}`, { method: 'PATCH', body: data });
+export const createAccount = (data) =>
+    request('/accounts', { method: 'POST', body: data });
+export const deleteAccount = (id) =>
+    request(`/accounts/${id}`, { method: 'DELETE' });
 
 // ── Transactions ──────────────────────────────
 export const getTransactions = (params = {}) => {

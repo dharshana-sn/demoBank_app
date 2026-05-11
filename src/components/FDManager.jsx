@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { getFixedDeposits, createFixedDeposit } from '../api.js';
-import { PiggyBank, Calculator, TrendingUp, Lock, Globe, Shield, Calendar, Percent, IndianRupee, Clock, Award, ChevronRight, X, CheckCircle, Info } from 'lucide-react';
+import { PiggyBank, Calculator, TrendingUp, Lock, Globe, Shield, Calendar, Percent, IndianRupee, Clock, Award, ChevronRight, X, CheckCircle, Info, Wallet } from 'lucide-react';
 import './FDManager.css';
 
 // Interest rates: tenure key -> { general, senior }
@@ -111,9 +111,10 @@ function calcFD(principal, annualRatePct, durationDays, payoutId) {
     }
 }
 
-export default function FDManager() {
+export default function FDManager({ accounts = [], onTransferComplete }) {
     const [customerType, setCustomerType] = useState('general');
     const [amount, setAmount] = useState(500000);
+    const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id || '');
     const [durationDays, setDurationDays] = useState(1095);
     const [payoutOption, setPayoutOption] = useState('maturity');
     const [showRatesModal, setShowRatesModal] = useState(false);
@@ -168,10 +169,13 @@ export default function FDManager() {
     const handleAmountSlider = (e) => setAmount(Number(e.target.value));
     const handleAmountInput = (e) => {
         const val = e.target.value.replace(/[^0-9]/g, '');
-        if (val === '') { setAmount(10000); return; }
+        if (val === '') { setAmount(0); return; }
         const num = parseInt(val, 10);
-        setAmount(Math.min(Math.max(num, 10000), 50000000));
+        // Allow typing freely, but keep it within a reasonable max for the slider's sake
+        setAmount(Math.min(num, 50000000));
     };
+
+    const handleAccountChange = (e) => setSelectedAccountId(e.target.value);
 
     const handleDurationSlider = (e) => setDurationDays(Number(e.target.value));
 
@@ -182,6 +186,19 @@ export default function FDManager() {
     };
 
     const handleOpenFD = async () => {
+        if (!selectedAccountId) {
+            alert('Please select a source account for the deposit.');
+            return;
+        }
+
+        const fromAcc = accounts.find(a => a.id === selectedAccountId);
+        if (!fromAcc) return;
+
+        if (fromAcc.balance < amount) {
+            alert(`Insufficient funds in ${fromAcc.name}. Available: ${formatINRFull(fromAcc.balance)}`);
+            return;
+        }
+
         const today = new Date().toISOString().split('T')[0];
         const matDate = new Date(Date.now() + durationDays * 86400000).toISOString().split('T')[0];
         const fd = {
@@ -196,12 +213,30 @@ export default function FDManager() {
 
         try {
             const saved = await createFixedDeposit(fd);
+            
+            // Deduct from account balance via a transaction
+            if (onTransferComplete) {
+                await onTransferComplete({
+                    id: `txn-fd-${Date.now()}`,
+                    customerId: 'CID-001',
+                    date: today,
+                    description: `Fixed Deposit Booking - ${calculation.duration}`,
+                    category: 'Investments (FD)',
+                    amount: -amount,
+                    status: 'Completed',
+                    type: 'debit',
+                    fromAccountId: selectedAccountId,
+                    accountId: selectedAccountId
+                });
+            }
+
             setActiveFDs(prev => [saved, ...prev]);
             setOpenedFD(saved);
             setShowSuccessToast(true);
             setTimeout(() => setShowSuccessToast(false), 4000);
         } catch (err) {
             console.error('Failed to book FD:', err);
+            alert('Failed to book Fixed Deposit. Please try again.');
         }
     };
 
@@ -265,9 +300,32 @@ export default function FDManager() {
                                     FD Calculator
                                 </h2>
                             </div>
+                            
+                            {/* Source Account Selection */}
+                            <div className="fd-control-block" style={{ marginTop: '20px' }}>
+                                <div className="fd-control-label">
+                                    <span><Wallet size={14} /> Source Account</span>
+                                    <span className="fd-balance-hint">
+                                        Bal: {formatINRFull(accounts.find(a => a.id === selectedAccountId)?.balance || 0)}
+                                    </span>
+                                </div>
+                                <select 
+                                    className="fd-account-select" 
+                                    value={selectedAccountId} 
+                                    onChange={handleAccountChange}
+                                    data-testid="select-fd-source-account"
+                                >
+                                    <option value="" disabled>Select Account</option>
+                                    {accounts.filter(a => a.type !== 'credit').map(acc => (
+                                        <option key={acc.id} value={acc.id}>
+                                            {acc.name} ({acc.number}) — {formatINRFull(acc.balance)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
                             {/* Customer Type Toggle */}
-                            <div className="fd-toggle-group">
+                            <div className="fd-toggle-group" style={{ marginTop: '20px' }}>
                                 <button
                                     className={`fd-toggle-btn ${customerType === 'general' ? 'fd-toggle-active' : ''}`}
                                     onClick={() => setCustomerType('general')}

@@ -28,4 +28,41 @@ router.patch('/:id/balance', async (req, res) => {
     }
 });
 
+// PATCH /api/accounts/:id — update account details (status, limit, etc.)
+router.patch('/:id', async (req, res) => {
+    try {
+        const account = await Account.findOneAndUpdate(
+            { id: req.params.id },
+            { $set: req.body },
+            { new: true }
+        );
+        if (!account) return res.status(404).json({ error: 'Account not found' });
+        res.json(account);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/accounts — create new account
+router.post('/', async (req, res) => {
+    try {
+        const newAccount = new Account(req.body);
+        await newAccount.save();
+        res.status(201).json(newAccount);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// DELETE /api/accounts/:id — remove account
+router.delete('/:id', async (req, res) => {
+    try {
+        const account = await Account.findOneAndDelete({ id: req.params.id });
+        if (!account) return res.status(404).json({ error: 'Account not found' });
+        res.json({ message: 'Account removed successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export default router;

@@ -10,7 +10,12 @@ const userSchema = new mongoose.Schema({
     provider: { type: String, default: 'local' },
     providerId: { type: String },
     memberSince: { type: String, default: "2022" },
-    pushToken: { type: String }
+    pushToken: { type: String },
+    preferences: {
+        currency: { type: String },
+        branch: { type: String },
+        notifications: [{ type: String }]
+    }
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);

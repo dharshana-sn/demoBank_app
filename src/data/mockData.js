@@ -16,20 +16,21 @@ export const mockAccounts = [
     "color": "#1D4ED8"
   },
   {
-    "id": "acc-3",
-    "name": "Credit Card",
-    "number": "****1192",
-    "balance": -3241.5,
-    "type": "credit",
-    "color": "#2563EB"
-  },
-  {
     "id": "acc-4",
-    "name": "Investments",
+    "name": "Investments (FD)",
     "number": "****6650",
     "balance": 98100.2,
     "type": "investment",
     "color": "#3B82F6"
+  },
+  {
+    "id": "acc-5",
+    "name": "Platinum Credit Card",
+    "number": "****1234",
+    "balance": -2450.00,
+    "type": "credit",
+    "limit": 70000,
+    "color": "#4F46E5"
   }
 ];
 
@@ -1136,7 +1137,7 @@ export const mockTransactions = [
   }
 ];
 
-export const transactionCategories = ["Salary", "Deposits", "Withdrawals", "Transfers", "Bills", "Shopping", "Dining", "Investments"];
+export const transactionCategories = ["Salary", "Deposits", "Withdrawals", "Transfers", "Bills", "Shopping", "Dining", "Investments (FD)", "Credit Card"];
 
 export const mockUsers = [
   {

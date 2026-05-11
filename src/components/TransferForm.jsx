@@ -15,7 +15,13 @@ export default function TransferForm({ onTransferComplete }) {
     const [accounts, setAccounts] = useState([]);
 
     useEffect(() => {
-        getAccounts().then(setAccounts).catch(console.error);
+        getAccounts()
+            .then(data => {
+                // Filter out credit cards from internal transfers
+                const nonCreditAccounts = data.filter(acc => acc.type !== 'credit');
+                setAccounts(nonCreditAccounts);
+            })
+            .catch(console.error);
     }, []);
 
     // Initial state for the transfer process
@@ -88,28 +94,32 @@ export default function TransferForm({ onTransferComplete }) {
             return;
         }
 
-        setIsProcessing(true);
+        try {
+            setIsProcessing(true);
+            const toAccount = accounts.find(a => a.id === transferFormData.to);
+            const newTransaction = {
+                id: `txn-tf-${Date.now()}`,
+                customerId: "CID-101",
+                date: new Date().toISOString().split("T")[0],
+                description: transferFormData.note || `Transfer: ${fromAccount?.name} → ${toAccount?.name}`,
+                category: "Internal Transfer",
+                amount: -amt,
+                status: "Completed",
+                type: "debit",
+                note: transferFormData.note || "",
+                fromAccountId: transferFormData.from,
+                toAccountId: transferFormData.to,
+            };
 
-        const toAccount = accounts.find(a => a.id === transferFormData.to);
-        const newTransaction = {
-            id: `txn-tf-${Date.now()}`,
-            customerId: "CID-101",
-            date: new Date().toISOString().split("T")[0],
-            description: transferFormData.note || `Transfer: ${fromAccount?.name} → ${toAccount?.name}`,
-            category: "Internal Transfer",
-            amount: -amt,
-            status: "Completed",
-            type: "debit",
-            note: transferFormData.note || "",
-            fromAccountId: transferFormData.from,
-            toAccountId: transferFormData.to,
-        };
-
-        if (onTransferComplete) await onTransferComplete(newTransaction);
-
-        setIsTransferSuccessful(true);
-        setIsProcessing(false);
-        setTransferFormData({ from: "", to: "", amount: "", note: "", priority: "normal" });
+            if (onTransferComplete) await onTransferComplete(newTransaction);
+            
+            setIsTransferSuccessful(true);
+            setTransferFormData(prev => ({ ...prev, amount: "", note: "" }));
+        } catch (error) {
+            console.error("Transfer failed, preserving inputs:", error);
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const handleFormReset = () => {

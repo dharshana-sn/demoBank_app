@@ -15,6 +15,7 @@ import "./PayToUser.css";
 
 export default function PayToUser({ onPaymentComplete, accounts = [] }) {
     const [selectedUser, setSelectedUser] = useState(null);
+    const filteredAccounts = accounts.filter(acc => acc.type !== 'credit');
     const [fromAccountId, setFromAccountId] = useState("");
     const [amount, setAmount] = useState("");
     const [note, setNote] = useState("");
@@ -25,10 +26,10 @@ export default function PayToUser({ onPaymentComplete, accounts = [] }) {
     const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
-        if (accounts.length > 0 && !fromAccountId) {
-            setFromAccountId(accounts[0].id);
+        if (filteredAccounts.length > 0 && !fromAccountId) {
+            setFromAccountId(filteredAccounts[0].id);
         }
-    }, [accounts]);
+    }, [filteredAccounts]);
 
     // Lock body scroll when modal is open
     useEffect(() => {
@@ -51,11 +52,12 @@ export default function PayToUser({ onPaymentComplete, accounts = [] }) {
         setIsSuccess(false);
     };
 
-    const handleInitiatePayment = () => {
+    const handleInitiatePayment = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
         if (!fromAccountId) { setError("Please select an account to pay from"); return; }
         if (!selectedUser) { setError("Please select a recipient"); return; }
         if (!amount || isNaN(amount) || Number(amount) <= 0) { setError("Enter a valid amount"); return; }
-        const fromAcc = accounts.find(a => a.id === fromAccountId);
+        const fromAcc = filteredAccounts.find(a => a.id === fromAccountId);
         if (!fromAcc || fromAcc.balance < Number(amount)) {
             setError(`Insufficient funds. Available: $${(fromAcc?.balance ?? 0).toFixed(2)}`);
             return;
@@ -64,7 +66,8 @@ export default function PayToUser({ onPaymentComplete, accounts = [] }) {
         setShowConfirm(true);
     };
 
-    const handleConfirmPayment = async () => {
+    const handleConfirmPayment = async (e) => {
+        if (e && e.preventDefault) e.preventDefault();
         setIsProcessing(true);
         await new Promise(r => setTimeout(r, 1200));
 
@@ -84,21 +87,25 @@ export default function PayToUser({ onPaymentComplete, accounts = [] }) {
         // Delegate persistence to the parent (Dashboard.handleTransferComplete)
         // which calls createTransaction + updates account balances.
         // DO NOT call createTransaction here — it would cause a double-save.
-        if (onPaymentComplete) onPaymentComplete(newTransaction);
-
-        setIsProcessing(false);
-        setShowConfirm(false);
-        setIsSuccess(true);
-        setSelectedUser(null);
-        setAmount("");
-        setNote("");
+        try {
+            if (onPaymentComplete) await onPaymentComplete(newTransaction);
+            setIsSuccess(true);
+            setSelectedUser(null);
+            setAmount("");
+            setNote("");
+        } catch (err) {
+            setError("Failed to complete payment. Please try again.");
+        } finally {
+            setIsProcessing(false);
+            setShowConfirm(false);
+        }
     };
 
     // Render the modal via portal so it covers the ENTIRE viewport
     const confirmModal = showConfirm ? createPortal(
         <div className="ptu-modal-overlay" data-testid="payment-confirm-modal">
             <div className="ptu-modal">
-                <button className="ptu-modal-close" onClick={() => setShowConfirm(false)} data-testid="btn-cancel-confirm">
+                <button type="button" className="ptu-modal-close" onClick={() => setShowConfirm(false)} data-testid="btn-cancel-confirm">
                     <X size={18} />
                 </button>
                 <h3 className="ptu-modal-title">Confirm Payment</h3>
@@ -123,10 +130,11 @@ export default function PayToUser({ onPaymentComplete, accounts = [] }) {
                     )}
                 </div>
                 <div className="ptu-modal-actions">
-                    <button className="btn btn-outline btn-sm" onClick={() => setShowConfirm(false)} data-testid="btn-cancel-payment">
+                    <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowConfirm(false)} data-testid="btn-cancel-payment">
                         Cancel
                     </button>
                     <button
+                        type="button"
                         className="btn btn-primary"
                         onClick={handleConfirmPayment}
                         disabled={isProcessing}
@@ -156,7 +164,7 @@ export default function PayToUser({ onPaymentComplete, accounts = [] }) {
             )}
 
             {/* From Account */}
-            {accounts.length > 0 && (
+            {filteredAccounts.length > 0 && (
                 <div className="form-group" style={{ marginBottom: "12px" }}>
                     <label className="form-label">From Account</label>
                     <select
@@ -165,7 +173,7 @@ export default function PayToUser({ onPaymentComplete, accounts = [] }) {
                         onChange={e => setFromAccountId(e.target.value)}
                         data-testid="select-pay-from-account"
                     >
-                        {accounts.map(acc => (
+                        {filteredAccounts.map(acc => (
                             <option key={acc.id} value={acc.id}>
                                 {acc.name} — ${acc.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                             </option>
@@ -235,6 +243,7 @@ export default function PayToUser({ onPaymentComplete, accounts = [] }) {
                     </div>
                     {error && <span className="form-error">{error}</span>}
                     <button
+                        type="button"
                         className="btn btn-primary ptu-send-btn"
                         onClick={handleInitiatePayment}
                         data-testid="btn-send-payment"

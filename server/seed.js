@@ -14,8 +14,8 @@ import User from './models/User.js';
 const ACCOUNTS = [
     { id: "acc-1", name: "Checking Account", number: "****4521", balance: 12450.75, type: "checking", color: "#1E40AF" },
     { id: "acc-2", name: "Savings Account", number: "****8832", balance: 56789, type: "savings", color: "#1D4ED8" },
-    { id: "acc-3", name: "Credit Card", number: "****1192", balance: -3241.5, type: "credit", color: "#2563EB" },
-    { id: "acc-4", name: "Investments", number: "****6650", balance: 98100.2, type: "investment", color: "#3B82F6" },
+    { id: "acc-4", name: "Investments (FD)", number: "****6650", balance: 98100.2, type: "investment", color: "#3B82F6" },
+    { id: "acc-5", name: "Platinum Credit Card", number: "****1234", balance: -8890.00, type: "credit", limit: 70000, color: "#4F46E5" },
 ];
 
 const INITIAL_FDS = [
@@ -106,10 +106,10 @@ const TRANSACTIONS = [
     { id: "txn-068", customerId: "CID-515", date: "2026-02-13", description: "Deposits Payment #68", category: "Deposits", amount: 1055.66, status: "Completed", type: "credit" },
     { id: "txn-069", customerId: "CID-628", date: "2026-01-26", description: "Withdrawals Payment #69", category: "Withdrawals", amount: -478.08, status: "Completed", type: "debit" },
     { id: "txn-070", customerId: "CID-668", date: "2026-02-01", description: "Deposits Payment #70", category: "Deposits", amount: 1510.66, status: "Completed", type: "credit" },
-    { id: "txn-071", customerId: "CID-310", date: "2026-01-23", description: "Deposits Payment #71", category: "Deposits", amount: 902.20, status: "Completed", type: "credit" },
-    { id: "txn-072", customerId: "CID-274", date: "2026-02-04", description: "Withdrawals Payment #72", category: "Withdrawals", amount: -1525.55, status: "Completed", type: "debit" },
-    { id: "txn-073", customerId: "CID-441", date: "2026-01-15", description: "Dining Payment #73", category: "Dining", amount: -1800.00, status: "Completed", type: "debit" },
-    { id: "txn-074", customerId: "CID-759", date: "2026-02-02", description: "Withdrawals Payment #74", category: "Withdrawals", amount: -649.29, status: "Completed", type: "debit" },
+    { id: "txn-071", customerId: "CID-310", date: "2026-01-23", description: "Spotify Subscription", category: "Entertainment", amount: -15.99, status: "Completed", type: "debit", accountId: "acc-5" },
+    { id: "txn-072", customerId: "CID-274", date: "2026-02-04", description: "Amazon.com Purchase", category: "Shopping", amount: -124.50, status: "Completed", type: "debit", accountId: "acc-5" },
+    { id: "txn-073", customerId: "CID-441", date: "2026-01-15", description: "Starbucks Coffee", category: "Dining", amount: -12.45, status: "Completed", type: "debit", accountId: "acc-5" },
+    { id: "txn-074", customerId: "CID-759", date: "2026-02-02", description: "Uber Ride", category: "Transport", amount: -35.20, status: "Completed", type: "debit", accountId: "acc-5" },
     { id: "txn-075", customerId: "CID-646", date: "2025-12-31", description: "Investments Payment #75", category: "Investments", amount: 1216.43, status: "Completed", type: "credit" },
     { id: "txn-076", customerId: "CID-955", date: "2026-02-07", description: "Bills Payment #76", category: "Bills", amount: -480.98, status: "Completed", type: "debit" },
     { id: "txn-077", customerId: "CID-183", date: "2026-01-06", description: "Salary Payment #77", category: "Salary", amount: 1048.32, status: "Completed", type: "credit" },
@@ -126,9 +126,9 @@ const TRANSACTIONS = [
     { id: "txn-088", customerId: "CID-492", date: "2026-02-09", description: "Bills Payment #88", category: "Bills", amount: -320.60, status: "Completed", type: "debit" },
     { id: "txn-089", customerId: "CID-573", date: "2026-01-21", description: "Withdrawals Payment #89", category: "Withdrawals", amount: -945.00, status: "Completed", type: "debit" },
     { id: "txn-090", customerId: "CID-681", date: "2026-02-17", description: "Deposits Payment #90", category: "Deposits", amount: 2250.00, status: "Completed", type: "credit" },
-    { id: "txn-091", customerId: "CID-792", date: "2026-01-16", description: "Investments Payment #91", category: "Investments", amount: 1680.00, status: "Completed", type: "credit" },
-    { id: "txn-092", customerId: "CID-814", date: "2026-02-26", description: "Shopping Payment #92", category: "Shopping", amount: -875.30, status: "Completed", type: "debit" },
-    { id: "txn-093", customerId: "CID-923", date: "2026-01-04", description: "Dining Payment #93", category: "Dining", amount: -510.45, status: "Completed", type: "debit" },
+    { id: "txn-091", customerId: "CID-792", date: "2026-01-16", description: "Apple Store Online", category: "Shopping", amount: -1299.00, status: "Completed", type: "debit", accountId: "acc-5" },
+    { id: "txn-092", customerId: "CID-814", date: "2026-02-26", description: "Netflix Monthly", category: "Entertainment", amount: -19.99, status: "Completed", type: "debit", accountId: "acc-5" },
+    { id: "txn-093", customerId: "CID-923", date: "2026-01-04", description: "Whole Foods Market", category: "Groceries", amount: -85.60, status: "Completed", type: "debit", accountId: "acc-5" },
     { id: "txn-094", customerId: "CID-134", date: "2026-02-05", description: "Salary Payment #94", category: "Salary", amount: 3200.00, status: "Completed", type: "credit" },
     { id: "txn-095", customerId: "CID-245", date: "2026-01-30", description: "Bills Payment #95", category: "Bills", amount: -1120.75, status: "Completed", type: "debit" },
     { id: "txn-096", customerId: "CID-356", date: "2026-02-28", description: "Transfers Payment #96", category: "Transfers", amount: -750.00, status: "Completed", type: "debit" },
