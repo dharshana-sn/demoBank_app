@@ -1161,7 +1161,7 @@ export default function Dashboard() {
             <aside className={`sidebar ${isSidebarOpen ? "sidebar-open" : ""}`} data-testid="sidebar">
                 <div className="sidebar-brand">
                     <Building2 size={26} color="white" />
-                    <span>Test Bank <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginLeft: '4px', verticalAlign: 'super' }}>v1.0.3</span></span>
+                    <span>Test Bank <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginLeft: '4px', verticalAlign: 'super' }}>v2.0.0</span></span>
                 </div>
 
                 <nav className="sidebar-nav">
