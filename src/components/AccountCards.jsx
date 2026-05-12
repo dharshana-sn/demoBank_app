@@ -20,6 +20,7 @@ import { TrendingUp, TrendingDown, GripVertical, Wallet } from "lucide-react";
 import "./AccountCards.css";
 
 function AccountCard({ account }) {
+    const [copied, setCopied] = useState(false);
     const {
         attributes,
         listeners,
@@ -32,7 +33,7 @@ function AccountCard({ account }) {
     });
 
     const activeCardStyle = {
-        transform: CSS.Transform.toString(transform),
+        transform: CSS.Transform.toString(transform ? { ...transform, y: 0 } : null),
         transition,
         opacity: isDragging ? 0.5 : 1,
         zIndex: isDragging ? 100 : 1,
@@ -59,7 +60,22 @@ function AccountCard({ account }) {
             <div className="ac-header">
                 <div>
                     <p className="ac-name">{account.name}</p>
-                    <p className="ac-number">{account.number}</p>
+                    <p
+                        className="ac-number"
+                        title="Click to copy"
+                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        onClick={e => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(account.number);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                        }}
+                    >
+                        {account.number}
+                        <span style={{ fontSize: '0.65rem', opacity: copied ? 1 : 0.6, transition: 'opacity 0.2s' }}>
+                            {copied ? '✅ Copied!' : '📋'}
+                        </span>
+                    </p>
                 </div>
                 <Wallet size={28} color="rgba(255,255,255,0.5)" />
             </div>

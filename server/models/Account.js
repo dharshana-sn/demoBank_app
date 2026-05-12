@@ -9,6 +9,7 @@ const accountSchema = new mongoose.Schema({
     type: { type: String, enum: ['checking', 'savings', 'credit', 'investment'], required: true },
     status: { type: String, enum: ['active', 'blocked', 'inactive'], default: 'active' },
     color: { type: String, default: '#3B82F6' },
+    userId: { type: String, required: true },
 }, { timestamps: true });
 
 export default mongoose.model('Account', accountSchema);

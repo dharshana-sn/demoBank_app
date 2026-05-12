@@ -6,9 +6,11 @@ import {
     RefreshCcw, CreditCard as CardIcon
 } from 'lucide-react';
 import { updateAccount, createAccount, getAccounts, deleteAccount, getTransactions, createTransaction } from '../api.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import './CreditCardPage.css';
 
 export default function CreditCardPage({ accounts: initialAccounts = [], onTransferComplete, onAccountsRefresh }) {
+    const { user } = useAuth();
     const [accounts, setAccounts] = useState(initialAccounts);
     const [sourceAccountId, setSourceAccountId] = useState('');
     const [amount, setAmount] = useState('');
@@ -43,20 +45,31 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
         }
     }, [accounts]);
 
+    // Auto-clear status notifications after 30 seconds
+    useEffect(() => {
+        if (status.message) {
+            const timer = setTimeout(() => {
+                setStatus({ type: '', message: '' });
+            }, 15000);
+            return () => clearTimeout(timer);
+        }
+    }, [status]);
+
     const sourceAccount = fundingAccounts.find(a => a.id === sourceAccountId);
     const outstandingBalance = creditCard ? Math.abs(creditCard.balance) : 0;
     const availableLimit = creditCard ? (creditCard.limit || 0) + creditCard.balance : 0;
 
-    const refreshData = async () => {
+    const refreshData = async (silent = false) => {
+        if (!user?.id) return;
         setIsProcessing(true);
         try {
-            const data = await getAccounts();
-            lastParentAccounts.current = data; // Prevent the next useEffect cycle from overwriting
+            const data = await getAccounts({ userId: user.id });
+            lastParentAccounts.current = data; 
             setAccounts(data);
             if (onAccountsRefresh) onAccountsRefresh(data);
-            setStatus({ type: 'success', message: 'Data refreshed successfully' });
+            if (!silent) setStatus({ type: 'success', message: 'Data refreshed successfully' });
         } catch (err) {
-            setStatus({ type: 'error', message: 'Failed to refresh data' });
+            if (!silent) setStatus({ type: 'error', message: 'Failed to refresh data' });
         } finally {
             setIsProcessing(false);
         }
@@ -74,9 +87,10 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
         setIsProcessing(true);
         setStatus({ type: '', message: '' });
         try {
-            await onTransferComplete({
+            const result = await onTransferComplete({
                 id: `txn-cc-${Date.now()}`,
                 customerId: 'CID-001',
+                userId: user.id,
                 date: new Date().toISOString().split('T')[0],
                 description: `Credit Card Payment - ${creditCard.name}`,
                 category: 'Credit Card',
@@ -87,9 +101,19 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
                 toAccountId: creditCard.id,
                 accountId: sourceAccountId
             });
+
+            // Optimistically update local state for immediate feedback
+            const updatedAccounts = accounts.map(acc => {
+                if (acc.id === sourceAccountId) return { ...acc, balance: acc.balance - payAmount };
+                if (acc.id === creditCard.id) return { ...acc, balance: acc.balance + payAmount };
+                return acc;
+            });
+            setAccounts(updatedAccounts);
+            lastParentAccounts.current = updatedAccounts;
+
             setStatus({ type: 'success', message: `Successfully paid $${payAmount.toLocaleString()} to ${creditCard.name}` });
             setAmount('');
-            await refreshData();
+            await refreshData(true); // Silent refresh to sync with DB
         } catch (err) {
             setStatus({ type: 'error', message: 'Payment failed. Please try again.' });
         } finally {
@@ -101,23 +125,31 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
         if (!newLimit || isNaN(newLimit)) { setStatus({ type: 'error', message: 'Please enter a valid number' }); return; }
         try {
             setIsProcessing(true);
-            await updateAccount(creditCard.id, { limit: parseFloat(newLimit) });
-            setStatus({ type: 'success', message: 'Credit limit updated successfully!' });
+            const updatedAccount = await updateAccount(creditCard.id, { limit: parseFloat(newLimit) });
+            
+            // Update local state immediately
+            const updatedAccounts = accounts.map(acc => acc.id === updatedAccount.id ? updatedAccount : acc);
+            setAccounts(updatedAccounts);
+            lastParentAccounts.current = updatedAccounts;
+            
+            // Notify parent
+            if (onAccountsRefresh) onAccountsRefresh(updatedAccounts);
+
+            setStatus({ type: 'success', message: `Your credit limit for ${creditCard.name} has been increased to $${parseFloat(newLimit).toLocaleString()}!` });
             setShowLimitModal(false);
             setNewLimit('');
-            await refreshData();
         } catch (err) {
-            setStatus({ type: 'error', message: 'Failed to update limit.' });
+            setStatus({ type: 'error', message: 'Failed to update limit: ' + err.message });
         } finally {
             setIsProcessing(false);
         }
     };
 
     const handleRequestStatement = async () => {
-        if (!creditCard) return;
+        if (!creditCard || !user?.id) return;
         setIsProcessing(true);
         try {
-            const allTxns = await getTransactions();
+            const allTxns = await getTransactions({ userId: user.id });
             // Filter for transactions belonging to this card
             // We check both fromAccountId and toAccountId (for payments)
             const cardTxns = allTxns.filter(t => 
@@ -153,6 +185,7 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
             const newTxn = {
                 id: `txn-man-${Date.now()}`,
                 customerId: 'CID-001',
+                userId: user.id,
                 date: new Date().toISOString().split('T')[0],
                 description: manualTxn.description,
                 category: manualTxn.category,
@@ -165,16 +198,24 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
             // 1. Create transaction record
             await createTransaction(newTxn);
             
-            // 2. Update card balance (decrease balance by adding negative amount)
-            await updateAccount(creditCard.id, { balance: creditCard.balance - amt });
+            // 2. Update card balance in DB
+            const updatedAccount = await updateAccount(creditCard.id, { balance: creditCard.balance - amt });
             
-            setStatus({ type: 'success', message: `Recorded ${manualTxn.description} of $${amt.toLocaleString()}` });
+            // 3. Update local state immediately
+            const updatedAccounts = accounts.map(acc => acc.id === updatedAccount.id ? updatedAccount : acc);
+            setAccounts(updatedAccounts);
+            lastParentAccounts.current = updatedAccounts;
+            if (onAccountsRefresh) onAccountsRefresh(updatedAccounts);
+
+            setStatus({ type: 'success', message: `Recorded ${manualTxn.description} of $${amt.toLocaleString()} on ${creditCard.name}` });
             setManualTxn({ description: '', category: 'Shopping', amount: '' });
             setShowManualTxnModal(false);
-            await refreshData();
-            if (showStatement) await handleRequestStatement(); // Refresh statement if open
+            
+            // 4. Refresh other data (like transactions) silently
+            await refreshData(true);
+            if (showStatement) await handleRequestStatement(); 
         } catch (err) {
-            setStatus({ type: 'error', message: 'Failed to record transaction.' });
+            setStatus({ type: 'error', message: 'Failed to record transaction: ' + err.message });
         } finally {
             setIsProcessing(false);
         }
@@ -192,7 +233,8 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
                 type: 'credit',
                 limit: type === 'gold' ? 30000 : type === 'platinum' ? 70000 : 50000,
                 color: type === 'gold' ? '#F59E0B' : type === 'platinum' ? '#4F46E5' : '#10B981',
-                status: 'active'
+                status: 'active',
+                userId: user.id
             };
             const savedCard = await createAccount(newCard);
             const cardToAdd = savedCard?.id ? savedCard : newCard;
@@ -274,7 +316,7 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
                                 <div className="cc-footer">
                                     <div className="cc-holder">
                                         <div className="cc-holder-label">Card Holder</div>
-                                        <div className="cc-holder-name">TEST USER</div>
+                                        <div className="cc-holder-name">{user?.name?.toUpperCase() || 'TEST USER'}</div>
                                     </div>
                                     <div className="cc-expiry">
                                         <div className="cc-expiry-label">Expires</div>
@@ -289,6 +331,12 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
                                     <div className="cc-info-label">Outstanding Balance</div>
                                     <div className="cc-info-value debit">
                                         ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </div>
+                                </div>
+                                <div className="cc-info-item limit-item">
+                                    <div className="cc-info-label">Total Credit Limit</div>
+                                    <div className="cc-info-value" style={{ color: 'var(--gray-700)' }}>
+                                        ${(creditCard.limit || 0).toLocaleString()}
                                     </div>
                                 </div>
                                 <div className="cc-info-item limit-item">

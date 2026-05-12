@@ -12,27 +12,43 @@ import FixedDeposit from './models/FixedDeposit.js';
 import User from './models/User.js';
 
 const ACCOUNTS = [
-    { id: "acc-1", name: "Checking Account", number: "****4521", balance: 12450.75, type: "checking", color: "#1E40AF" },
-    { id: "acc-2", name: "Savings Account", number: "****8832", balance: 56789, type: "savings", color: "#1D4ED8" },
-    { id: "acc-4", name: "Investments (FD)", number: "****6650", balance: 98100.2, type: "investment", color: "#3B82F6" },
-    { id: "acc-5", name: "Platinum Credit Card", number: "****1234", balance: -8890.00, type: "credit", limit: 70000, color: "#4F46E5" },
+    { id: "acc-1", name: "Checking Account", number: "4521678901", balance: 62450.75, type: "checking", color: "#1E40AF", userId: "user-1" },
+    { id: "acc-2", name: "Savings Account", number: "8832456701", balance: 56789, type: "savings", color: "#1D4ED8", userId: "user-1" },
+    { id: "acc-4", name: "Investments (FD)", number: "6650234501", balance: 98100.2, type: "investment", color: "#3B82F6", userId: "user-1" },
+    { id: "acc-5", name: "Platinum Credit Card", number: "5678901234", balance: -8890.00, type: "credit", limit: 70000, color: "#4F46E5", userId: "user-1" },
+    
+    // Accounts for the second user (Recipient)
+    { id: "acc-101", name: "Personal Savings", number: "9876543210", balance: 2500.00, type: "savings", color: "#10B981", userId: "user-2" },
+    { id: "acc-102", name: "Main Checking", number: "1234567890", balance: 1200.50, type: "checking", color: "#F59E0B", userId: "user-2" },
 ];
 
 const INITIAL_FDS = [
     { id: "fd-1", principal: 50000, rate: 6.5, tenure: "1 Year", startDate: "2025-06-15", maturityDate: "2026-06-15", maturityAmount: 53250, status: "active" },
     { id: "fd-2", principal: 150000, rate: 7.5, tenure: "3 Years", startDate: "2024-02-10", maturityDate: "2027-02-10", maturityAmount: 183750, status: "active" },
     { id: "fd-3", principal: 300000, rate: 7.1, tenure: "5 Years", startDate: "2023-08-01", maturityDate: "2028-08-01", maturityAmount: 406500, status: "active" },
+    { id: "fd-4", principal: 75000, rate: 6.8, tenure: "2 Years", startDate: "2025-01-10", maturityDate: "2027-01-10", maturityAmount: 87855, status: "active" },
 ];
 
-const INITIAL_USER = {
-    id: "user-1",
-    name: "Test User",
-    email: "testUser@gmail.com",
-    phone: "+1 (555) 012-3456",
-    address: "123 Oak Street, New York, NY 10001",
-    avatar: "TU",
-    memberSince: "2022"
-};
+const INITIAL_USERS = [
+    {
+        id: "user-1",
+        name: "Test User",
+        email: "testUser@gmail.com",
+        phone: "+1 (555) 012-3456",
+        address: "123 Oak Street, New York, NY 10001",
+        avatar: "TU",
+        memberSince: "2022"
+    },
+    {
+        id: "user-2",
+        name: "John Doe",
+        email: "john.doe@example.com",
+        phone: "+1 (555) 987-6543",
+        address: "456 Pine Avenue, Los Angeles, CA 90001",
+        avatar: "JD",
+        memberSince: "2023"
+    }
+];
 
 // All 100+ transactions from mockData.js
 const TRANSACTIONS = [
@@ -138,6 +154,9 @@ const TRANSACTIONS = [
     { id: "txn-100", customerId: "CID-790", date: "2026-02-25", description: "Salary Payment #100", category: "Salary", amount: 4500.00, status: "Completed", type: "credit" },
 ];
 
+// Add userId: "user-1" to all transactions for simplicity in seeding
+const ENRICHED_TRANSACTIONS = TRANSACTIONS.map(t => ({ ...t, userId: "user-1" }));
+
 async function seed() {
     try {
         await mongoose.connect(process.env.MONGO_URI);
@@ -154,14 +173,14 @@ async function seed() {
         await Account.insertMany(ACCOUNTS);
         console.log(`Seeded ${ACCOUNTS.length} accounts`);
 
-        await Transaction.insertMany(TRANSACTIONS);
-        console.log(`Seeded ${TRANSACTIONS.length} transactions`);
+        await Transaction.insertMany(ENRICHED_TRANSACTIONS);
+        console.log(`Seeded ${ENRICHED_TRANSACTIONS.length} transactions`);
 
         await FixedDeposit.insertMany(INITIAL_FDS);
         console.log(`Seeded ${INITIAL_FDS.length} fixed deposits`);
 
-        await User.create(INITIAL_USER);
-        console.log('Seeded initial user profile');
+        await User.insertMany(INITIAL_USERS);
+        console.log(`Seeded ${INITIAL_USERS.length} user profiles`);
 
         console.log('Seed complete!');
     } catch (err) {

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { getFixedDeposits, createFixedDeposit } from '../api.js';
-import { PiggyBank, Calculator, TrendingUp, Lock, Globe, Shield, Calendar, Percent, IndianRupee, Clock, Award, ChevronRight, X, CheckCircle, Info, Wallet } from 'lucide-react';
+import { PiggyBank, Calculator, TrendingUp, Lock, Globe, Shield, Calendar, Percent, DollarSign, Clock, Award, ChevronRight, X, CheckCircle, Info, Wallet } from 'lucide-react';
 import './FDManager.css';
 
 // Interest rates: tenure key -> { general, senior }
@@ -34,13 +34,13 @@ const PAYOUT_OPTIONS = [
 ];
 
 function formatINR(num) {
-    if (num >= 10000000) return `₹${(num / 10000000).toFixed(2)} Cr`;
-    if (num >= 100000) return `₹${(num / 100000).toFixed(2)} L`;
-    return `₹${num.toLocaleString('en-IN')}`;
+    if (num >= 10000000) return `$${(num / 10000000).toFixed(2)}M`;
+    if (num >= 100000) return `$${(num / 1000).toFixed(1)}K`;
+    return `$${num.toLocaleString('en-US')}`;
 }
 
 function formatINRFull(num) {
-    return `₹${Math.round(num).toLocaleString('en-IN')}`;
+    return `$${Math.round(num).toLocaleString('en-US')}`;
 }
 
 function addDaysToDate(date, days) {
@@ -185,7 +185,14 @@ export default function FDManager({ accounts = [], onTransferComplete }) {
         setDurationDays(midDays);
     };
 
+    const MAX_FDS = 8;
+
     const handleOpenFD = async () => {
+        if (activeFDs.length >= MAX_FDS) {
+            alert(`You have reached the maximum limit of ${MAX_FDS} active Fixed Deposits. Please wait for an existing FD to mature before opening a new one.`);
+            return;
+        }
+
         if (!selectedAccountId) {
             alert('Please select a source account for the deposit.');
             return;
@@ -195,7 +202,7 @@ export default function FDManager({ accounts = [], onTransferComplete }) {
         if (!fromAcc) return;
 
         if (fromAcc.balance < amount) {
-            alert(`Insufficient funds in ${fromAcc.name}. Available: ${formatINRFull(fromAcc.balance)}`);
+            alert(`Insufficient funds in ${fromAcc.name}. Available: $${fromAcc.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`);
             return;
         }
 
@@ -345,13 +352,13 @@ export default function FDManager({ accounts = [], onTransferComplete }) {
                             {/* Amount Slider */}
                             <div className="fd-control-block">
                                 <div className="fd-control-label">
-                                    <span><IndianRupee size={14} /> Investment Amount</span>
+                                    <span><DollarSign size={14} /> Investment Amount</span>
                                     <div className="fd-amount-input-wrap">
-                                        <span className="fd-rupee-sign">₹</span>
+                                        <span className="fd-rupee-sign">$</span>
                                         <input
                                             type="text"
                                             className="fd-amount-input"
-                                            value={amount.toLocaleString('en-IN')}
+                                            value={amount.toLocaleString('en-US')}
                                             onChange={handleAmountInput}
                                             data-testid="input-fd-amount"
                                         />
@@ -368,8 +375,8 @@ export default function FDManager({ accounts = [], onTransferComplete }) {
                                     data-testid="slider-fd-amount"
                                 />
                                 <div className="fd-slider-labels">
-                                    <span>₹10K</span>
-                                    <span>₹50 Cr</span>
+                                    <span>$10K</span>
+                                    <span>$50M</span>
                                 </div>
                             </div>
 
@@ -513,8 +520,15 @@ export default function FDManager({ accounts = [], onTransferComplete }) {
                             </div>
 
                             <div className="fd-summary-actions">
-                                <button className="btn fd-btn-open" data-testid="btn-open-fd" onClick={handleOpenFD}>
-                                    Open Fixed Deposit <ChevronRight size={16} />
+                                <button
+                                    className="btn fd-btn-open"
+                                    data-testid="btn-open-fd"
+                                    onClick={handleOpenFD}
+                                    disabled={activeFDs.length >= MAX_FDS}
+                                    title={activeFDs.length >= MAX_FDS ? 'Maximum of 8 FDs reached' : 'Open a new Fixed Deposit'}
+                                    style={activeFDs.length >= MAX_FDS ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                                >
+                                    {activeFDs.length >= MAX_FDS ? `Limit Reached (${MAX_FDS}/8)` : 'Open Fixed Deposit'} <ChevronRight size={16} />
                                 </button>
                                 <button className="btn fd-btn-rates" data-testid="btn-view-rates" onClick={handleViewAllRates}>
                                     View All Interest Rates
@@ -539,7 +553,10 @@ export default function FDManager({ accounts = [], onTransferComplete }) {
                                     <PiggyBank size={20} style={{ marginRight: 8, color: 'var(--blue-600)' }} />
                                     Your Active Deposits
                                 </h2>
-                                <span className="badge badge-blue">{activeFDs.length} Active</span>
+                                <span className="badge badge-blue">
+                                    {activeFDs.length} / 8 Active
+                                    {activeFDs.length >= 8 && <span style={{ marginLeft: '6px', color: 'var(--danger)' }}>· Limit Reached</span>}
+                                </span>
                             </div>
                             <div className="fd-list">
                                 {activeFDs.map(fd => {

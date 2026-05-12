@@ -1141,25 +1141,32 @@ export const transactionCategories = ["Salary", "Deposits", "Withdrawals", "Tran
 
 export const mockUsers = [
   {
+    "id": "user-1",
+    "name": "Test User",
+    "email": "testUser@gmail.com",
+    "avatar": "TU",
+    "accountNumber": "4521678901"
+  },
+  {
     "id": "usr-1",
     "name": "Alice Johnson",
     "email": "alice.johnson@email.com",
     "avatar": "A",
-    "accountNumber": "****7721"
+    "accountNumber": "4528172635"
   },
   {
     "id": "usr-2",
     "name": "Bob Williams",
     "email": "bob.williams@email.com",
     "avatar": "B",
-    "accountNumber": "****3345"
+    "accountNumber": "9823746150"
   },
   {
     "id": "usr-3",
     "name": "Catherine Lee",
     "email": "catherine.lee@email.com",
     "avatar": "C",
-    "accountNumber": "****5589"
+    "accountNumber": "6152437890"
   },
   {
     "id": "usr-4",

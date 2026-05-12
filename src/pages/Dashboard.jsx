@@ -19,6 +19,7 @@ import {
 import GlobalSearch from "../components/GlobalSearch.jsx";
 import AccountCards from "../components/AccountCards.jsx";
 import TransferForm from "../components/TransferForm.jsx";
+import SameBankTransferForm from "../components/SameBankTransferForm.jsx";
 import PayToUser from "../components/PayToUser.jsx";
 import CheckboxFilter from "../components/CheckboxFilter.jsx";
 import TransactionTable from "../components/TransactionTable.jsx";
@@ -130,7 +131,7 @@ function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategor
                         ></iframe>
                     </div>
                 </div>
-                <TransferForm onTransferComplete={onTransferComplete} />
+                <TransferForm onTransferComplete={onTransferComplete} accounts={accounts} />
             </div>
 
             <div className="two-col fade-in" style={{ animationDelay: "0.1s" }}>
@@ -187,7 +188,7 @@ function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
 
     return (
         <div className="page-content fade-in" data-testid="accounts-page">
-            <section className="section">
+            <section className="section" style={{ paddingTop: '24px' }}>
                 <AccountCards accounts={accounts.filter(a => a.type !== 'credit')} />
             </section>
 
@@ -223,7 +224,20 @@ function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
                                     </div>
                                     <div className="acc-det-info">
                                         <div className="acc-det-name">{account.name}</div>
-                                        <div className="acc-det-num">{account.number} · {account.type.charAt(0).toUpperCase() + account.type.slice(1)}</div>
+                                        <div
+                                            className="acc-det-num"
+                                            title="Click to copy account number"
+                                            style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(account.number);
+                                                // Brief visual feedback via a temporary tooltip
+                                                const el = document.getElementById(`copy-hint-${account.id}`);
+                                                if (el) { el.style.opacity = 1; setTimeout(() => { el.style.opacity = 0; }, 1800); }
+                                            }}
+                                        >
+                                            {account.number} · {account.type.charAt(0).toUpperCase() + account.type.slice(1)}
+                                            <span id={`copy-hint-${account.id}`} style={{ fontSize: '0.72rem', color: 'var(--success)', opacity: 0, transition: 'opacity 0.3s' }}>✅ Copied!</span>
+                                        </div>
                                     </div>
                                     <div className={`acc-det-bal ${isNegative ? "debit" : "credit"}`}>
                                         {isNegative ? "-" : "+"}${Math.abs(account.balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
@@ -267,7 +281,7 @@ function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
     );
 }
 
-function TransfersPage({ globalSearchQuery, allTransactions, onTransferComplete, accounts }) {
+function TransfersPage({ globalSearchQuery, allTransactions, onTransferComplete, accounts, user }) {
     const tableRef = useRef(null);
     const query = globalSearchQuery.toLowerCase();
     const transferHistory = allTransactions
@@ -279,28 +293,7 @@ function TransfersPage({ globalSearchQuery, allTransactions, onTransferComplete,
             Math.abs(transaction.amount).toString().includes(query)
         );
 
-    const handleDownloadStatement = () => {
-        const headers = ["Date", "Customer ID", "Description", "Category", "Amount", "Status", "Type"];
-        const rows = transferHistory.map(t => [
-            t.date,
-            t.customerId,
-            `"${t.description}"`,
-            t.category,
-            t.amount.toFixed(2),
-            t.status,
-            t.type
-        ]);
-        const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `transfer_statement_${new Date().toISOString().split("T")[0]}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    };
+    const [activeTab, setActiveTab] = useState("internal");
 
     return (
         <div className="page-content fade-in" data-testid="transfers-page">
@@ -323,9 +316,47 @@ function TransfersPage({ globalSearchQuery, allTransactions, onTransferComplete,
                 </div>
             </section>
 
-            <div className="two-col section fade-in" style={{ padding: "0 28px 20px" }}>
-                <TransferForm onTransferComplete={onTransferComplete} />
-                <PayToUser onPaymentComplete={onTransferComplete} accounts={accounts} />
+            <div className="section fade-in" style={{ padding: "0 28px 20px" }}>
+                <div className="transfer-tabs-container glassmorphic">
+                    <div className="transfer-tabs">
+                        <button 
+                            className={`transfer-tab ${activeTab === "internal" ? "active" : ""}`}
+                            onClick={() => setActiveTab("internal")}
+                            data-testid="tab-internal-transfer"
+                        >
+                            <ArrowLeftRight size={18} />
+                            <span>Internal Transfer</span>
+                        </button>
+                        <button 
+                            className={`transfer-tab ${activeTab === "same-bank" ? "active" : ""}`}
+                            onClick={() => setActiveTab("same-bank")}
+                            data-testid="tab-same-bank-transfer"
+                        >
+                            <Building2 size={18} />
+                            <span>Same Bank Transfer</span>
+                        </button>
+                        <button 
+                            className={`transfer-tab ${activeTab === "pay-user" ? "active" : ""}`}
+                            onClick={() => setActiveTab("pay-user")}
+                            data-testid="tab-pay-user"
+                        >
+                            <User size={18} />
+                            <span>Pay to Contact</span>
+                        </button>
+                    </div>
+                    
+                    <div className="transfer-tab-content fade-in" key={activeTab}>
+                        {activeTab === "internal" && (
+                            <TransferForm onTransferComplete={onTransferComplete} accounts={accounts} />
+                        )}
+                        {activeTab === "same-bank" && (
+                            <SameBankTransferForm onTransferComplete={onTransferComplete} accounts={accounts} user={user} />
+                        )}
+                        {activeTab === "pay-user" && (
+                            <PayToUser onPaymentComplete={onTransferComplete} accounts={accounts} user={user} />
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Transfer Transaction Table */}
@@ -378,7 +409,7 @@ function SearchResultsPage({ transactions, query }) {
     );
 }
 
-function AnalyticsPage({ transactions }) {
+function AnalyticsPage({ transactions, accounts = [] }) {
     const [isFlutterVisible, setIsFlutterVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -429,7 +460,7 @@ function AnalyticsPage({ transactions }) {
     }
 
     if (isFlutterVisible) {
-        return <FlutterAnalytics onBack={() => setIsFlutterVisible(false)} />;
+        return <FlutterAnalytics onBack={() => setIsFlutterVisible(false)} accounts={accounts} allTransactions={allTransactions} />;
     }
 
     return (
@@ -456,19 +487,22 @@ function AnalyticsPage({ transactions }) {
                 <div className="summary-card">
                     <span className="summary-label">Total Income</span>
                     <span className="summary-value credit">
-                        +${transactions.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0).toLocaleString()}
+                        +${transactions.filter(t => t.type === 'credit' && accounts.find(a => a.id === t.accountId)?.type !== 'credit').reduce((s, t) => s + t.amount, 0).toLocaleString()}
                     </span>
                 </div>
                 <div className="summary-card">
                     <span className="summary-label">Total Expenses</span>
                     <span className="summary-value debit">
-                        -${Math.abs(transactions.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0)).toLocaleString()}
+                        -${Math.abs(transactions.filter(t => t.type === 'debit' && t.category !== 'Internal Transfer').reduce((s, t) => s + t.amount, 0)).toLocaleString()}
                     </span>
                 </div>
                 <div className="summary-card">
                     <span className="summary-label">Net Savings</span>
                     <span className="summary-value">
-                        +${(transactions.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0) + transactions.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0)).toLocaleString()}
+                        +${(
+                            transactions.filter(t => t.type === 'credit' && accounts.find(a => a.id === t.accountId)?.type !== 'credit').reduce((s, t) => s + t.amount, 0) -
+                            Math.abs(transactions.filter(t => t.type === 'debit' && t.category !== 'Internal Transfer').reduce((s, t) => s + t.amount, 0))
+                        ).toLocaleString()}
                     </span>
                 </div>
                 <div className="summary-card">
@@ -578,8 +612,7 @@ function SettingsPage({ user: authUser }) {
         const fetchProfile = async () => {
             if (authUser?.email) {
                 try {
-                    // Try to fetch by email or a fixed ID since we only have one test user
-                    const data = await getUserProfile("user-1");
+                    const data = await getUserProfile(authUser.id);
                     setProfile({
                         name: data.name,
                         email: data.email,
@@ -605,7 +638,7 @@ function SettingsPage({ user: authUser }) {
     const handleProfileUpdate = async (event) => {
         event.preventDefault();
         try {
-            const updated = await updateUserProfile("user-1", {
+            const updated = await updateUserProfile(authUser.id, {
                 ...profile,
                 preferences: {
                     currency: standardComboVal,
@@ -629,7 +662,7 @@ function SettingsPage({ user: authUser }) {
     const handlePreferencesSave = async (event) => {
         event.preventDefault();
         try {
-            await updateUserProfile("user-1", {
+            await updateUserProfile(authUser.id, {
                 ...profile,
                 preferences: {
                     currency: standardComboVal,
@@ -750,7 +783,33 @@ function SettingsPage({ user: authUser }) {
     );
 }
 
-function FlutterAnalytics({ onBack }) {
+function FlutterAnalytics({ onBack, accounts = [], allTransactions = [] }) {
+    // 1. Calculate Summary Metrics
+    const totalNetWorth = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+    const monthlyIncome = allTransactions
+        .filter(t => t.type === "credit" && accounts.find(a => a.id === t.accountId)?.type !== 'credit')
+        .reduce((s, t) => s + t.amount, 0);
+    const monthlyExpenses = Math.abs(
+        allTransactions.filter(t => t.type === "debit" && t.category !== "Internal Transfer").reduce((s, t) => s + t.amount, 0)
+    );
+    const savingsRate = monthlyIncome > 0 
+        ? ((monthlyIncome - monthlyExpenses) / monthlyIncome * 100).toFixed(1) 
+        : 0;
+
+    // 2. Calculate Category Spending Distribution
+    const categorySpendingMap = allTransactions
+        .filter(t => t.type === "debit" && t.category !== "Internal Transfer")
+        .reduce((acc, t) => {
+            acc[t.category] = (acc[t.category] || 0) + Math.abs(t.amount);
+            return acc;
+        }, {});
+
+    const sortedCategories = Object.entries(categorySpendingMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10); // Top 10 categories
+
+    const maxSpend = Math.max(...sortedCategories.map(c => c[1]), 1000);
+    const chartHeight = 220; // Max bar height in pixels
     return (
         <div className="page-content fade-in" style={{
             height: 'calc(100vh - 120px)',
@@ -789,15 +848,15 @@ function FlutterAnalytics({ onBack }) {
 
                 {/* Summary Strips (Rendered as SVG Groups) */}
                 {[
-                    { label: "Total Net Worth", value: "$124,500.00", color: "#3b82f6", x: 25 },
-                    { label: "Monthly Income", value: "+$12,450.25", color: "#10b981", x: 270 },
-                    { label: "Monthly Expenses", value: "-$4,210.50", color: "#ef4444", x: 515 },
-                    { label: "Savings Rate", value: "66.2%", color: "#8b5cf6", x: 760 },
+                    { label: "Total Net Worth", value: `$${totalNetWorth.toLocaleString("en-US", { minimumFractionDigits: 2 })}`, color: "#3b82f6", x: 25 },
+                    { label: "Total Income", value: `+$${monthlyIncome.toLocaleString("en-US", { minimumFractionDigits: 2 })}`, color: "#10b981", x: 270 },
+                    { label: "Total Expenses", value: `-$${monthlyExpenses.toLocaleString("en-US", { minimumFractionDigits: 2 })}`, color: "#ef4444", x: 515 },
+                    { label: "Savings Rate", value: `${savingsRate}%`, color: "#8b5cf6", x: 760 },
                 ].map((item, i) => (
                     <g key={`summary-${i}`} transform={`translate(${item.x}, 90)`}>
                         <rect width="215" height="100" rx="12" fill="#ffffff" stroke="#e5e7eb" strokeWidth="1" />
                         <text x="20" y="35" fontFamily="Inter, sans-serif" fontSize="12" fontWeight="600" fill="#64748b" textTransform="uppercase">{item.label}</text>
-                        <text x="20" y="75" fontFamily="Inter, sans-serif" fontSize="24" fontWeight="800" fill={item.color}>{item.value}</text>
+                        <text x="20" y="75" fontFamily="Inter, sans-serif" fontSize="18" fontWeight="800" fill={item.color}>{item.value}</text>
                     </g>
                 ))}
 
@@ -814,22 +873,27 @@ function FlutterAnalytics({ onBack }) {
                     </g>
 
                     {/* Bar Chart Bars (SVG Shapes) */}
-                    {[220, 150, 180, 260, 120, 200, 170, 240, 190, 210].map((h, i) => (
-                        <g key={`bar-group-${i}`}>
-                            <rect
-                                x={80 + (i * 85)}
-                                y={320 - h}
-                                width="40"
-                                height={h}
-                                rx="6"
-                                fill={i % 2 === 0 ? "#2563eb" : "#60a5fa"}
-                            >
-                                <animate attributeName="height" from="0" to={h} dur="1.5s" fill="freeze" />
-                                <animate attributeName="y" from="320" to={320 - h} dur="1.5s" fill="freeze" />
-                            </rect>
-                            <text x={100 + (i * 85)} y="340" textAnchor="middle" fontFamily="Inter, sans-serif" fontSize="10" fill="#94a3b8">CAT-{i + 1}</text>
-                        </g>
-                    ))}
+                    {sortedCategories.map(([category, amount], i) => {
+                        const h = (amount / maxSpend) * chartHeight;
+                        return (
+                            <g key={`bar-group-${i}`}>
+                                <rect
+                                    x={80 + (i * 85)}
+                                    y={320 - h}
+                                    width="40"
+                                    height={h}
+                                    rx="6"
+                                    fill={i % 2 === 0 ? "#2563eb" : "#60a5fa"}
+                                >
+                                    <animate attributeName="height" from="0" to={h} dur="1s" fill="freeze" />
+                                    <animate attributeName="y" from="320" to={320 - h} dur="1s" fill="freeze" />
+                                </rect>
+                                <text x={100 + (i * 85)} y="340" textAnchor="middle" fontFamily="Inter, sans-serif" fontSize="9" fill="#94a3b8" transform={`rotate(10, ${100 + (i * 85)}, 340)`}>
+                                    {category.length > 8 ? category.substring(0, 8) + '..' : category}
+                                </text>
+                            </g>
+                        );
+                    })}
                 </g>
 
                 {/* Bottom Row Information */}
@@ -871,13 +935,7 @@ function FlutterAnalytics({ onBack }) {
     );
 }
 
-const INITIAL_NOTIFICATIONS = [
-    { id: 1, icon: "💰", title: "Salary Deposited", message: "+$5,200.00 credited to Checking", time: "2 hrs ago", isRead: false },
-    { id: 2, icon: "⚠️", title: "Large Transaction Alert", message: "$1,800.00 mortgage payment processed", time: "5 hrs ago", isRead: false },
-    { id: 3, icon: "✅", title: "Transfer Completed", message: "$500 moved to Savings Account", time: "Yesterday", isRead: true },
-    { id: 4, icon: "🔔", title: "Low Balance Warning", message: "Credit card balance exceeds 80% limit", time: "2 days ago", isRead: true },
-    { id: 5, icon: "📊", title: "Monthly Statement Ready", message: "Your January 2026 statement is available", time: "3 days ago", isRead: true },
-];
+const INITIAL_NOTIFICATIONS = [];
 
 export default function Dashboard() {
     const { user, logout } = useAuth();
@@ -893,7 +951,13 @@ export default function Dashboard() {
 
     // Fetch accounts + transactions from MongoDB on mount
     useEffect(() => {
-        Promise.all([getAccounts(), getTransactions()])
+        if (!user?.id) return;
+        
+        setIsLoading(true);
+        Promise.all([
+            getAccounts({ userId: user.id }), 
+            getTransactions({ userId: user.id })
+        ])
             .then(([accs, txns]) => {
                 setAccounts(accs);
                 setAllTransactions(txns);
@@ -901,56 +965,125 @@ export default function Dashboard() {
             })
             .catch(err => console.error('Failed to load data:', err))
             .finally(() => setIsLoading(false));
-    }, []);
+    }, [user?.id]);
+
+    // Silent background poll every 15 seconds — picks up incoming transfers from other users
+    useEffect(() => {
+        if (!user?.id) return;
+        const poll = setInterval(() => {
+            Promise.all([
+                getAccounts({ userId: user.id }),
+                getTransactions({ userId: user.id })
+            ]).then(([accs, txns]) => {
+                setAccounts(prev => {
+                    // Only update if balances actually changed
+                    const changed = accs.some((a, i) => !prev[i] || prev[i].balance !== a.balance);
+                    return changed ? accs : prev;
+                });
+                setAllTransactions(prev => {
+                    // Only update if there are new transactions
+                    return txns.length !== prev.length ? txns : prev;
+                });
+            }).catch(() => {}); // silent fail — don't show errors during poll
+        }, 15000); // every 15 seconds
+        return () => clearInterval(poll);
+    }, [user?.id]);
 
     const handleTransferComplete = async (newTxn) => {
+        // If the server already handled the full transfer atomically (same-bank),
+        // just sync the local sender balance without re-creating the transaction.
+        if (newTxn._serverHandled) {
+            const amt = Math.abs(newTxn.amount);
+            setAccounts(prev => prev.map(acc =>
+                acc.id === newTxn.fromAccountId
+                    ? { ...acc, balance: Math.round((acc.balance - amt) * 100) / 100 }
+                    : acc
+            ));
+            setAllTransactions(prev => [{ ...newTxn, userId: user.id }, ...prev]);
+            setNotifications(prev => [{
+                id: Date.now(),
+                icon: '🏢',
+                title: 'Transfer Completed',
+                message: `$${amt.toLocaleString('en-US', { minimumFractionDigits: 2 })} sent to account ${newTxn.toAccountNum}`,
+                time: 'Just now',
+                isRead: false,
+            }, ...prev]);
+            return;
+        }
+
         const tempId = newTxn.id || `txn-optimistic-${Date.now()}`;
-        const optimisticTxn = { ...newTxn, id: tempId, _optimistic: true };
+        const enrichedTxn = { ...newTxn, userId: user.id };
+        const optimisticTxn = { ...enrichedTxn, id: tempId, _optimistic: true };
         setAllTransactions(prev => [optimisticTxn, ...prev]);
 
         let saved;
         try {
-            saved = await createTransaction(newTxn);
+            saved = await createTransaction(enrichedTxn);
             setAllTransactions(prev => prev.map(t => t.id === tempId ? saved : t));
         } catch (err) {
             console.error('Transfer failed:', err);
             setAllTransactions(prev => prev.filter(t => t.id !== tempId));
-            throw err; // Re-throw so caller knows it failed
+            throw err;
         }
 
-        // Transaction saved — update balances separately so a balance error doesn't hide the saved transaction
         try {
             const amt = Math.abs(newTxn.amount);
             const isInternal = newTxn.category === "Internal Transfer" || newTxn.category === "Credit Card" || newTxn.category === "Investments (FD)";
+            const isSameBank = !!newTxn.toAccountNum && !newTxn._serverHandled;
 
+            // 1. Update Sender's Accounts (Local state + DB)
             const updatedAccounts = await Promise.all(
                 accounts.map(acc => {
-                    if (isInternal) {
-                        if (acc.id === newTxn.fromAccountId) return updateAccountBalance(acc.id, -amt);
-                        if (acc.id === newTxn.toAccountId) return updateAccountBalance(acc.id, +amt);
-                    } else if (acc.id === newTxn.fromAccountId) {
-                        return updateAccountBalance(acc.id, -amt);
-                    }
+                    if (acc.id === newTxn.fromAccountId) return updateAccountBalance(acc.id, -amt);
+                    if (isInternal && acc.id === newTxn.toAccountId) return updateAccountBalance(acc.id, +amt);
                     return Promise.resolve(acc);
                 })
             );
             setAccounts(updatedAccounts);
 
+            if (isSameBank) {
+                try {
+                    console.log('Attempting to credit same bank account:', newTxn.toAccountNum);
+                    // Update recipient balance in DB
+                    const recipientAcc = await updateAccountBalanceByNumber(newTxn.toAccountNum, +amt);
+                    console.log('Recipient account updated:', recipientAcc);
+                    
+                    // Create a credit transaction for the recipient user
+                    if (recipientAcc && recipientAcc.userId) {
+                        await createTransaction({
+                            id: `txn-credit-${Date.now()}`,
+                            date: newTxn.date,
+                            description: `Transfer from ${user.name}`,
+                            category: "Deposits",
+                            amount: amt,
+                            status: "Completed",
+                            type: "credit",
+                            accountId: recipientAcc.id,
+                            userId: recipientAcc.userId,
+                            note: newTxn.note || ""
+                        });
+                    }
+                } catch (recipientErr) {
+                    console.error('Could not credit recipient account:', recipientErr);
+                    // We don't throw here as the sender's part is done
+                }
+            }
+
             const fromAcc = updatedAccounts.find(a => a.id === newTxn.fromAccountId);
             const availableBalance = fromAcc?.balance;
             setNotifications(prev => [{
                 id: Date.now(),
-                icon: isInternal ? "🔄" : "💸",
+                icon: isInternal ? "🔄" : (isSameBank ? "🏢" : "💸"),
                 title: isInternal ? "Transfer Completed" : "Amount Debited",
                 message: isInternal
-                    ? `$${amt.toLocaleString("en-US", { minimumFractionDigits: 2 })} moved between accounts`
-                    : `$${amt.toLocaleString("en-US", { minimumFractionDigits: 2 })} debited · Available: $${availableBalance != null ? availableBalance.toLocaleString("en-US", { minimumFractionDigits: 2 }) : "—"}`,
+                    ? `$${amt.toLocaleString("en-US", { minimumFractionDigits: 2 })} moved to account ${newTxn.toAccountId}`
+                    : `$${amt.toLocaleString("en-US", { minimumFractionDigits: 2 })} sent to account ${newTxn.toAccountNum || "external"}`,
                 time: "Just now",
                 isRead: false,
             }, ...prev]);
         } catch (err) {
             console.error('Balance update failed:', err);
-            throw err; // Re-throw
+            throw err;
         }
     };
 
@@ -1011,8 +1144,8 @@ export default function Dashboard() {
             case "accounts": return <AccountsPage globalSearchQuery={globalSearchQuery} accounts={accounts} allTransactions={allTransactions} />;
             case "fd": return <FDManager accounts={accounts} onTransferComplete={handleTransferComplete} />;
             case "credit-cards": return <CreditCardPage accounts={accounts} onTransferComplete={handleTransferComplete} onAccountsRefresh={setAccounts} />;
-            case "transfers": return <TransfersPage globalSearchQuery={globalSearchQuery} allTransactions={allTransactions} onTransferComplete={handleTransferComplete} accounts={accounts} />;
-            case "analytics": return <AnalyticsPage transactions={allTransactions} />;
+            case "transfers": return <TransfersPage globalSearchQuery={globalSearchQuery} allTransactions={allTransactions} onTransferComplete={handleTransferComplete} accounts={accounts} user={user} />;
+            case "analytics": return <AnalyticsPage transactions={allTransactions} accounts={accounts} />;
             case "kyc": return <KycPage />;
             case "settings": return <SettingsPage user={user} />;
             default: return null;
@@ -1096,22 +1229,28 @@ export default function Dashboard() {
                                             </button>
                                         </div>
                                         <div className="notif-list">
-                                            {notifications.map(notification => (
-                                                <div
-                                                    key={notification.id}
-                                                    className={`notif-item ${notification.isRead ? "notif-read" : "notif-unread"}`}
-                                                    data-testid={`notif-item-${notification.id}`}
-                                                    onClick={() => setNotifications(prev => prev.map(x => x.id === notification.id ? { ...x, isRead: true } : x))}
-                                                >
-                                                    <span className="notif-icon">{notification.icon}</span>
-                                                    <div className="notif-body">
-                                                        <div className="notif-item-title">{notification.title}</div>
-                                                        <div className="notif-item-message">{notification.message}</div>
-                                                        <div className="notif-item-time">{notification.time}</div>
+                                            {notifications.filter(n => !n.isRead).length > 0 ? (
+                                                notifications.filter(n => !n.isRead).map(notification => (
+                                                    <div
+                                                        key={notification.id}
+                                                        className="notif-item notif-unread"
+                                                        data-testid={`notif-item-${notification.id}`}
+                                                        onClick={() => setNotifications(prev => prev.map(x => x.id === notification.id ? { ...x, isRead: true } : x))}
+                                                    >
+                                                        <span className="notif-icon">{notification.icon}</span>
+                                                        <div className="notif-body">
+                                                            <div className="notif-item-title">{notification.title}</div>
+                                                            <div className="notif-item-message">{notification.message}</div>
+                                                            <div className="notif-item-time">{notification.time}</div>
+                                                        </div>
+                                                        <span className="notif-unread-dot" />
                                                     </div>
-                                                    {!notification.isRead && <span className="notif-unread-dot" />}
+                                                ))
+                                            ) : (
+                                                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--gray-500)', fontSize: '0.85rem' }}>
+                                                    No new notifications
                                                 </div>
-                                            ))}
+                                            )}
                                         </div>
                                     </div>
                                 </>

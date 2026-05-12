@@ -13,7 +13,13 @@ import { Eye, EyeOff, Building2, ShieldCheck, AlertCircle /*, RefreshCcw */ } fr
 import { checkHealth } from "../api.js";
 import "./LoginPage.css";
 
-const DEMO_CREDENTIALS = { email: "testUser@gmail.com", password: "password123" };
+const DEMO_USERS = [
+    { id: "user-1", name: "Test User", email: "testUser@gmail.com", password: "password123", avatar: "TU" },
+    { id: "user-2", name: "John Doe", email: "john.doe@example.com", password: "password123", avatar: "JD" },
+    { id: "usr-1", name: "Alice Johnson", email: "alice.johnson@email.com", password: "password123", avatar: "A" },
+    { id: "usr-2", name: "Bob Williams", email: "bob.williams@email.com", password: "password123", avatar: "B" },
+    { id: "usr-3", name: "Catherine Lee", email: "catherine.lee@email.com", password: "password123", avatar: "C" }
+];
 
 /*
 function generateFrontendCaptcha() {
@@ -133,17 +139,19 @@ export default function LoginPage() {
         // 2. Simulate a network delay for a more realistic feel
         await new Promise(resolve => setTimeout(resolve, 900));
 
-        if (formData.email === DEMO_CREDENTIALS.email && formData.password === DEMO_CREDENTIALS.password) {
+        const matchedUser = DEMO_USERS.find(u => u.email === formData.email && u.password === formData.password);
+
+        if (matchedUser) {
             login({
-                name: "Test User",
-                email: formData.email,
-                avatar: "TU",
+                id: matchedUser.id,
+                name: matchedUser.name,
+                email: matchedUser.email,
+                avatar: matchedUser.avatar,
                 loginMethod: "credentials"
             });
             navigate("/dashboard");
         } else {
-            setAuthErrorMessage("Invalid email or password. Use testUser@gmail.com / password123");
-            // setShowCaptcha(false);
+            setAuthErrorMessage("Invalid email or password. Use testUser@gmail.com or john.doe@example.com with password123");
         }
         setIsSubmitting(false);
     };
@@ -337,7 +345,7 @@ export default function LoginPage() {
                         </form>
 
                         <p className="demo-hint" data-testid="demo-hint">
-                            🔑 Demo: <strong>testUser@gmail.com</strong> / <strong>password123</strong>
+                            🔑 Demo 1: <strong>testUser@gmail.com</strong> / <strong>password123</strong><br/>
                         </p>
                     </div>
                 </div>

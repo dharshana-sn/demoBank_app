@@ -10,10 +10,11 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { mockUsers } from "../data/mockData.js";
 import { Send, CheckCircle2, X, Users } from "lucide-react";
+import { sameBankTransfer } from "../api.js";
 import PayQRCode from "./PayQRCode.jsx";
 import "./PayToUser.css";
 
-export default function PayToUser({ onPaymentComplete, accounts = [] }) {
+export default function PayToUser({ onPaymentComplete, accounts = [], user }) {
     const [selectedUser, setSelectedUser] = useState(null);
     const filteredAccounts = accounts.filter(acc => acc.type !== 'credit');
     const [fromAccountId, setFromAccountId] = useState("");
@@ -42,8 +43,10 @@ export default function PayToUser({ onPaymentComplete, accounts = [] }) {
     }, [showConfirm]);
 
     const filteredUsers = mockUsers.filter(u =>
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchQuery.toLowerCase())
+        u.id !== user?.id && (
+            u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            u.email.toLowerCase().includes(searchQuery.toLowerCase())
+        )
     );
 
     const handleSelectUser = (user) => {
@@ -69,32 +72,42 @@ export default function PayToUser({ onPaymentComplete, accounts = [] }) {
     const handleConfirmPayment = async (e) => {
         if (e && e.preventDefault) e.preventDefault();
         setIsProcessing(true);
-        await new Promise(r => setTimeout(r, 1200));
+        setError("");
 
-        const newTransaction = {
-            id: `txn-pay-${Date.now()}`,
-            customerId: selectedUser.id,
-            date: new Date().toISOString().split("T")[0],
-            description: note || `Payment to ${selectedUser.name}`,
-            category: "Transfers",
-            amount: -Number(amount),
-            status: "Completed",
-            type: "debit",
-            note: note || "",
-            fromAccountId,
-        };
-
-        // Delegate persistence to the parent (Dashboard.handleTransferComplete)
-        // which calls createTransaction + updates account balances.
-        // DO NOT call createTransaction here — it would cause a double-save.
         try {
-            if (onPaymentComplete) await onPaymentComplete(newTransaction);
+            const result = await sameBankTransfer({
+                fromAccountId,
+                toAccountNum: selectedUser.accountNumber,
+                amount: Number(amount),
+                senderUserId: user?.id,
+                senderName: user?.name,
+                note: note || `Payment to ${selectedUser.name}`,
+                date: new Date().toISOString().split('T')[0],
+            });
+
+            // Notify parent (Dashboard) to update local balance
+            if (onPaymentComplete) {
+                await onPaymentComplete({
+                    id: result.debitTxn?.id || `txn-pay-${Date.now()}`,
+                    fromAccountId,
+                    toAccountNum: selectedUser.accountNumber,
+                    amount: -Number(amount),
+                    category: 'Transfers',
+                    type: 'debit',
+                    status: 'Completed',
+                    date: new Date().toISOString().split('T')[0],
+                    description: note || `Payment to ${selectedUser.name}`,
+                    _serverHandled: true, // flag for Dashboard
+                    customerId: selectedUser.id
+                });
+            }
+
             setIsSuccess(true);
             setSelectedUser(null);
             setAmount("");
             setNote("");
         } catch (err) {
-            setError("Failed to complete payment. Please try again.");
+            setError(err.message || "Failed to complete payment. Please try again.");
         } finally {
             setIsProcessing(false);
             setShowConfirm(false);

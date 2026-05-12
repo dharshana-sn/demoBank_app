@@ -47,9 +47,14 @@ async function request(path, options = {}) {
 }
 
 // ── Accounts ──────────────────────────────────
-export const getAccounts = () => request('/accounts');
+export const getAccounts = (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/accounts${qs ? `?${qs}` : ''}`);
+};
 export const updateAccountBalance = (id, delta) =>
     request(`/accounts/${id}/balance`, { method: 'PATCH', body: { delta } });
+export const updateAccountBalanceByNumber = (number, delta) =>
+    request(`/accounts/by-number/${number}/balance`, { method: 'PATCH', body: { delta } });
 export const updateAccount = (id, data) =>
     request(`/accounts/${id}`, { method: 'PATCH', body: data });
 export const createAccount = (data) =>
@@ -64,6 +69,8 @@ export const getTransactions = (params = {}) => {
 };
 export const createTransaction = (txn) =>
     request('/transactions', { method: 'POST', body: txn });
+export const sameBankTransfer = (data) =>
+    request('/transactions/same-bank-transfer', { method: 'POST', body: data });
 
 // ── Fixed Deposits ────────────────────────────
 export const getFixedDeposits = () => request('/fixed-deposits');

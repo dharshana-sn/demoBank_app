@@ -11,6 +11,7 @@ const transactionSchema = new mongoose.Schema({
     type: { type: String, enum: ['credit', 'debit'], required: true },
     note: { type: String, default: '' },
     accountId: { type: String, default: '' },
+    userId: { type: String, required: true },
 }, { timestamps: true });
 
 // Index for fast date-range + category queries

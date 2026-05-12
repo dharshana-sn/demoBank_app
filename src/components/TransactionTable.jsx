@@ -234,7 +234,7 @@ const TransactionTable = forwardRef(({ transactions, globalSearch }, ref) => {
                                     data-testid={`txn-row-${transaction.id}`}
                                 >
                                     <td className="td-date">{new Date(transaction.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
-                                    <td className="td-cid">{getHighlightedText(transaction.customerId, globalSearch)}</td>
+                                    <td className="td-cid">{getHighlightedText(transaction.customerId || '—', globalSearch)}</td>
                                     <td className="td-desc">{getHighlightedText(transaction.description, globalSearch)}</td>
                                     <td>
                                         <span className="cat-dot" style={{ background: categoryStyle.bg, color: categoryStyle.color }}>
@@ -259,7 +259,7 @@ const TransactionTable = forwardRef(({ transactions, globalSearch }, ref) => {
                             return (
                                 <tr key={`print-${transaction.id}`} className={`txn-row ${index % 2 === 0 ? "even" : "odd"}`}>
                                     <td className="td-date">{new Date(transaction.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
-                                    <td className="td-cid">{transaction.customerId}</td>
+                                    <td className="td-cid">{transaction.customerId || '—'}</td>
                                     <td className="td-desc">{transaction.description}</td>
                                     <td>
                                         <span className="cat-dot" style={{ background: categoryStyle.bg, color: categoryStyle.color }}>

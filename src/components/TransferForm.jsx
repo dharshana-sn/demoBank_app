@@ -7,22 +7,11 @@
  */
 
 import { useState, useEffect } from "react";
-import { getAccounts } from "../api.js";
 import { Send, CheckCircle2 } from "lucide-react";
 import "./TransferForm.css";
 
-export default function TransferForm({ onTransferComplete }) {
-    const [accounts, setAccounts] = useState([]);
+export default function TransferForm({ onTransferComplete, accounts = [] }) {
 
-    useEffect(() => {
-        getAccounts()
-            .then(data => {
-                // Filter out credit cards from internal transfers
-                const nonCreditAccounts = data.filter(acc => acc.type !== 'credit');
-                setAccounts(nonCreditAccounts);
-            })
-            .catch(console.error);
-    }, []);
 
     // Initial state for the transfer process
     const [transferFormData, setTransferFormData] = useState({
@@ -128,7 +117,9 @@ export default function TransferForm({ onTransferComplete }) {
         setIsTransferSuccessful(false);
     };
 
-    const availableAccountOptions = accounts.map(account => (
+    const filteredAccounts = accounts.filter(acc => acc.type !== 'credit');
+
+    const availableAccountOptions = filteredAccounts.map(account => (
         <option key={account.id} value={account.id}>
             {account.name} ({account.number})
         </option>

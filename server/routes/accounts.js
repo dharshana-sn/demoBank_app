@@ -3,10 +3,12 @@ import Account from '../models/Account.js';
 
 const router = express.Router();
 
-// GET /api/accounts — list all accounts
+// GET /api/accounts — list accounts for a specific user
 router.get('/', async (req, res) => {
     try {
-        const accounts = await Account.find().sort({ id: 1 });
+        const filter = {};
+        if (req.query.userId) filter.userId = req.query.userId;
+        const accounts = await Account.find(filter).sort({ id: 1 });
         res.json(accounts);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -18,6 +20,21 @@ router.patch('/:id/balance', async (req, res) => {
     try {
         const { delta } = req.body; // delta can be positive (credit) or negative (debit)
         const account = await Account.findOne({ id: req.params.id });
+        if (!account) return res.status(404).json({ error: 'Account not found' });
+
+        account.balance = Math.round((account.balance + delta) * 100) / 100;
+        await account.save();
+        res.json(account);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PATCH /api/accounts/by-number/:number/balance — update balance by account number
+router.patch('/by-number/:number/balance', async (req, res) => {
+    try {
+        const { delta } = req.body;
+        const account = await Account.findOne({ number: req.params.number });
         if (!account) return res.status(404).json({ error: 'Account not found' });
 
         account.balance = Math.round((account.balance + delta) * 100) / 100;
