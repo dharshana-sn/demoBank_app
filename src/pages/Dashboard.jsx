@@ -229,7 +229,37 @@ function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
                                             title="Click to copy account number"
                                             style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                                             onClick={() => {
-                                                navigator.clipboard.writeText(account.number);
+                                                const textToCopy = account.number;
+                                                
+                                                const runFallback = () => {
+                                                    const textArea = document.createElement("textarea");
+                                                    textArea.value = textToCopy;
+                                                    textArea.style.top = "0";
+                                                    textArea.style.left = "0";
+                                                    textArea.style.position = "fixed";
+                                                    document.body.appendChild(textArea);
+                                                    textArea.focus();
+                                                    textArea.select();
+                                                    try {
+                                                        document.execCommand('copy');
+                                                    } catch (err) {
+                                                        // Fail silently as requested
+                                                    }
+                                                    document.body.removeChild(textArea);
+                                                };
+
+                                                if (navigator.clipboard && navigator.clipboard.writeText) {
+                                                    // Modern approach (requires HTTPS)
+                                                    // navigator.clipboard.writeText(account.number); 
+                                                    navigator.clipboard.writeText(textToCopy).catch(err => {
+                                                        // If modern API fails (e.g. permission denied), try fallback
+                                                        runFallback();
+                                                    });
+                                                } else {
+                                                    // Fallback approach for non-HTTPS or older browsers
+                                                    runFallback();
+                                                }
+                                                
                                                 // Brief visual feedback via a temporary tooltip
                                                 const el = document.getElementById(`copy-hint-${account.id}`);
                                                 if (el) { el.style.opacity = 1; setTimeout(() => { el.style.opacity = 0; }, 1800); }
