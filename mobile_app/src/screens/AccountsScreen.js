@@ -1,32 +1,45 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     View, Text, ScrollView, StyleSheet, TouchableOpacity,
-    ActivityIndicator, RefreshControl
+    ActivityIndicator, RefreshControl, Clipboard, Alert, Modal
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { getAccounts, getTransactions } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
+import { NestableScrollContainer, NestableDraggableFlatList } from 'react-native-draggable-flatlist';
 
 const ACCOUNT_COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 
 export default function AccountsScreen({ navigation }) {
     const { C } = useTheme();
+    const { user } = useAuth();
     const [accounts, setAccounts] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [selectedTxn, setSelectedTxn] = useState(null);
 
     const styles = getStyles(C);
 
+    const copyToClipboard = (text) => {
+        Clipboard.setString(text);
+        Alert.alert('Copied', 'Account number copied to clipboard!');
+    };
+
     const load = useCallback(async () => {
+        if (!user?.id) return;
         try {
-            const [accs, txns] = await Promise.all([getAccounts(), getTransactions()]);
+            const [accs, txns] = await Promise.all([
+                getAccounts({ userId: user.id }),
+                getTransactions({ userId: user.id })
+            ]);
             setAccounts(accs);
             setTransactions(txns);
         } catch (e) { console.error(e); }
         finally { setLoading(false); setRefreshing(false); }
-    }, []);
+    }, [user?.id]);
 
     useFocusEffect(
         useCallback(() => {
@@ -41,7 +54,7 @@ export default function AccountsScreen({ navigation }) {
     );
 
     return (
-        <ScrollView
+        <NestableScrollContainer
             style={styles.container}
             showsVerticalScrollIndicator={false}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={C.primary} />}
@@ -58,29 +71,47 @@ export default function AccountsScreen({ navigation }) {
 
             {/* Account Cards */}
             <View style={styles.section}>
-                {accounts.map((acc, i) => {
-                    const color = acc.color || ACCOUNT_COLORS[i % ACCOUNT_COLORS.length];
-                    const isNeg = acc.balance < 0;
-                    return (
-                        <View key={acc.id || i} style={[styles.accountCard, { borderLeftColor: color }]}>
-                            <View style={styles.accountCardLeft}>
-                                <View style={[styles.accIcon, { backgroundColor: `${color}22` }]}>
-                                    <Text style={[styles.accIconText, { color }]}>💳</Text>
+                <NestableDraggableFlatList
+                    data={accounts.filter(acc => acc.type !== 'credit')}
+                    keyExtractor={(item, index) => item.id || String(index)}
+                    onDragEnd={({ data }) => {
+                        const creditAccounts = accounts.filter(acc => acc.type === 'credit');
+                        setAccounts([...data, ...creditAccounts]);
+                    }}
+                    renderItem={({ item: acc, drag, isActive }) => {
+                        const i = accounts.findIndex(a => a.id === acc.id);
+                        const color = acc.color || ACCOUNT_COLORS[i % ACCOUNT_COLORS.length] || ACCOUNT_COLORS[0];
+                        const isNeg = acc.balance < 0;
+                        return (
+                            <TouchableOpacity
+                                onLongPress={drag}
+                                disabled={isActive}
+                                activeOpacity={0.8}
+                                style={[
+                                    styles.accountCard,
+                                    { borderLeftColor: color },
+                                    isActive && { transform: [{ scale: 1.02 }], ...SHADOWS.lg, zIndex: 99 }
+                                ]}
+                            >
+                                <View style={styles.accountCardLeft}>
+                                    <View style={[styles.accIcon, { backgroundColor: `${color}22` }]}>
+                                        <Text style={[styles.accIconText, { color }]}>💳</Text>
+                                    </View>
+                                    <TouchableOpacity onPress={() => copyToClipboard(acc.number)} style={{ flex: 1 }}>
+                                        <Text style={styles.accName}>{acc.name}</Text>
+                                        <Text style={styles.accNum}>{acc.number} · {acc.type?.charAt(0).toUpperCase() + acc.type?.slice(1)} 📋</Text>
+                                    </TouchableOpacity>
                                 </View>
-                                <View>
-                                    <Text style={styles.accName}>{acc.name}</Text>
-                                    <Text style={styles.accNum}>{acc.number} · {acc.type?.charAt(0).toUpperCase() + acc.type?.slice(1)}</Text>
+                                <View style={styles.accountCardRight}>
+                                    <Text style={[styles.accBalance, { color: isNeg ? C.danger : C.success }]}>
+                                        {isNeg ? '-' : '+'}${Math.abs(acc.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                    </Text>
+                                    <Text style={styles.accStatus}>Active</Text>
                                 </View>
-                            </View>
-                            <View style={styles.accountCardRight}>
-                                <Text style={[styles.accBalance, { color: isNeg ? C.danger : C.success }]}>
-                                    {isNeg ? '-' : '+'}${Math.abs(acc.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                </Text>
-                                <Text style={styles.accStatus}>Active</Text>
-                            </View>
-                        </View>
-                    );
-                })}
+                            </TouchableOpacity>
+                        );
+                    }}
+                />
             </View>
 
             {/* Summary Strip */}
@@ -103,7 +134,12 @@ export default function AccountsScreen({ navigation }) {
                     {transactions.length === 0
                         ? <Text style={styles.emptyText}>No transactions found</Text>
                         : transactions.slice(0, 20).map((t, i) => (
-                            <View key={t._id || i} style={[styles.txRow, i < transactions.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}>
+                            <TouchableOpacity 
+                                key={t._id || i} 
+                                style={[styles.txRow, i < transactions.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}
+                                onPress={() => setSelectedTxn(t)}
+                                activeOpacity={0.7}
+                            >
                                 <View style={[styles.txIcon, { backgroundColor: t.type === 'credit' ? '#D1FAE5' : '#FEE2E2' }]}>
                                     <Text style={{ fontSize: 14 }}>{t.type === 'credit' ? '📈' : '📉'}</Text>
                                 </View>
@@ -119,14 +155,67 @@ export default function AccountsScreen({ navigation }) {
                                         color: t.status === 'Completed' ? C.success : t.status === 'Pending' ? C.warning : C.danger
                                     }]}>{t.status}</Text>
                                 </View>
-                            </View>
+                            </TouchableOpacity>
                         ))
                     }
                 </View>
             </View>
 
+            {/* Transaction Detail Modal */}
+            <Modal visible={!!selectedTxn} transparent animationType="slide">
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Transaction Details</Text>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Description</Text>
+                            <Text style={styles.detailValue}>{selectedTxn?.description}</Text>
+                        </View>
+ 
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Recipient</Text>
+                            <Text style={styles.detailValue}>
+                                {selectedTxn?.description?.startsWith('Payment to ') 
+                                    ? selectedTxn.description.substring(11).split(':')[0].trim()
+                                    : (selectedTxn?.description?.startsWith('Transfer to account ')
+                                        ? selectedTxn.description.substring(20).trim()
+                                        : (selectedTxn?.description?.startsWith('Transfer from ')
+                                            ? selectedTxn.description.substring(14).trim()
+                                            : 'N/A'))}
+                            </Text>
+                        </View>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Amount</Text>
+                            <Text style={[styles.detailValue, { color: selectedTxn?.type === 'credit' ? C.success : C.danger }]}>
+                                {selectedTxn?.type === 'credit' ? '+' : '-'}${Math.abs(selectedTxn?.amount || 0).toFixed(2)}
+                            </Text>
+                        </View>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Date</Text>
+                            <Text style={styles.detailValue}>{selectedTxn?.date}</Text>
+                        </View>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Category</Text>
+                            <Text style={styles.detailValue}>{selectedTxn?.category}</Text>
+                        </View>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Status</Text>
+                            <Text style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
+                        </View>
+ 
+                        <TouchableOpacity style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
+                            <Text style={styles.modalCancelText}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+ 
             <View style={{ height: 24 }} />
-        </ScrollView>
+        </NestableScrollContainer>
     );
 }
 
@@ -172,5 +261,13 @@ function getStyles(C) {
         txMeta: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginTop: 1 },
         txAmount: { ...FONTS.bold, fontSize: 13 },
         txStatus: { ...FONTS.medium, fontSize: 10, marginTop: 2 },
+        modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: SPACING.md },
+        modalContent: { backgroundColor: C.card, borderRadius: RADIUS.lg, padding: SPACING.md, ...SHADOWS.lg },
+        modalTitle: { ...FONTS.bold, fontSize: 18, color: C.text, marginBottom: 12 },
+        detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.border },
+        detailLabel: { ...FONTS.medium, fontSize: 13, color: C.textMuted },
+        detailValue: { ...FONTS.bold, fontSize: 13, color: C.text, flex: 1, textAlign: 'right', marginLeft: 10 },
+        modalCancel: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: RADIUS.md, backgroundColor: C.border },
+        modalCancelText: { ...FONTS.medium, fontSize: 14, color: C.text },
     });
 }

@@ -6,6 +6,7 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import { getKycStatus, deleteKycDocument, uploadKycDocument, BASE_URL } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -17,6 +18,7 @@ const DOCUMENT_TYPES = [
 
 export default function KycScreen({ navigation }) {
     const { C } = useTheme();
+    const { user } = useAuth();
     const [kycStatus, setKycStatus] = useState(null);
     const [loading, setLoading] = useState(true);
     const [deleting, setDeleting] = useState(null);
@@ -25,8 +27,9 @@ export default function KycScreen({ navigation }) {
     const styles = getStyles(C);
 
     const load = async () => {
+        if (!user?.id) return;
         try {
-            const data = await getKycStatus();
+            const data = await getKycStatus({ userId: user.id });
             setKycStatus(data);
         } catch (err) {
             console.error('KYC status error:', err);
@@ -46,7 +49,7 @@ export default function KycScreen({ navigation }) {
             if (result.canceled) return;
             const asset = result.assets[0];
             setUploading(docType);
-            await uploadKycDocument(docType, asset.uri, asset.name, asset.mimeType || 'application/octet-stream');
+            await uploadKycDocument(docType, asset.uri, asset.name, asset.mimeType || 'application/octet-stream', user.id);
             await load();
             Alert.alert('Success', isReplace ? 'Document updated successfully!' : 'Document uploaded successfully!');
         } catch (err) {
@@ -83,7 +86,7 @@ export default function KycScreen({ navigation }) {
                     onPress: async () => {
                         setDeleting(docType);
                         try {
-                            await deleteKycDocument(docType);
+                            await deleteKycDocument(docType, { userId: user.id });
                             await load();
                         } catch (err) {
                             Alert.alert('Error', err.message);

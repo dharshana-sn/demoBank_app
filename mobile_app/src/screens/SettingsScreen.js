@@ -24,7 +24,7 @@ export default function SettingsScreen({ navigation }) {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const data = await getUserProfile('user-1');
+                const data = await getUserProfile(user.id);
                 setProfile({
                     name: data.name,
                     email: data.email,
@@ -48,7 +48,7 @@ export default function SettingsScreen({ navigation }) {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const updated = await updateUserProfile('user-1', profile);
+            const updated = await updateUserProfile(user.id, profile);
             await login({ ...user, name: updated.name, email: updated.email });
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);

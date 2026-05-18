@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     View, Text, ScrollView, StyleSheet, TouchableOpacity,
-    ActivityIndicator, RefreshControl
+    ActivityIndicator, RefreshControl, Modal, StatusBar
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,11 +10,7 @@ import { useTheme } from '../context/ThemeContext';
 import { getAccounts, getTransactions } from '../api/api';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 
-const INITIAL_NOTIFICATIONS = [
-    { id: 1, icon: '💰', title: 'Salary Deposited', message: '+$5,200.00 credited to Checking', time: '2 hrs ago', unread: true },
-    { id: 2, icon: '⚠️', title: 'Large Transaction Alert', message: '$1,800.00 mortgage payment processed', time: '5 hrs ago', unread: true },
-    { id: 3, icon: '✅', title: 'Transfer Completed', message: '$500 moved to Savings Account', time: 'Yesterday', unread: false },
-];
+const INITIAL_NOTIFICATIONS = [];
 
 export default function OverviewScreen({ navigation }) {
     const { user } = useAuth();
@@ -25,12 +21,17 @@ export default function OverviewScreen({ navigation }) {
     const [refreshing, setRefreshing] = useState(false);
     const [showNotifs, setShowNotifs] = useState(false);
     const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+    const [selectedTxn, setSelectedTxn] = useState(null);
 
     const styles = getStyles(C);
 
     const load = useCallback(async () => {
+        if (!user?.id) return;
         try {
-            const [accs, txns] = await Promise.all([getAccounts(), getTransactions()]);
+            const [accs, txns] = await Promise.all([
+                getAccounts({ userId: user.id }),
+                getTransactions({ userId: user.id })
+            ]);
             setAccounts(accs);
             setTransactions(txns);
         } catch (err) {
@@ -39,7 +40,7 @@ export default function OverviewScreen({ navigation }) {
             setIsLoading(false);
             setRefreshing(false);
         }
-    }, []);
+    }, [user?.id]);
 
     useFocusEffect(
         useCallback(() => {
@@ -48,6 +49,33 @@ export default function OverviewScreen({ navigation }) {
     );
 
     useEffect(() => { load(); }, [load]);
+
+    // Background poll every 15 seconds to pick up new transactions and notify
+    useEffect(() => {
+        if (!user?.id) return;
+        const interval = setInterval(async () => {
+            try {
+                const txns = await getTransactions({ userId: user.id });
+                if (txns.length > transactions.length) {
+                    const newTxns = txns.filter(t => !transactions.find(p => p.id === t.id));
+                    newTxns.forEach(t => {
+                        setNotifications(n => [{
+                            id: Date.now() + Math.random(),
+                            icon: t.type === 'credit' ? '💰' : '💸',
+                            title: t.type === 'credit' ? 'Money Received' : 'Money Sent',
+                            message: `${t.description}: $${Math.abs(t.amount).toLocaleString()}`,
+                            time: 'Just now',
+                            unread: true,
+                        }, ...n]);
+                    });
+                    setTransactions(txns);
+                }
+            } catch (err) {
+                console.error('Failed to poll transactions:', err);
+            }
+        }, 15000);
+        return () => clearInterval(interval);
+    }, [user?.id, transactions]);
 
     const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
     const totalIncome = transactions.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0);
@@ -58,6 +86,27 @@ export default function OverviewScreen({ navigation }) {
     );
     const unread = notifications.filter(n => n.unread).length;
     const recentTxns = transactions.slice(0, 5);
+
+    // Calculate latest month data for "Monthly Highlight"
+    const getLatestMonthData = () => {
+        if (transactions.length === 0) return { month: 'No Data', income: 0, expense: 0 };
+
+        const dates = transactions.map(t => new Date(t.date));
+        const latestDate = new Date(Math.max(...dates));
+        const monthStr = latestDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+        const monthTxns = transactions.filter(t => {
+            const d = new Date(t.date);
+            return d.getMonth() === latestDate.getMonth() && d.getFullYear() === latestDate.getFullYear();
+        });
+
+        const income = monthTxns.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0);
+        const expense = Math.abs(monthTxns.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0));
+
+        return { month: monthStr, income, expense };
+    };
+
+    const latestMonth = getLatestMonthData();
 
     if (isLoading) {
         return (
@@ -74,6 +123,7 @@ export default function OverviewScreen({ navigation }) {
             showsVerticalScrollIndicator={false}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={C.primary} />}
         >
+            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
             {/* Header */}
             <LinearGradient colors={[C.gradStart, C.gradEnd]} style={styles.header}>
                 <View style={styles.headerRow}>
@@ -148,25 +198,7 @@ export default function OverviewScreen({ navigation }) {
                 </View>
             </View>
 
-            {/* Quick Actions */}
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Quick Actions</Text>
-                <View style={styles.quickActionsRow}>
-                    {[
-                        { icon: '💸', label: 'Transfer', screen: 'Transfers' },
-                        { icon: '📊', label: 'Analytics', screen: 'Analytics' },
-                        { icon: '🏦', label: 'Accounts', screen: 'Accounts' },
-                        { icon: '💳', label: 'Fixed Dep.', screen: 'Fixed Deposits' },
-                    ].map(action => (
-                        <TouchableOpacity key={action.label} style={styles.quickAction} onPress={() => navigation.navigate(action.screen)} activeOpacity={0.75}>
-                            <View style={styles.quickActionIcon}>
-                                <Text style={{ fontSize: 22 }}>{action.icon}</Text>
-                            </View>
-                            <Text style={styles.quickActionLabel}>{action.label}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-            </View>
+
 
             {/* Recent Transactions */}
             <View style={styles.section}>
@@ -180,7 +212,12 @@ export default function OverviewScreen({ navigation }) {
                     {recentTxns.length === 0
                         ? <Text style={styles.emptyText}>No transactions yet</Text>
                         : recentTxns.map((t, i) => (
-                            <View key={t._id || i} style={[styles.txnRow, i < recentTxns.length - 1 && styles.txnRowBorder]}>
+                            <TouchableOpacity 
+                                key={t._id || i} 
+                                style={[styles.txnRow, i < recentTxns.length - 1 && styles.txnRowBorder]}
+                                onPress={() => setSelectedTxn(t)}
+                                activeOpacity={0.7}
+                            >
                                 <View style={[styles.txnIcon, { backgroundColor: t.type === 'credit' ? '#D1FAE5' : '#FEE2E2' }]}>
                                     <Text style={{ fontSize: 16 }}>{t.type === 'credit' ? '📈' : '📉'}</Text>
                                 </View>
@@ -191,7 +228,7 @@ export default function OverviewScreen({ navigation }) {
                                 <Text style={[styles.txnAmount, { color: t.type === 'credit' ? C.success : C.danger }]}>
                                     {t.type === 'credit' ? '+' : '-'}${Math.abs(t.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                 </Text>
-                            </View>
+                            </TouchableOpacity>
                         ))
                     }
                 </View>
@@ -201,20 +238,81 @@ export default function OverviewScreen({ navigation }) {
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Monthly Highlight</Text>
                 <View style={[styles.card, { backgroundColor: C.primary }]}>
-                    <Text style={{ ...FONTS.semiBold, color: 'rgba(255,255,255,0.75)', fontSize: 12, marginBottom: 4 }}>February 2026</Text>
+                    <Text style={{ ...FONTS.semiBold, color: 'rgba(255,255,255,0.75)', fontSize: 12, marginBottom: 4 }}>{latestMonth.month}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                         <View>
                             <Text style={{ ...FONTS.regular, color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>Income</Text>
-                            <Text style={{ ...FONTS.bold, color: '#6EE7B7', fontSize: 20 }}>+$10,338.25</Text>
+                            <Text style={{ ...FONTS.bold, color: '#6EE7B7', fontSize: 20 }}>+${latestMonth.income.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
                         </View>
                         <View style={{ alignItems: 'flex-end' }}>
                             <Text style={{ ...FONTS.regular, color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>Expenses</Text>
-                            <Text style={{ ...FONTS.bold, color: '#FCA5A5', fontSize: 20 }}>-$5,387.97</Text>
+                            <Text style={{ ...FONTS.bold, color: '#FCA5A5', fontSize: 20 }}>-${latestMonth.expense.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
                         </View>
                     </View>
                 </View>
             </View>
 
+            {/* Transaction Detail Modal */}
+            <Modal visible={!!selectedTxn} transparent animationType="slide">
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Transaction Details</Text>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Description</Text>
+                            <Text style={styles.detailValue}>{selectedTxn?.description}</Text>
+                        </View>
+ 
+                        {(() => {
+                            const desc = selectedTxn?.description;
+                            if (!desc) return null;
+                            let recipient = 'N/A';
+                            const m1 = desc.match(/^Payment to ([^:]+)/);
+                            if (m1) recipient = m1[1].trim();
+                            const m2 = desc.match(/^Transfer to account (.+)/);
+                            if (m2) recipient = m2[1].trim();
+                            const m3 = desc.match(/^Transfer from (.+)/);
+                            if (m3) recipient = m3[1].trim();
+                            
+                            if (recipient === 'N/A') return null;
+                            
+                            return (
+                                <View style={styles.detailRow}>
+                                    <Text style={styles.detailLabel}>Recipient/Sender</Text>
+                                    <Text style={styles.detailValue}>{recipient}</Text>
+                                </View>
+                            );
+                        })()}
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Amount</Text>
+                            <Text style={[styles.detailValue, { color: selectedTxn?.type === 'credit' ? C.success : C.danger }]}>
+                                {selectedTxn?.type === 'credit' ? '+' : '-'}${Math.abs(selectedTxn?.amount || 0).toFixed(2)}
+                            </Text>
+                        </View>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Date</Text>
+                            <Text style={styles.detailValue}>{selectedTxn?.date}</Text>
+                        </View>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Category</Text>
+                            <Text style={styles.detailValue}>{selectedTxn?.category}</Text>
+                        </View>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Status</Text>
+                            <Text style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
+                        </View>
+ 
+                        <TouchableOpacity style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
+                            <Text style={styles.modalCancelText}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+ 
             <View style={{ height: 20 }} />
         </ScrollView>
     );
@@ -252,8 +350,12 @@ function getStyles(C) {
         notifMsg: { ...FONTS.regular, fontSize: 12, color: C.textMuted, marginTop: 1 },
         notifTime: { ...FONTS.regular, fontSize: 11, color: C.textLight, marginTop: 2 },
         unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.accent, marginLeft: 8 },
-        summaryStrip: { flexDirection: 'row', gap: SPACING.sm, paddingHorizontal: SPACING.md, marginTop: SPACING.md },
-        summaryCard: { flex: 1, backgroundColor: C.card, borderRadius: RADIUS.md, padding: 12, ...SHADOWS.sm, alignItems: 'center' },
+        quickActionsRow: { flexDirection: 'row', justifyContent: 'center', gap: 16, paddingHorizontal: SPACING.md, marginTop: SPACING.lg, marginBottom: SPACING.sm },
+        actionItem: { alignItems: 'center' },
+        actionIconBg: { width: 56, height: 56, borderRadius: 14, backgroundColor: 'rgba(59, 130, 246, 0.08)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.15)', marginBottom: 8 },
+        actionText: { ...FONTS.medium, fontSize: 12, color: C.text },
+        summaryStrip: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: SPACING.md, marginTop: SPACING.md },
+        summaryCard: { width: '31%', backgroundColor: C.card, borderRadius: RADIUS.md, padding: 12, ...SHADOWS.sm, alignItems: 'center' },
         summaryLabel: { ...FONTS.regular, fontSize: 11, color: C.textMuted, textAlign: 'center', marginBottom: 4 },
         summaryValue: { ...FONTS.bold, fontSize: 16, color: C.text },
         section: { paddingHorizontal: SPACING.md, marginTop: SPACING.lg },
@@ -272,5 +374,13 @@ function getStyles(C) {
         quickAction: { alignItems: 'center', flex: 1 },
         quickActionIcon: { width: 56, height: 56, borderRadius: RADIUS.md, backgroundColor: C.card, justifyContent: 'center', alignItems: 'center', ...SHADOWS.sm, marginBottom: 6 },
         quickActionLabel: { ...FONTS.medium, fontSize: 11, color: C.textMuted, textAlign: 'center' },
+        modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: SPACING.md },
+        modalContent: { backgroundColor: C.card, borderRadius: RADIUS.lg, padding: SPACING.md, ...SHADOWS.lg },
+        modalTitle: { ...FONTS.bold, fontSize: 18, color: C.text, marginBottom: 12 },
+        detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.border },
+        detailLabel: { ...FONTS.medium, fontSize: 13, color: C.textMuted },
+        detailValue: { ...FONTS.bold, fontSize: 13, color: C.text, flex: 1, textAlign: 'right', marginLeft: 10 },
+        modalCancel: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: RADIUS.md, backgroundColor: C.border },
+        modalCancelText: { ...FONTS.medium, fontSize: 14, color: C.text },
     });
 }

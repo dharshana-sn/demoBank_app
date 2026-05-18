@@ -1,3 +1,5 @@
+import 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -9,6 +11,7 @@ import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import LoginScreen from './src/screens/LoginScreen';
 import OverviewScreen from './src/screens/OverviewScreen';
 import AccountsScreen from './src/screens/AccountsScreen';
+import CreditCardsScreen from './src/screens/CreditCardsScreen';
 import TransfersScreen from './src/screens/TransfersScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import FixedDepositsScreen from './src/screens/FixedDepositsScreen';
@@ -23,7 +26,8 @@ const Tab = createBottomTabNavigator();
 
 const TAB_ICONS = {
     'Overview':       { active: '🏠', inactive: '🏠' },
-    'Accounts':       { active: '💳', inactive: '💳' },
+    'Accounts':       { active: '💰', inactive: '💰' },
+    'Credit Cards':   { active: '💳', inactive: '💳' },
     'Transfers':      { active: '💸', inactive: '💸' },
     'Analytics':      { active: '📊', inactive: '📊' },
     'Fixed Deposits': { active: '🏦', inactive: '🏦' },
@@ -68,6 +72,7 @@ function DashboardTabs() {
         >
             <Tab.Screen name="Overview" component={OverviewScreen} />
             <Tab.Screen name="Accounts" component={AccountsScreen} />
+            <Tab.Screen name="Credit Cards" component={CreditCardsScreen} />
             <Tab.Screen name="Transfers" component={TransfersScreen} />
             <Tab.Screen name="Analytics" component={AnalyticsScreen} />
             <Tab.Screen name="Fixed Deposits" component={FixedDepositsScreen} />
@@ -116,13 +121,15 @@ function RootNavigator() {
 
 export default function App() {
     return (
-        <AuthProvider>
-            <ThemeProvider>
-                <NavigationContainer>
-                    <RootNavigator />
-                </NavigationContainer>
-            </ThemeProvider>
-        </AuthProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <AuthProvider>
+                <ThemeProvider>
+                    <NavigationContainer>
+                        <RootNavigator />
+                    </NavigationContainer>
+                </ThemeProvider>
+            </AuthProvider>
+        </GestureHandlerRootView>
     );
 }
 

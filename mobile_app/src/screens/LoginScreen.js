@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { checkHealth } from '../api/api';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
+import { mockUsers } from '../utils/mockData';
 
 const DEMO_EMAIL = 'testUser@gmail.com';
 const DEMO_PASSWORD = 'password123';
@@ -50,10 +51,13 @@ export default function LoginScreen() {
 
         // 2. Simulate login delay
         await new Promise(r => setTimeout(r, 900));
-        if (email === DEMO_EMAIL && password === DEMO_PASSWORD) {
-            await login({ name: 'Test User', email, avatar: 'TU' });
+        
+        const matchedUser = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+        
+        if (matchedUser && password === DEMO_PASSWORD) {
+            await login({ id: matchedUser.id, name: matchedUser.name, email: matchedUser.email, avatar: matchedUser.avatar });
         } else {
-            Alert.alert('Login Failed', 'Invalid credentials.\nDemo: testUser@gmail.com / password123');
+            Alert.alert('Login Failed', 'Invalid credentials.\nTry testUser@gmail.com or other mock emails with password123');
         }
         setIsLoading(false);
     };
@@ -175,6 +179,7 @@ function getStyles(C) {
         featureIcon: { fontSize: 14 },
         featureText: { ...FONTS.medium, fontSize: 13, color: 'rgba(255,255,255,0.9)' },
         formPanel: {
+            flex: 1,
             backgroundColor: C.card, borderTopLeftRadius: 28, borderTopRightRadius: 28,
             marginTop: -20, padding: SPACING.lg, paddingBottom: 40, ...SHADOWS.lg,
         },

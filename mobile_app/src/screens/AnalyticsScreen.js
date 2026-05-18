@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl, Dimensions
 } from 'react-native';
 import { getTransactions } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 
 const CATEGORY_COLORS = {
@@ -12,32 +13,29 @@ const CATEGORY_COLORS = {
     Dining: '#14B8A6', Investments: '#3B82F6',
 };
 
-const MONTHLY_DATA = [
-    { month: 'Feb 2026', income: 10338.25, expense: 5387.97 },
-    { month: 'Jan 2026', income: 8520.00, expense: 4210.50 },
-    { month: 'Dec 2025', income: 9100.00, expense: 6030.00 },
-    { month: 'Nov 2025', income: 8200.00, expense: 3800.00 },
-];
+// Monthly data is now calculated dynamically from transactions
 
 const { width } = Dimensions.get('window');
 
 export default function AnalyticsScreen({ navigation }) {
     const { C } = useTheme();
+    const { user } = useAuth();
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
     const styles = getStyles(C);
 
-    const load = async () => {
+    const load = useCallback(async () => {
+        if (!user?.id) return;
         try {
-            const txns = await getTransactions();
+            const txns = await getTransactions({ userId: user.id });
             setTransactions(txns);
         } catch (e) { console.error(e); }
         finally { setLoading(false); setRefreshing(false); }
-    };
+    }, [user?.id]);
 
-    useEffect(() => { load(); }, []);
+    useEffect(() => { load(); }, [load]);
 
     if (loading) return (
         <View style={styles.center}>
@@ -50,6 +48,25 @@ export default function AnalyticsScreen({ navigation }) {
     const totalExpense = Math.abs(transactions.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0));
     const netSavings = totalIncome - totalExpense;
     const savingsRate = totalIncome > 0 ? ((netSavings / totalIncome) * 100).toFixed(1) : '0.0';
+
+    // Calculate monthly data dynamically from transactions
+    const monthlyDataObj = transactions.reduce((acc, t) => {
+        const date = new Date(t.date);
+        const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+        if (!acc[monthYear]) {
+            acc[monthYear] = { month: monthYear, income: 0, expense: 0 };
+        }
+        if (t.type === 'credit') {
+            acc[monthYear].income += t.amount;
+        } else if (t.type === 'debit') {
+            acc[monthYear].expense += Math.abs(t.amount);
+        }
+        return acc;
+    }, {});
+
+    const monthlyDataArray = Object.values(monthlyDataObj).sort((a, b) => {
+        return new Date(b.month) - new Date(a.month);
+    });
 
     const categories = Object.keys(CATEGORY_COLORS);
     const categoryTotals = categories.map(cat => {
@@ -112,7 +129,7 @@ export default function AnalyticsScreen({ navigation }) {
             {/* Monthly Breakdown */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>📅 Monthly Breakdown</Text>
-                {MONTHLY_DATA.map(({ month, income, expense }) => {
+                {monthlyDataArray.map(({ month, income, expense }) => {
                     const net = income - expense;
                     return (
                         <View key={month} style={styles.monthRow}>
@@ -130,8 +147,8 @@ export default function AnalyticsScreen({ navigation }) {
             {/* Income vs Expenses bars */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>📈 Income vs Expenses</Text>
-                {MONTHLY_DATA.map(({ month, income, expense }) => {
-                    const maxVal = Math.max(...MONTHLY_DATA.map(m => m.income));
+                {monthlyDataArray.map(({ month, income, expense }) => {
+                    const maxVal = Math.max(...monthlyDataArray.map(m => m.income)) || 1;
                     const incomeW = (income / maxVal) * (width - 80);
                     const expenseW = (expense / maxVal) * (width - 80);
                     return (

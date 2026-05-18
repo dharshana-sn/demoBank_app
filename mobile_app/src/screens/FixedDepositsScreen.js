@@ -3,8 +3,9 @@ import {
     View, Text, ScrollView, StyleSheet, TextInput,
     TouchableOpacity, Alert, ActivityIndicator
 } from 'react-native';
-import { getFixedDeposits, createFixedDeposit } from '../api/api';
+import { getFixedDeposits, createFixedDeposit, getAccounts, updateAccountBalance } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -18,18 +19,28 @@ const TENURE_OPTIONS = [
 
 export default function FixedDepositsScreen({ navigation }) {
     const { C } = useTheme();
+    const { user } = useAuth();
     const [deposits, setDeposits] = useState([]);
+    const [accounts, setAccounts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState({ amount: '', tenure: 12 });
+    const [form, setForm] = useState({ amount: '', tenure: 12, sourceAccount: '' });
 
     const styles = getStyles(C);
     const selectedTenure = TENURE_OPTIONS.find(t => t.value === form.tenure) || TENURE_OPTIONS[2];
 
     useEffect(() => {
-        getFixedDeposits()
-            .then(setDeposits)
+        if (!user?.id) return;
+        Promise.all([getFixedDeposits({ userId: user.id }), getAccounts({ userId: user.id })])
+            .then(([fds, accs]) => {
+                setDeposits(fds);
+                setAccounts(accs);
+                const funding = accs.filter(acc => acc.type === 'checking' || acc.type === 'savings');
+                if (funding.length > 0) {
+                    setForm(f => ({ ...f, sourceAccount: funding[0].id }));
+                }
+            })
             .catch(console.error)
             .finally(() => setLoading(false));
     }, []);
@@ -51,12 +62,18 @@ export default function FixedDepositsScreen({ navigation }) {
             Alert.alert('Error', 'Minimum deposit amount is $500.');
             return;
         }
+        const sourceAcc = accounts.find(a => a.id === form.sourceAccount);
+        if (!sourceAcc || sourceAcc.balance < parseFloat(form.amount)) {
+            Alert.alert('Error', 'Insufficient funds in source account.');
+            return;
+        }
         setSubmitting(true);
         try {
             const startDate = new Date();
             const endDate = new Date(startDate);
             endDate.setMonth(endDate.getMonth() + form.tenure);
             const newFD = {
+                userId: user.id,
                 principal: parseFloat(form.amount),
                 rate: selectedTenure.rate,
                 tenure: String(form.tenure),
@@ -66,8 +83,10 @@ export default function FixedDepositsScreen({ navigation }) {
                 status: 'active',
             };
             const saved = await createFixedDeposit(newFD);
+            await updateAccountBalance(form.sourceAccount, -parseFloat(form.amount));
+            
             setDeposits(prev => [saved, ...prev]);
-            setForm({ amount: '', tenure: 12 });
+            setForm({ amount: '', tenure: 12, sourceAccount: form.sourceAccount });
             setShowForm(false);
             Alert.alert('✅ Success', `Fixed Deposit of $${newFD.principal} created!`);
         } catch (err) {
@@ -108,25 +127,52 @@ export default function FixedDepositsScreen({ navigation }) {
 
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>🏦 Current Interest Rates</Text>
-                {TENURE_OPTIONS.map(opt => (
-                    <View key={opt.value} style={styles.rateRow}>
-                        <Text style={styles.rateTenure}>{opt.label}</Text>
-                        <View style={styles.rateBadge}>
-                            <Text style={styles.rateBadgeText}>{opt.rate}% p.a.</Text>
+                <View style={styles.rateGrid}>
+                    {TENURE_OPTIONS.map(opt => (
+                        <View key={opt.value} style={styles.rateCard}>
+                            <Text style={styles.rateTenure}>{opt.label}</Text>
+                            <Text style={styles.ratePercent}>{opt.rate}%</Text>
+                            <Text style={styles.ratePa}>per annum</Text>
                         </View>
-                    </View>
-                ))}
+                    ))}
+                </View>
             </View>
 
-            <TouchableOpacity style={styles.createBtn} onPress={() => setShowForm(p => !p)} activeOpacity={0.85}>
-                <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.createBtnInner}>
-                    <Text style={styles.createBtnText}>{showForm ? '✕ Cancel' : '+ Open New Fixed Deposit'}</Text>
-                </LinearGradient>
-            </TouchableOpacity>
+            {!showForm && (
+                <TouchableOpacity style={styles.createBtn} onPress={() => setShowForm(true)} activeOpacity={0.85}>
+                    <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.createBtnInner}>
+                        <Text style={styles.createBtnText}>+ Open New Fixed Deposit</Text>
+                    </LinearGradient>
+                </TouchableOpacity>
+            )}
 
             {showForm && (
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>New Fixed Deposit</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                        <Text style={[styles.cardTitle, { marginBottom: 0 }]}>New Fixed Deposit</Text>
+                        <TouchableOpacity onPress={() => setShowForm(false)} style={{ padding: 4 }}>
+                            <Text style={{ ...FONTS.medium, color: C.danger, fontSize: 14 }}>✕ Cancel</Text>
+                        </TouchableOpacity>
+                    </View>
+                    
+                    <Text style={styles.fieldLabel}>Source Account</Text>
+                    <View style={styles.pickerBox}>
+                        {accounts.filter(acc => acc.type === 'checking' || acc.type === 'savings').map(acc => (
+                            <TouchableOpacity
+                                key={acc.id}
+                                style={[styles.accOption, form.sourceAccount === acc.id && styles.accOptionSelected]}
+                                onPress={() => setForm(f => ({ ...f, sourceAccount: acc.id }))}
+                            >
+                                <Text style={[styles.accOptionText, form.sourceAccount === acc.id && { color: '#fff' }]}>
+                                    {acc.name}
+                                </Text>
+                                <Text style={[styles.accBalanceText, form.sourceAccount === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
+                                    ${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
                     <Text style={styles.fieldLabel}>Amount ($) · Min $500</Text>
                     <TextInput
                         style={styles.input}
@@ -155,21 +201,27 @@ export default function FixedDepositsScreen({ navigation }) {
                     </View>
 
                     {form.amount && parseFloat(form.amount) > 0 && (
-                        <View style={styles.previewBox}>
-                            <Text style={styles.previewTitle}>Estimated Returns</Text>
+                        <LinearGradient colors={[C.primary, '#1E3A8A']} style={styles.previewBox}>
+                            <Text style={styles.previewTitle}>Your Returns</Text>
+                            
+                            <View style={styles.previewRateSection}>
+                                <Text style={styles.previewRateValue}>{selectedTenure.rate}%</Text>
+                                <Text style={styles.previewRateLabel}>Per Annum</Text>
+                            </View>
+
                             <View style={styles.previewRow}>
                                 <Text style={styles.previewLabel}>Principal</Text>
                                 <Text style={styles.previewValue}>${parseFloat(form.amount).toLocaleString()}</Text>
                             </View>
                             <View style={styles.previewRow}>
-                                <Text style={styles.previewLabel}>Interest ({selectedTenure.rate}%)</Text>
-                                <Text style={[styles.previewValue, { color: C.success }]}>+${interestEarned()}</Text>
+                                <Text style={styles.previewLabel}>Interest Earned</Text>
+                                <Text style={[styles.previewValue, { color: '#34D399' }]}>+${interestEarned()}</Text>
                             </View>
-                            <View style={[styles.previewRow, { borderTopWidth: 1, borderTopColor: C.border, marginTop: 8, paddingTop: 8 }]}>
-                                <Text style={[styles.previewLabel, { ...FONTS.bold }]}>Maturity Amount</Text>
-                                <Text style={[styles.previewValue, { color: C.primary, fontSize: 16 }]}>${maturityAmount()}</Text>
+                            <View style={[styles.previewRow, { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', marginTop: 8, paddingTop: 8 }]}>
+                                <Text style={[styles.previewLabel, { ...FONTS.bold, color: '#fff' }]}>Maturity Amount</Text>
+                                <Text style={[styles.previewValue, { color: '#FCD34D', fontSize: 16 }]}>${maturityAmount()}</Text>
                             </View>
-                        </View>
+                        </LinearGradient>
                     )}
 
                     <TouchableOpacity
@@ -232,19 +284,33 @@ function getStyles(C) {
         },
         pageTitle: { ...FONTS.bold, fontSize: 22, color: C.text },
         pageSub: { ...FONTS.regular, fontSize: 13, color: C.textMuted, marginTop: 2 },
-        banner: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 20, paddingHorizontal: SPACING.lg },
+        banner: { 
+            flexDirection: 'row', justifyContent: 'space-around', 
+            paddingVertical: 20, paddingHorizontal: SPACING.lg,
+            marginHorizontal: SPACING.md, borderRadius: RADIUS.lg,
+            marginTop: SPACING.md, marginBottom: SPACING.sm
+        },
         bannerLabel: { ...FONTS.regular, color: 'rgba(255,255,255,0.75)', fontSize: 12, marginBottom: 4 },
         bannerValue: { ...FONTS.extraBold, color: '#fff', fontSize: 24 },
-        card: { backgroundColor: C.card, marginHorizontal: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.md, ...SHADOWS.sm },
-        cardTitle: { ...FONTS.bold, fontSize: 15, color: C.text, marginBottom: 14 },
-        rateRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
-        rateTenure: { ...FONTS.medium, fontSize: 14, color: C.text },
-        rateBadge: { backgroundColor: C.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full },
-        rateBadgeText: { ...FONTS.bold, fontSize: 13, color: C.primary },
+        card: { backgroundColor: C.card, marginHorizontal: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.md, ...SHADOWS.sm },
+        cardTitle: { ...FONTS.bold, fontSize: 16, color: C.text, marginBottom: 16 },
+        rateGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
+        rateCard: { width: '48%', backgroundColor: C.bg, padding: 16, borderRadius: RADIUS.lg, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)', marginBottom: 4 },
+        rateTenure: { ...FONTS.medium, fontSize: 13, color: C.textMuted, marginBottom: 2 },
+        ratePercent: { ...FONTS.extraBold, fontSize: 22, color: C.primary, marginVertical: 2 },
+        ratePa: { ...FONTS.regular, fontSize: 10, color: C.textLight, marginTop: 2 },
         createBtn: { marginHorizontal: SPACING.md, borderRadius: RADIUS.md, overflow: 'hidden', marginBottom: SPACING.md },
         createBtnInner: { paddingVertical: 14, alignItems: 'center' },
         createBtnText: { ...FONTS.bold, fontSize: 15, color: '#fff' },
+        cancelBtn: { marginHorizontal: SPACING.md, borderRadius: RADIUS.md, overflow: 'hidden', marginBottom: SPACING.md, borderWidth: 1.5, borderColor: C.danger, backgroundColor: C.bg },
+        cancelBtnInner: { paddingVertical: 12, alignItems: 'center' },
+        cancelBtnText: { ...FONTS.bold, fontSize: 15, color: C.danger },
         fieldLabel: { ...FONTS.semiBold, fontSize: 13, color: C.text, marginBottom: 8, marginTop: 12 },
+        pickerBox: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
+        accOption: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full, backgroundColor: C.bg, borderWidth: 1, borderColor: C.border },
+        accOptionSelected: { backgroundColor: C.primary, borderColor: C.primary },
+        accOptionText: { ...FONTS.medium, fontSize: 12, color: C.text },
+        accBalanceText: { ...FONTS.regular, fontSize: 10, color: C.textMuted, marginTop: 1 },
         input: {
             borderWidth: 1.5, borderColor: C.border, borderRadius: RADIUS.md,
             paddingHorizontal: 14, paddingVertical: 12,
@@ -258,11 +324,14 @@ function getStyles(C) {
         tenureSelected: { backgroundColor: C.primary, borderColor: C.primary },
         tenureText: { ...FONTS.semiBold, fontSize: 12, color: C.text },
         tenureRate: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginTop: 2 },
-        previewBox: { backgroundColor: C.bg, borderRadius: RADIUS.md, padding: 14, marginTop: 16, borderWidth: 1, borderColor: C.border },
-        previewTitle: { ...FONTS.semiBold, fontSize: 13, color: C.text, marginBottom: 10 },
-        previewRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
-        previewLabel: { ...FONTS.regular, fontSize: 13, color: C.textMuted },
-        previewValue: { ...FONTS.semiBold, fontSize: 13, color: C.text },
+        previewBox: { borderRadius: RADIUS.lg, padding: 16, marginTop: 16, overflow: 'hidden' },
+        previewTitle: { ...FONTS.semiBold, fontSize: 14, color: '#fff', marginBottom: 12 },
+        previewRateSection: { alignItems: 'center', marginVertical: 10 },
+        previewRateValue: { ...FONTS.extraBold, fontSize: 32, color: '#fff' },
+        previewRateLabel: { ...FONTS.regular, fontSize: 12, color: 'rgba(255,255,255,0.7)' },
+        previewRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
+        previewLabel: { ...FONTS.regular, fontSize: 13, color: 'rgba(255,255,255,0.8)' },
+        previewValue: { ...FONTS.semiBold, fontSize: 13, color: '#fff' },
         submitBtn: { borderRadius: RADIUS.md, overflow: 'hidden', marginTop: 16 },
         submitBtnInner: { paddingVertical: 15, alignItems: 'center' },
         submitBtnText: { ...FONTS.bold, fontSize: 15, color: '#fff' },

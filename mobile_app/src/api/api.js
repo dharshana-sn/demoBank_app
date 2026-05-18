@@ -7,6 +7,7 @@
 // - Local dev: 'http://10.0.2.2:5001/api' for Android emulator
 // - Local dev: 'http://localhost:5001/api' for iOS simulator
 // - Production: 'https://demobank-app-backend.onrender.com/api'
+// export const BASE_URL = 'http://10.0.2.2:5001/api';
 export const BASE_URL = 'http://192.168.22.89:5001/api';
 
 export const checkHealth = async () => {
@@ -53,9 +54,19 @@ async function request(path, options = {}) {
 }
 
 // ── Accounts ──────────────────────────────────
-export const getAccounts = () => request('/accounts');
+export const getAccounts = async (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/accounts${qs ? `?${qs}` : ''}`);
+};
 export const updateAccountBalance = (id, delta) =>
     request(`/accounts/${id}/balance`, { method: 'PATCH', body: { delta } });
+export const updateAccount = (id, data) =>
+    request(`/accounts/${id}`, { method: 'PATCH', body: data });
+export const createAccount = (data) =>
+    request('/accounts', { method: 'POST', body: data });
+export const deleteAccount = (id) =>
+    request(`/accounts/${id}`, { method: 'DELETE' });
+
 
 // ── Transactions ──────────────────────────────
 export const getTransactions = (params = {}) => {
@@ -64,9 +75,14 @@ export const getTransactions = (params = {}) => {
 };
 export const createTransaction = (txn) =>
     request('/transactions', { method: 'POST', body: txn });
+export const sameBankTransfer = (data) =>
+    request('/transactions/same-bank-transfer', { method: 'POST', body: data });
 
 // ── Fixed Deposits ────────────────────────────
-export const getFixedDeposits = () => request('/fixed-deposits');
+export const getFixedDeposits = (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/fixed-deposits${qs ? `?${qs}` : ''}`);
+};
 export const createFixedDeposit = (fd) =>
     request('/fixed-deposits', { method: 'POST', body: fd });
 
@@ -80,17 +96,23 @@ export const loginUser = (email, password) =>
     request('/auth/login', { method: 'POST', body: { email, password } });
 
 // ── KYC ───────────────────────────────────────
-export const getKycStatus = () => request('/kyc/status');
-export const deleteKycDocument = (type) =>
-    request(`/kyc/document/${type}`, { method: 'DELETE' });
+export const getKycStatus = (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/kyc/status${qs ? `?${qs}` : ''}`);
+};
+export const deleteKycDocument = (type, params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/kyc/document/${type}${qs ? `?${qs}` : ''}`, { method: 'DELETE' });
+};
 
-export const uploadKycDocument = async (type, fileUri, fileName, mimeType) => {
+export const uploadKycDocument = async (type, fileUri, fileName, mimeType, userId) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
     try {
         const formData = new FormData();
         formData.append('document', { uri: fileUri, name: fileName, type: mimeType || 'application/octet-stream' });
         formData.append('documentType', type);
+        formData.append('userId', userId);
         const res = await fetch(`${BASE_URL}/kyc/upload`, {
             method: 'POST',
             body: formData,
