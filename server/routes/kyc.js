@@ -11,12 +11,8 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Store KYC filenames in-memory for this test user
-const mockKycStatus = {
-    aadhar: null,
-    pan: null,
-    license: null
-};
+// Store KYC filenames in-memory by userId
+const mockKycStatus = {};
 
 // Expose uploaded files statically so the frontend can "View Document"
 router.use('/files', express.static(uploadDir));
@@ -37,7 +33,12 @@ const upload = multer({ storage: storage });
 
 // Pre-fill State Endpoint
 router.get('/status', (req, res) => {
-    res.json(mockKycStatus);
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: 'userId is required' });
+    if (!mockKycStatus[userId]) {
+        mockKycStatus[userId] = { aadhar: null, pan: null, license: null };
+    }
+    res.json(mockKycStatus[userId]);
 });
 
 router.post('/upload', upload.single('document'), (req, res) => {
@@ -46,16 +47,24 @@ router.post('/upload', upload.single('document'), (req, res) => {
             return res.status(400).json({ error: 'No file uploaded.' });
         }
         
-        const docType = req.body.documentType;
+        const { documentType: docType, userId } = req.body;
+        if (!userId) {
+            fs.unlinkSync(req.file.path);
+            return res.status(400).json({ error: 'userId is required' });
+        }
+        
         if (!['aadhar', 'pan', 'license'].includes(docType)) {
             // Cleanup the file if invalid type
             fs.unlinkSync(req.file.path);
             return res.status(400).json({ error: 'Invalid document type. Must be aadhar, pan, or license.' });
         }
-
+ 
         // Save successfully uploaded filename
-        mockKycStatus[docType] = req.file.filename;
-
+        if (!mockKycStatus[userId]) {
+            mockKycStatus[userId] = { aadhar: null, pan: null, license: null };
+        }
+        mockKycStatus[userId][docType] = req.file.filename;
+ 
         // Simulate processing delay for demo
         setTimeout(() => {
             res.json({
@@ -74,17 +83,24 @@ router.post('/upload', upload.single('document'), (req, res) => {
 // Delete Document Endpoint
 router.delete('/document/:type', (req, res) => {
     const { type } = req.params;
+    const { userId } = req.query;
+    
+    if (!userId) return res.status(400).json({ error: 'userId is required' });
     if (!['aadhar', 'pan', 'license'].includes(type)) {
         return res.status(400).json({ error: 'Invalid document type.' });
     }
-
-    const filename = mockKycStatus[type];
+ 
+    if (!mockKycStatus[userId]) {
+        return res.json({ success: true, message: 'Document deleted successfully' });
+    }
+ 
+    const filename = mockKycStatus[userId][type];
     if (filename) {
         const filepath = path.join(uploadDir, filename);
         if (fs.existsSync(filepath)) {
             fs.unlinkSync(filepath);
         }
-        mockKycStatus[type] = null;
+        mockKycStatus[userId][type] = null;
     }
     
     res.json({ success: true, message: 'Document deleted successfully' });

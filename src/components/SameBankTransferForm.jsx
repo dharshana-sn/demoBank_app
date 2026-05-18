@@ -11,7 +11,7 @@ import { sameBankTransfer } from "../api.js";
 import "./TransferForm.css"; // Reuse common transfer styles
 
 export default function SameBankTransferForm({ onTransferComplete, accounts = [], user }) {
-    const filteredAccounts = accounts.filter(acc => acc.type !== 'credit');
+    const filteredAccounts = accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment');
     
     const [formData, setFormData] = useState({
         fromAccountId: "",

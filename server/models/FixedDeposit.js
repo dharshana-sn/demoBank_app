@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const fixedDepositSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
+    userId: { type: String, required: true },
     principal: { type: Number, required: true },
     rate: { type: Number, required: true },
     tenure: { type: String, required: true },

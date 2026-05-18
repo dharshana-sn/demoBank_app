@@ -1172,7 +1172,7 @@ export default function Dashboard() {
                     allTransactions={allTransactions}
                 />;
             case "accounts": return <AccountsPage globalSearchQuery={globalSearchQuery} accounts={accounts} allTransactions={allTransactions} />;
-            case "fd": return <FDManager accounts={accounts} onTransferComplete={handleTransferComplete} />;
+            case "fd": return <FDManager accounts={accounts} onTransferComplete={handleTransferComplete} user={user} />;
             case "credit-cards": return <CreditCardPage accounts={accounts} onTransferComplete={handleTransferComplete} onAccountsRefresh={setAccounts} />;
             case "transfers": return <TransfersPage globalSearchQuery={globalSearchQuery} allTransactions={allTransactions} onTransferComplete={handleTransferComplete} accounts={accounts} user={user} />;
             case "analytics": return <AnalyticsPage transactions={allTransactions} accounts={accounts} />;

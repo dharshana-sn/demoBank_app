@@ -111,7 +111,7 @@ function calcFD(principal, annualRatePct, durationDays, payoutId) {
     }
 }
 
-export default function FDManager({ accounts = [], onTransferComplete }) {
+export default function FDManager({ accounts = [], onTransferComplete, user }) {
     const [customerType, setCustomerType] = useState('general');
     const [amount, setAmount] = useState(500000);
     const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id || '');
@@ -124,10 +124,11 @@ export default function FDManager({ accounts = [], onTransferComplete }) {
 
     // Fetch active FDs from MongoDB on mount
     useEffect(() => {
-        getFixedDeposits()
+        if (!user?.id) return;
+        getFixedDeposits({ userId: user.id })
             .then(setActiveFDs)
             .catch(err => console.error('Failed to load FDs:', err));
-    }, []);
+    }, [user?.id]);
 
     // Close modal on Escape key
     useEffect(() => {

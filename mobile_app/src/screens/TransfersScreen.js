@@ -1,23 +1,28 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     View, Text, ScrollView, StyleSheet, TextInput,
-    TouchableOpacity, Alert, ActivityIndicator
+    TouchableOpacity, Alert, ActivityIndicator, Modal, StatusBar
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { getAccounts, createTransaction, updateAccountBalance, getTransactions } from '../api/api';
+import { getAccounts, createTransaction, updateAccountBalance, getTransactions, sameBankTransfer } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { mockUsers } from '../utils/mockData';
 
 export default function TransfersScreen({ navigation, route }) {
     const { C } = useTheme();
+    const { user } = useAuth();
     const [accounts, setAccounts] = useState([]);
     const [form, setForm] = useState({ from: '', to: '', amount: '', description: '' });
     const [payForm, setPayForm] = useState({ from: '', recipient: '', amount: '', note: '' });
+    const [sbForm, setSbForm] = useState({ from: '', recipientAccount: '', recipientName: '', amount: '', note: '' });
     const [loading, setLoading] = useState(false);
     const [pageLoading, setPageLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('internal');
     const [recentTransfers, setRecentTransfers] = useState([]);
+    const [selectedTxn, setSelectedTxn] = useState(null);
 
     const styles = getStyles(C);
 
@@ -38,11 +43,12 @@ export default function TransfersScreen({ navigation, route }) {
     );
 
     const loadData = useCallback(async () => {
+        if (!user?.id) return;
         setPageLoading(true);
         try {
             const [accs, txns] = await Promise.all([
-                getAccounts(),
-                getTransactions(),
+               getAccounts({ userId: user.id }),
+                getTransactions({ userId: user.id }),
             ]);
             setAccounts(accs);
             if (accs.length >= 2) {
@@ -50,6 +56,7 @@ export default function TransfersScreen({ navigation, route }) {
             }
             if (accs.length >= 1) {
                 setPayForm(f => ({ ...f, from: f.from || accs[0].id }));
+                setSbForm(f => ({ ...f, from: f.from || accs[0].id }));
             }
             const transfers = txns
                 .filter(t => t.category === 'Transfers' || t.category === 'Internal Transfer')
@@ -61,7 +68,7 @@ export default function TransfersScreen({ navigation, route }) {
         } finally {
             setPageLoading(false);
         }
-    }, []);
+    }, [user?.id]);
 
     // Reload every time the screen comes into focus
     useFocusEffect(
@@ -105,8 +112,9 @@ export default function TransfersScreen({ navigation, route }) {
                 description: form.description || `Transfer to ${toAccount?.name || form.to}`,
                 amount: -amt, type: 'debit', category: 'Internal Transfer',
                 status: 'Completed', date: new Date().toISOString().split('T')[0],
-                customerId: 'CUST001',
+                customerId: user.id,
                 accountId: form.from,
+                userId: user.id,
             };
             await createTransaction(txn);
             await Promise.all([
@@ -143,20 +151,69 @@ export default function TransfersScreen({ navigation, route }) {
             const description = payForm.note
                 ? `Payment to ${payForm.recipient}: ${payForm.note}`
                 : `Payment to ${payForm.recipient}`;
-            const txn = {
-                description,
-                amount: -amt, type: 'debit', category: 'Transfers',
-                status: 'Completed', date: new Date().toISOString().split('T')[0],
-                customerId: payForm.recipient,
-                accountId: payForm.from,
-            };
-            await createTransaction(txn);
-            await updateAccountBalance(payForm.from, -amt);
+            
+            const recipientUser = mockUsers.find(u => u.name === payForm.recipient);
+            const recipientAccountNum = recipientUser?.accountNumber;
+
+            if (!recipientAccountNum) {
+                throw new Error(`Could not find account number for ${payForm.recipient}`);
+            }
+
+            await sameBankTransfer({
+                fromAccountId: payForm.from,
+                toAccountNum: recipientAccountNum,
+                amount: amt,
+                senderUserId: user?.id,
+                senderName: user?.name,
+                note: description,
+                date: new Date().toISOString().split('T')[0],
+            });
+
             setPayForm(f => ({ from: f.from, recipient: '', amount: '', note: '' }));
             await loadData();
             Alert.alert(
                 '✅ Payment Sent',
                 `$${amt.toFixed(2)} sent to ${payForm.recipient} successfully!`
+            );
+        } catch (err) {
+            Alert.alert('Error', err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSameBankTransfer = async () => {
+        if (!sbForm.from) {
+            Alert.alert('Error', 'Please select an account to pay from.');
+            return;
+        }
+        if (!sbForm.recipientAccount || !sbForm.recipientName || !sbForm.amount || isNaN(parseFloat(sbForm.amount))) {
+            Alert.alert('Error', 'Please fill in all fields correctly.');
+            return;
+        }
+        const amt = parseFloat(sbForm.amount);
+        const fromAccount = accounts.find(a => a.id === sbForm.from);
+        if (!fromAccount || fromAccount.balance < amt) {
+            Alert.alert('Insufficient Funds', `Available balance: $${(fromAccount?.balance ?? 0).toFixed(2)}`);
+            return;
+        }
+        setLoading(true);
+        try {
+            const result = await sameBankTransfer({
+                fromAccountId: sbForm.from,
+                toAccountNum: sbForm.recipientAccount,
+                amount: amt,
+                senderUserId: user?.id,
+                senderName: user?.name,
+                note: sbForm.note || '',
+                date: new Date().toISOString().split('T')[0],
+            });
+
+            setSbForm(f => ({ from: f.from, recipientAccount: '', recipientName: '', amount: '', note: '' }));
+            await loadData();
+            Alert.alert(
+                '✅ Success',
+                `$${amt.toFixed(2)} transferred to ${sbForm.recipientName} successfully!`
             );
         } catch (err) {
             Alert.alert('Error', err.message);
@@ -171,6 +228,7 @@ export default function TransfersScreen({ navigation, route }) {
 
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+            <StatusBar barStyle="dark-content" backgroundColor={C.card} />
             <View style={styles.topBar}>
                 <View>
                     <Text style={styles.pageTitle}>Fund Transfers</Text>
@@ -201,6 +259,12 @@ export default function TransfersScreen({ navigation, route }) {
                     <Text style={[styles.tabText, activeTab === 'internal' && styles.tabTextActive]}>Between Accounts</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
+                    style={[styles.tab, activeTab === 'same-bank' && styles.tabActive]}
+                    onPress={() => setActiveTab('same-bank')}
+                >
+                    <Text style={[styles.tabText, activeTab === 'same-bank' && styles.tabTextActive]}>Same Bank</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
                     style={[styles.tab, activeTab === 'pay' && styles.tabActive]}
                     onPress={() => setActiveTab('pay')}
                 >
@@ -213,7 +277,7 @@ export default function TransfersScreen({ navigation, route }) {
                     <Text style={styles.cardTitle}>Transfer Between Accounts</Text>
                     <Text style={styles.fieldLabel}>From Account</Text>
                     <View style={styles.pickerBox}>
-                        {accounts.map(acc => (
+                        {accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment').map(acc => (
                             <TouchableOpacity
                                 key={acc.id}
                                 style={[styles.accOption, form.from === acc.id && styles.accOptionSelected]}
@@ -230,7 +294,7 @@ export default function TransfersScreen({ navigation, route }) {
                     </View>
                     <Text style={styles.fieldLabel}>To Account</Text>
                     <View style={styles.pickerBox}>
-                        {accounts.map(acc => (
+                        {accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment').map(acc => (
                             <TouchableOpacity
                                 key={acc.id}
                                 style={[styles.accOption, form.to === acc.id && styles.accOptionSelected]}
@@ -272,6 +336,72 @@ export default function TransfersScreen({ navigation, route }) {
                 </View>
             )}
 
+            {activeTab === 'same-bank' && (
+                <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Same Bank Transfer</Text>
+                    <Text style={styles.fieldLabel}>From Account</Text>
+                    <View style={styles.pickerBox}>
+                        {accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment').map(acc => (
+                            <TouchableOpacity
+                                key={acc.id}
+                                style={[styles.accOption, sbForm.from === acc.id && styles.accOptionSelected]}
+                                onPress={() => setSbForm(f => ({ ...f, from: acc.id }))}
+                            >
+                                <Text style={[styles.accOptionText, sbForm.from === acc.id && { color: '#fff' }]}>
+                                    {acc.name}
+                                </Text>
+                                <Text style={[styles.accBalanceText, sbForm.from === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
+                                    ${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                    <Text style={styles.fieldLabel}>Recipient Account Number</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Enter account number"
+                        placeholderTextColor={C.textLight}
+                        value={sbForm.recipientAccount}
+                        onChangeText={v => setSbForm(f => ({ ...f, recipientAccount: v }))}
+                    />
+                    <Text style={styles.fieldLabel}>Recipient Name</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="e.g. John Doe"
+                        placeholderTextColor={C.textLight}
+                        value={sbForm.recipientName}
+                        onChangeText={v => setSbForm(f => ({ ...f, recipientName: v }))}
+                    />
+                    <Text style={styles.fieldLabel}>Amount ($)</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="0.00"
+                        placeholderTextColor={C.textLight}
+                        value={sbForm.amount}
+                        onChangeText={v => setSbForm(f => ({ ...f, amount: v }))}
+                        keyboardType="numeric"
+                    />
+                    <Text style={styles.fieldLabel}>Note (optional)</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="e.g. Rent, Gift"
+                        placeholderTextColor={C.textLight}
+                        value={sbForm.note}
+                        onChangeText={v => setSbForm(f => ({ ...f, note: v }))}
+                    />
+                    <TouchableOpacity
+                        style={[styles.submitBtn, loading && { opacity: 0.6 }]}
+                        onPress={handleSameBankTransfer}
+                        disabled={loading}
+                        activeOpacity={0.85}
+                    >
+                        <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.submitBtnInner}>
+                            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Transfer Funds</Text>}
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </View>
+            )}
+
             {activeTab === 'pay' && (
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Pay to Another User</Text>
@@ -292,7 +422,7 @@ export default function TransfersScreen({ navigation, route }) {
                     </View>
                     <Text style={styles.fieldLabel}>From Account</Text>
                     <View style={styles.pickerBox}>
-                        {accounts.map(acc => (
+                        {accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment').map(acc => (
                             <TouchableOpacity
                                 key={acc.id}
                                 style={[styles.accOption, payForm.from === acc.id && styles.accOptionSelected]}
@@ -307,14 +437,22 @@ export default function TransfersScreen({ navigation, route }) {
                             </TouchableOpacity>
                         ))}
                     </View>
-                    <Text style={styles.fieldLabel}>Recipient ID / Name</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g. CUST002"
-                        placeholderTextColor={C.textLight}
-                        value={payForm.recipient}
-                        onChangeText={v => setPayForm(f => ({ ...f, recipient: v }))}
-                    />
+                    <Text style={styles.fieldLabel}>Select Recipient</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16, paddingVertical: 4 }}>
+                        {mockUsers.filter(u => u.id !== user?.id).map(u => (
+                            <TouchableOpacity
+                                key={u.id}
+                                style={styles.userOption}
+                                onPress={() => setPayForm(f => ({ ...f, recipient: u.name }))}
+                                activeOpacity={0.8}
+                            >
+                                <View style={[styles.userAvatar, payForm.recipient === u.name && { backgroundColor: C.primary, borderColor: C.primary }]}>
+                                    <Text style={[styles.userAvatarText, payForm.recipient === u.name && { color: '#fff' }]}>{u.avatar}</Text>
+                                </View>
+                                <Text style={[styles.userNameText, payForm.recipient === u.name && { color: C.primary, ...FONTS.bold }]}>{u.name.split(' ')[0]}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
                     <Text style={styles.fieldLabel}>Amount ($)</Text>
                     <TextInput
                         style={styles.input}
@@ -349,7 +487,12 @@ export default function TransfersScreen({ navigation, route }) {
                 <View style={[styles.card, { marginTop: SPACING.md }]}>
                     <Text style={styles.cardTitle}>Transfer History</Text>
                     {recentTransfers.map((t, i) => (
-                        <View key={t.id} style={[styles.txRow, i < recentTransfers.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}>
+                        <TouchableOpacity 
+                            key={t.id} 
+                            style={[styles.txRow, i < recentTransfers.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}
+                            onPress={() => setSelectedTxn(t)}
+                            activeOpacity={0.7}
+                        >
                             <Text style={{ fontSize: 20, marginRight: 10 }}>
                                 {t.category === 'Internal Transfer' ? '🔄' : '💸'}
                             </Text>
@@ -362,11 +505,68 @@ export default function TransfersScreen({ navigation, route }) {
                             <Text style={{ ...FONTS.bold, color: t.category === 'Internal Transfer' ? C.textMuted : (t.type === 'credit' ? C.success : C.danger) }}>
                                 {t.category === 'Internal Transfer' ? '↔' : (t.type === 'credit' ? '+' : '-')}${Math.abs(t.amount).toFixed(2)}
                             </Text>
-                        </View>
+                        </TouchableOpacity>
                     ))}
                 </View>
             )}
 
+            {/* Transaction Detail Modal */}
+            <Modal visible={!!selectedTxn} transparent animationType="slide">
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Transaction Details</Text>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Description</Text>
+                            <Text style={styles.detailValue}>{selectedTxn?.description}</Text>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Recipient</Text>
+                            <Text style={styles.detailValue}>
+                                {(() => {
+                                    const desc = selectedTxn?.description;
+                                    if (!desc) return 'N/A';
+                                    const m1 = desc.match(/^Payment to ([^:]+)/);
+                                    if (m1) return m1[1].trim();
+                                    const m2 = desc.match(/^Transfer to account (.+)/);
+                                    if (m2) return m2[1].trim();
+                                    const m3 = desc.match(/^Transfer from (.+)/);
+                                    if (m3) return m3[1].trim();
+                                    return 'N/A';
+                                })()}
+                            </Text>
+                        </View>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Amount</Text>
+                            <Text style={[styles.detailValue, { color: selectedTxn?.type === 'credit' ? C.success : C.danger }]}>
+                                {selectedTxn?.type === 'credit' ? '+' : '-'}${Math.abs(selectedTxn?.amount || 0).toFixed(2)}
+                            </Text>
+                        </View>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Date</Text>
+                            <Text style={styles.detailValue}>{selectedTxn?.date}</Text>
+                        </View>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Category</Text>
+                            <Text style={styles.detailValue}>{selectedTxn?.category}</Text>
+                        </View>
+                        
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Status</Text>
+                            <Text style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
+                        </View>
+ 
+                        <TouchableOpacity style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
+                            <Text style={styles.modalCancelText}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+ 
             <View style={{ height: 24 }} />
         </ScrollView>
     );
@@ -381,6 +581,10 @@ function getStyles(C) {
         qrScanBtnText: { ...FONTS.bold, color: '#fff', fontSize: 15 },
         orDivider: { flexDirection: 'row', alignItems: 'center', marginVertical: 14, gap: 8 },
         orLine: { flex: 1, height: 1, backgroundColor: C.border },
+        userOption: { alignItems: 'center', marginRight: 16 },
+        userAvatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: C.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: C.border, ...SHADOWS.sm },
+        userAvatarText: { ...FONTS.bold, fontSize: 16, color: C.text },
+        userNameText: { ...FONTS.medium, fontSize: 12, color: C.textMuted, marginTop: 4 },
         orText: { ...FONTS.medium, fontSize: 12, color: C.textMuted },
         topBar: {
             paddingHorizontal: SPACING.md, paddingTop: 20, paddingBottom: 12,
@@ -418,6 +622,14 @@ function getStyles(C) {
         submitBtn: { borderRadius: RADIUS.md, overflow: 'hidden', marginTop: 20 },
         submitBtnInner: { paddingVertical: 15, alignItems: 'center' },
         submitBtnText: { ...FONTS.bold, fontSize: 15, color: '#fff' },
+        modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: SPACING.md },
+        modalContent: { backgroundColor: C.card, borderRadius: RADIUS.lg, padding: SPACING.md, ...SHADOWS.lg },
+        modalTitle: { ...FONTS.bold, fontSize: 18, color: C.text, marginBottom: 12 },
+        detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.border },
+        detailLabel: { ...FONTS.medium, fontSize: 13, color: C.textMuted },
+        detailValue: { ...FONTS.bold, fontSize: 13, color: C.text, flex: 1, textAlign: 'right', marginLeft: 10 },
+        modalCancel: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: RADIUS.md, backgroundColor: C.border },
+        modalCancelText: { ...FONTS.medium, fontSize: 14, color: C.text },
         txRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
         txDesc: { ...FONTS.semiBold, fontSize: 13, color: C.text },
         txMeta: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginTop: 2 },

@@ -20,13 +20,21 @@ const ACCOUNTS = [
     // Accounts for the second user (Recipient)
     { id: "acc-101", name: "Personal Savings", number: "9876543210", balance: 2500.00, type: "savings", color: "#10B981", userId: "user-2" },
     { id: "acc-102", name: "Main Checking", number: "1234567890", balance: 1200.50, type: "checking", color: "#F59E0B", userId: "user-2" },
+    
+    // Accounts for other mock users
+    { id: "acc-usr-1", name: "Savings Account", number: "4528172635", balance: 5000.00, type: "savings", color: "#10B981", userId: "usr-1" },
+    { id: "acc-usr-2", name: "Savings Account", number: "9823746150", balance: 5000.00, type: "savings", color: "#10B981", userId: "usr-2" },
+    { id: "acc-usr-3", name: "Savings Account", number: "6152437890", balance: 5000.00, type: "savings", color: "#10B981", userId: "usr-3" },
+    { id: "acc-usr-4", name: "Savings Account", number: "9999012", balance: 5000.00, type: "savings", color: "#10B981", userId: "usr-4" },
+    { id: "acc-usr-5", name: "Savings Account", number: "9991476", balance: 5000.00, type: "savings", color: "#10B981", userId: "usr-5" },
+    { id: "acc-usr-6", name: "Savings Account", number: "9996230", balance: 5000.00, type: "savings", color: "#10B981", userId: "usr-6" },
 ];
 
 const INITIAL_FDS = [
-    { id: "fd-1", principal: 50000, rate: 6.5, tenure: "1 Year", startDate: "2025-06-15", maturityDate: "2026-06-15", maturityAmount: 53250, status: "active" },
-    { id: "fd-2", principal: 150000, rate: 7.5, tenure: "3 Years", startDate: "2024-02-10", maturityDate: "2027-02-10", maturityAmount: 183750, status: "active" },
-    { id: "fd-3", principal: 300000, rate: 7.1, tenure: "5 Years", startDate: "2023-08-01", maturityDate: "2028-08-01", maturityAmount: 406500, status: "active" },
-    { id: "fd-4", principal: 75000, rate: 6.8, tenure: "2 Years", startDate: "2025-01-10", maturityDate: "2027-01-10", maturityAmount: 87855, status: "active" },
+    { id: "fd-1", userId: "user-1", principal: 50000, rate: 6.5, tenure: "1 Year", startDate: "2025-06-15", maturityDate: "2026-06-15", maturityAmount: 53250, status: "active" },
+    { id: "fd-2", userId: "user-1", principal: 150000, rate: 7.5, tenure: "3 Years", startDate: "2024-02-10", maturityDate: "2027-02-10", maturityAmount: 183750, status: "active" },
+    { id: "fd-3", userId: "user-1", principal: 300000, rate: 7.1, tenure: "5 Years", startDate: "2023-08-01", maturityDate: "2028-08-01", maturityAmount: 406500, status: "active" },
+    { id: "fd-4", userId: "user-1", principal: 75000, rate: 6.8, tenure: "2 Years", startDate: "2025-01-10", maturityDate: "2027-01-10", maturityAmount: 87855, status: "active" },
 ];
 
 const INITIAL_USERS = [
@@ -47,6 +55,48 @@ const INITIAL_USERS = [
         address: "456 Pine Avenue, Los Angeles, CA 90001",
         avatar: "JD",
         memberSince: "2023"
+    },
+    {
+        id: "usr-1",
+        name: "Alice Johnson",
+        email: "alice.johnson@email.com",
+        avatar: "A",
+        memberSince: "2022"
+    },
+    {
+        id: "usr-2",
+        name: "Bob Williams",
+        email: "bob.williams@email.com",
+        avatar: "B",
+        memberSince: "2022"
+    },
+    {
+        id: "usr-3",
+        name: "Catherine Lee",
+        email: "catherine.lee@email.com",
+        avatar: "C",
+        memberSince: "2022"
+    },
+    {
+        id: "usr-4",
+        name: "David Martinez",
+        email: "david.martinez@email.com",
+        avatar: "D",
+        memberSince: "2022"
+    },
+    {
+        id: "usr-5",
+        name: "Emily Chen",
+        email: "emily.chen@email.com",
+        avatar: "E",
+        memberSince: "2022"
+    },
+    {
+        id: "usr-6",
+        name: "Frank Brown",
+        email: "frank.brown@email.com",
+        avatar: "F",
+        memberSince: "2022"
     }
 ];
 

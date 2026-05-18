@@ -6,7 +6,9 @@ const router = express.Router();
 // GET /api/fixed-deposits — list all active FDs
 router.get('/', async (req, res) => {
     try {
-        const fds = await FixedDeposit.find({ status: 'active' }).sort({ createdAt: -1 });
+        const filter = { status: 'active' };
+        if (req.query.userId) filter.userId = req.query.userId;
+        const fds = await FixedDeposit.find(filter).sort({ createdAt: -1 });
         res.json(fds);
     } catch (err) {
         res.status(500).json({ error: err.message });

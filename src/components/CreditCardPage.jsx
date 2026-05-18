@@ -56,8 +56,9 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
     }, [status]);
 
     const sourceAccount = fundingAccounts.find(a => a.id === sourceAccountId);
-    const outstandingBalance = creditCard ? Math.abs(creditCard.balance) : 0;
-    const availableLimit = creditCard ? (creditCard.limit || 0) + creditCard.balance : 0;
+    const dueAmount = creditCard ? Math.max(0, -creditCard.balance) : 0;
+    const availableLimit = creditCard ? Math.min(creditCard.limit || 0, (creditCard.limit || 0) + creditCard.balance) : 0;
+
 
     const refreshData = async (silent = false) => {
         if (!user?.id) return;
@@ -78,6 +79,7 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
     const handlePayment = async (e) => {
         e.preventDefault();
         const payAmount = parseFloat(amount);
+        if (dueAmount <= 0) { setStatus({ type: 'error', message: 'No pending amount due' }); return; }
         if (!payAmount || payAmount <= 0) { setStatus({ type: 'error', message: 'Please enter a valid amount' }); return; }
         if (!creditCard) { setStatus({ type: 'error', message: 'No credit card found' }); return; }
         if (creditCard.status === 'blocked') { setStatus({ type: 'error', message: 'This card is blocked' }); return; }
@@ -328,9 +330,9 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
                             {/* Balance & Limit Info */}
                             <div className="cc-info-grid" style={{ marginTop: '24px' }}>
                                 <div className="cc-info-item balance-item">
-                                    <div className="cc-info-label">Outstanding Balance</div>
+                                    <div className="cc-info-label">Amount Due</div>
                                     <div className="cc-info-value debit">
-                                        ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        ${dueAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </div>
                                 </div>
                                 <div className="cc-info-item limit-item">
@@ -400,16 +402,16 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
                                 <button
                                     type="button"
                                     className="btn btn-outline btn-sm"
-                                    onClick={() => setAmount(outstandingBalance.toString())}
-                                    disabled={!creditCard || creditCard.status === 'blocked'}
+                                    onClick={() => setAmount(dueAmount.toString())}
+                                    disabled={!creditCard || creditCard.status === 'blocked' || dueAmount <= 0}
                                 >
                                     Pay Full
                                 </button>
                                 <button
                                     type="button"
                                     className="btn btn-outline btn-sm"
-                                    onClick={() => setAmount((outstandingBalance * 0.1).toFixed(2))}
-                                    disabled={!creditCard || creditCard.status === 'blocked'}
+                                    onClick={() => setAmount((dueAmount * 0.1).toFixed(2))}
+                                    disabled={!creditCard || creditCard.status === 'blocked' || dueAmount <= 0}
                                 >
                                     Pay Min (10%)
                                 </button>
@@ -419,7 +421,7 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
                         <button
                             type="submit"
                             className="cc-pay-btn"
-                            disabled={isProcessing || !amount || !creditCard || creditCard.status === 'blocked'}
+                            disabled={isProcessing || !amount || !creditCard || creditCard.status === 'blocked' || dueAmount <= 0}
                         >
                             {isProcessing ? 'Processing...' : 'Make Payment'}
                             <ArrowRight size={18} />

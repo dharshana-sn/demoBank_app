@@ -16,7 +16,7 @@ import "./PayToUser.css";
 
 export default function PayToUser({ onPaymentComplete, accounts = [], user }) {
     const [selectedUser, setSelectedUser] = useState(null);
-    const filteredAccounts = accounts.filter(acc => acc.type !== 'credit');
+    const filteredAccounts = accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment');
     const [fromAccountId, setFromAccountId] = useState("");
     const [amount, setAmount] = useState("");
     const [note, setNote] = useState("");

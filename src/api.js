@@ -6,8 +6,8 @@
 
 // const PROD_URL = 'https://demobank-app-backend.onrender.com/api';
 // const BASE = import.meta.env.DEV ? '/api' : PROD_URL;
-const BASE = 'http://localhost:5001/api';
-// const BASE = 'http://192.168.22.89:5001/api';
+// const BASE = 'http://localhost:5001/api';
+const BASE = 'http://192.168.22.89:5001/api';
 
 export const checkHealth = async () => {
     const controller = new AbortController();
@@ -73,7 +73,10 @@ export const sameBankTransfer = (data) =>
     request('/transactions/same-bank-transfer', { method: 'POST', body: data });
 
 // ── Fixed Deposits ────────────────────────────
-export const getFixedDeposits = () => request('/fixed-deposits');
+export const getFixedDeposits = (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/fixed-deposits${qs ? `?${qs}` : ''}`);
+};
 export const createFixedDeposit = (fd) =>
     request('/fixed-deposits', { method: 'POST', body: fd });
 

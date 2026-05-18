@@ -63,7 +63,11 @@ router.patch('/:id', async (req, res) => {
 // POST /api/accounts — create new account
 router.post('/', async (req, res) => {
     try {
-        const newAccount = new Account(req.body);
+        const accountData = {
+            ...req.body,
+            id: req.body.id || `acc-${Date.now()}`
+        };
+        const newAccount = new Account(accountData);
         await newAccount.save();
         res.status(201).json(newAccount);
     } catch (err) {

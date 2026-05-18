@@ -117,7 +117,7 @@ export default function TransferForm({ onTransferComplete, accounts = [] }) {
         setIsTransferSuccessful(false);
     };
 
-    const filteredAccounts = accounts.filter(acc => acc.type !== 'credit');
+    const filteredAccounts = accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment');
 
     const availableAccountOptions = filteredAccounts.map(account => (
         <option key={account.id} value={account.id}>
