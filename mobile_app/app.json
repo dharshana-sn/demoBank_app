@@ -27,8 +27,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-secure-store",
-      "./plugins/withDisableABISplits"
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {
