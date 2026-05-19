@@ -1,16 +1,96 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     View, Text, ScrollView, StyleSheet, TouchableOpacity,
-    ActivityIndicator, RefreshControl, Clipboard, Alert, Modal
+    ActivityIndicator, RefreshControl, Clipboard, Alert, Modal,
+    PanResponder, Animated
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { getAccounts, getTransactions } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
-import { NestableScrollContainer, NestableDraggableFlatList } from 'react-native-draggable-flatlist';
 
 const ACCOUNT_COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
+
+function DraggableList({ data, onChange, renderItem }) {
+    const [list, setList] = useState(data);
+    const [activeIdx, setActiveIdx] = useState(-1);
+    const dragAnim = useRef(new Animated.Value(0)).current;
+    const activeRef = useRef(-1);
+    const listRef = useRef(data);
+    const itemHeightRef = useRef(80);
+
+    useEffect(() => {
+        listRef.current = data;
+        setList(data);
+    }, [data]);
+
+    const panResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => false,
+            onMoveShouldSetPanResponder: () => activeRef.current >= 0,
+            onPanResponderMove: (_, { dy }) => {
+                if (activeRef.current < 0) return;
+                dragAnim.setValue(dy);
+                const h = itemHeightRef.current;
+                const target = Math.max(0, Math.min(
+                    listRef.current.length - 1,
+                    Math.round(activeRef.current + dy / h)
+                ));
+                if (target !== activeRef.current) {
+                    const next = [...listRef.current];
+                    const [item] = next.splice(activeRef.current, 1);
+                    next.splice(target, 0, item);
+                    const adj = dy - (target - activeRef.current) * h;
+                    activeRef.current = target;
+                    listRef.current = next;
+                    dragAnim.setValue(adj);
+                    setList([...next]);
+                    setActiveIdx(target);
+                }
+            },
+            onPanResponderRelease: () => {
+                Animated.spring(dragAnim, { toValue: 0, useNativeDriver: true, speed: 20 }).start();
+                onChange([...listRef.current]);
+                setActiveIdx(-1);
+                activeRef.current = -1;
+            },
+            onPanResponderTerminate: () => {
+                dragAnim.setValue(0);
+                setActiveIdx(-1);
+                activeRef.current = -1;
+            },
+        })
+    ).current;
+
+    const startDrag = useCallback((index) => {
+        activeRef.current = index;
+        setActiveIdx(index);
+        dragAnim.setValue(0);
+    }, []);
+
+    return (
+        <View {...panResponder.panHandlers}>
+            {list.map((item, index) => {
+                const isActive = index === activeIdx;
+                return (
+                    <Animated.View
+                        key={item.id ?? String(index)}
+                        onLayout={e => { itemHeightRef.current = e.nativeEvent.layout.height; }}
+                        style={isActive ? {
+                            transform: [{ translateY: dragAnim }],
+                            zIndex: 999,
+                            elevation: 8,
+                            opacity: 0.95,
+                        } : undefined}
+                    >
+                        {renderItem({ item, index, isActive, startDrag: () => startDrag(index) })}
+                    </Animated.View>
+                );
+            })}
+        </View>
+    );
+}
 
 export default function AccountsScreen({ navigation }) {
     const { C } = useTheme();
@@ -41,20 +121,17 @@ export default function AccountsScreen({ navigation }) {
         finally { setLoading(false); setRefreshing(false); }
     }, [user?.id]);
 
-    useFocusEffect(
-        useCallback(() => {
-            load();
-        }, [load])
-    );
-
+    useFocusEffect(useCallback(() => { load(); }, [load]));
     useEffect(() => { load(); }, [load]);
 
     if (loading) return (
         <View style={styles.center}><ActivityIndicator size="large" color={C.primary} /></View>
     );
 
+    const nonCreditAccounts = accounts.filter(acc => acc.type !== 'credit');
+
     return (
-        <NestableScrollContainer
+        <ScrollView
             style={styles.container}
             showsVerticalScrollIndicator={false}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={C.primary} />}
@@ -71,26 +148,24 @@ export default function AccountsScreen({ navigation }) {
 
             {/* Account Cards */}
             <View style={styles.section}>
-                <NestableDraggableFlatList
-                    data={accounts.filter(acc => acc.type !== 'credit')}
-                    keyExtractor={(item, index) => item.id || String(index)}
-                    onDragEnd={({ data }) => {
+                <DraggableList
+                    data={nonCreditAccounts}
+                    onChange={(reordered) => {
                         const creditAccounts = accounts.filter(acc => acc.type === 'credit');
-                        setAccounts([...data, ...creditAccounts]);
+                        setAccounts([...reordered, ...creditAccounts]);
                     }}
-                    renderItem={({ item: acc, drag, isActive }) => {
+                    renderItem={({ item: acc, isActive, startDrag }) => {
                         const i = accounts.findIndex(a => a.id === acc.id);
                         const color = acc.color || ACCOUNT_COLORS[i % ACCOUNT_COLORS.length] || ACCOUNT_COLORS[0];
                         const isNeg = acc.balance < 0;
                         return (
                             <TouchableOpacity
-                                onLongPress={drag}
-                                disabled={isActive}
+                                onLongPress={startDrag}
                                 activeOpacity={0.8}
                                 style={[
                                     styles.accountCard,
                                     { borderLeftColor: color },
-                                    isActive && { transform: [{ scale: 1.02 }], ...SHADOWS.lg, zIndex: 99 }
+                                    isActive && { ...SHADOWS.lg }
                                 ]}
                             >
                                 <View style={styles.accountCardLeft}>
@@ -134,8 +209,8 @@ export default function AccountsScreen({ navigation }) {
                     {transactions.length === 0
                         ? <Text style={styles.emptyText}>No transactions found</Text>
                         : transactions.slice(0, 20).map((t, i) => (
-                            <TouchableOpacity 
-                                key={t._id || i} 
+                            <TouchableOpacity
+                                key={t._id || i}
                                 style={[styles.txRow, i < transactions.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}
                                 onPress={() => setSelectedTxn(t)}
                                 activeOpacity={0.7}
@@ -166,16 +241,14 @@ export default function AccountsScreen({ navigation }) {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>Transaction Details</Text>
-                        
                         <View style={styles.detailRow}>
                             <Text style={styles.detailLabel}>Description</Text>
                             <Text style={styles.detailValue}>{selectedTxn?.description}</Text>
                         </View>
- 
                         <View style={styles.detailRow}>
                             <Text style={styles.detailLabel}>Recipient</Text>
                             <Text style={styles.detailValue}>
-                                {selectedTxn?.description?.startsWith('Payment to ') 
+                                {selectedTxn?.description?.startsWith('Payment to ')
                                     ? selectedTxn.description.substring(11).split(':')[0].trim()
                                     : (selectedTxn?.description?.startsWith('Transfer to account ')
                                         ? selectedTxn.description.substring(20).trim()
@@ -184,38 +257,33 @@ export default function AccountsScreen({ navigation }) {
                                             : 'N/A'))}
                             </Text>
                         </View>
-                        
                         <View style={styles.detailRow}>
                             <Text style={styles.detailLabel}>Amount</Text>
                             <Text style={[styles.detailValue, { color: selectedTxn?.type === 'credit' ? C.success : C.danger }]}>
                                 {selectedTxn?.type === 'credit' ? '+' : '-'}${Math.abs(selectedTxn?.amount || 0).toFixed(2)}
                             </Text>
                         </View>
-                        
                         <View style={styles.detailRow}>
                             <Text style={styles.detailLabel}>Date</Text>
                             <Text style={styles.detailValue}>{selectedTxn?.date}</Text>
                         </View>
-                        
                         <View style={styles.detailRow}>
                             <Text style={styles.detailLabel}>Category</Text>
                             <Text style={styles.detailValue}>{selectedTxn?.category}</Text>
                         </View>
-                        
                         <View style={styles.detailRow}>
                             <Text style={styles.detailLabel}>Status</Text>
                             <Text style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
                         </View>
- 
                         <TouchableOpacity style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
                             <Text style={styles.modalCancelText}>Close</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
             </Modal>
- 
+
             <View style={{ height: 24 }} />
-        </NestableScrollContainer>
+        </ScrollView>
     );
 }
 
