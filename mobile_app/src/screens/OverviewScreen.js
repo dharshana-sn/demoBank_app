@@ -131,7 +131,7 @@ export default function OverviewScreen({ navigation }) {
                 <View style={styles.headerRow}>
                     <View>
                         <Text style={styles.greeting}>Good day,</Text>
-                        <Text style={styles.userName}>{user?.name || 'User'} 👋</Text>
+                        <Text style={styles.userName}>{user?.name || 'User'} </Text>
                     </View>
                     <TouchableOpacity style={styles.notifBtn} onPress={() => setShowNotifs(p => !p)} activeOpacity={0.8}>
                         <Text style={{ fontSize: 22 }}>🔔</Text>
@@ -214,8 +214,8 @@ export default function OverviewScreen({ navigation }) {
                     {recentTxns.length === 0
                         ? <Text style={styles.emptyText}>No transactions yet</Text>
                         : recentTxns.map((t, i) => (
-                            <TouchableOpacity 
-                                key={t._id || i} 
+                            <TouchableOpacity
+                                key={t._id || i}
                                 style={[styles.txnRow, i < recentTxns.length - 1 && styles.txnRowBorder]}
                                 onPress={() => setSelectedTxn(t)}
                                 activeOpacity={0.7}
@@ -259,12 +259,12 @@ export default function OverviewScreen({ navigation }) {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>Transaction Details</Text>
-                        
+
                         <View style={styles.detailRow}>
                             <Text style={styles.detailLabel}>Description</Text>
                             <Text style={styles.detailValue}>{selectedTxn?.description}</Text>
                         </View>
- 
+
                         {(() => {
                             const desc = selectedTxn?.description;
                             if (!desc) return null;
@@ -275,9 +275,9 @@ export default function OverviewScreen({ navigation }) {
                             if (m2) recipient = m2[1].trim();
                             const m3 = desc.match(/^Transfer from (.+)/);
                             if (m3) recipient = m3[1].trim();
-                            
+
                             if (recipient === 'N/A') return null;
-                            
+
                             return (
                                 <View style={styles.detailRow}>
                                     <Text style={styles.detailLabel}>Recipient/Sender</Text>
@@ -285,36 +285,36 @@ export default function OverviewScreen({ navigation }) {
                                 </View>
                             );
                         })()}
-                        
+
                         <View style={styles.detailRow}>
                             <Text style={styles.detailLabel}>Amount</Text>
                             <Text style={[styles.detailValue, { color: selectedTxn?.type === 'credit' ? C.success : C.danger }]}>
                                 {selectedTxn?.type === 'credit' ? '+' : '-'}${Math.abs(selectedTxn?.amount || 0).toFixed(2)}
                             </Text>
                         </View>
-                        
+
                         <View style={styles.detailRow}>
                             <Text style={styles.detailLabel}>Date</Text>
                             <Text style={styles.detailValue}>{selectedTxn?.date}</Text>
                         </View>
-                        
+
                         <View style={styles.detailRow}>
                             <Text style={styles.detailLabel}>Category</Text>
                             <Text style={styles.detailValue}>{selectedTxn?.category}</Text>
                         </View>
-                        
+
                         <View style={styles.detailRow}>
                             <Text style={styles.detailLabel}>Status</Text>
                             <Text style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
                         </View>
- 
+
                         <TouchableOpacity style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
                             <Text style={styles.modalCancelText}>Close</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
             </Modal>
- 
+
             <View style={{ height: 20 }} />
         </ScrollView>
     );

@@ -7,14 +7,14 @@
 // - Local dev: 'http://10.0.2.2:5001/api' for Android emulator
 // - Local dev: 'http://localhost:5001/api' for iOS simulator
 // - Production: 'https://demobank-app-backend.onrender.com/api'
-// export const BASE_URL = 'http://10.0.2.2:5001/api';
 export const BASE_URL = 'http://192.168.22.89:5001/api';
+// export const BASE_URL = 'http://10.0.2.2:5001/api';
 
 export const checkHealth = async () => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout for health check
     try {
-        const res = await fetch(`${BASE_URL}/health`, { 
+        const res = await fetch(`${BASE_URL}/health`, {
             method: 'GET',
             signal: controller.signal
         });

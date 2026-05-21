@@ -105,7 +105,11 @@ export default function FixedDepositsScreen({ navigation }) {
     );
 
     return (
-        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+        >
             <View style={styles.topBar}>
                 <View>
                     <Text style={styles.pageTitle}>Fixed Deposits</Text>
@@ -130,13 +134,22 @@ export default function FixedDepositsScreen({ navigation }) {
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>🏦 Current Interest Rates</Text>
                 <View style={styles.rateGrid}>
-                    {TENURE_OPTIONS.map(opt => (
-                        <View key={opt.value} style={styles.rateCard}>
-                            <Text style={styles.rateTenure}>{opt.label}</Text>
-                            <Text style={styles.ratePercent}>{opt.rate}%</Text>
-                            <Text style={styles.ratePa}>per annum</Text>
-                        </View>
-                    ))}
+                    {TENURE_OPTIONS.map((opt, index) => {
+                        const isLastOdd = TENURE_OPTIONS.length % 2 !== 0 && index === TENURE_OPTIONS.length - 1;
+                        return (
+                            <View
+                                key={opt.value}
+                                style={[
+                                    styles.rateCard,
+                                    isLastOdd && styles.rateCardLastOdd
+                                ]}
+                            >
+                                <Text style={styles.rateTenure}>{opt.label}</Text>
+                                <Text style={styles.ratePercent}>{opt.rate}%</Text>
+                                <Text style={styles.ratePa}>per annum</Text>
+                            </View>
+                        );
+                    })}
                 </View>
             </View>
 
@@ -181,8 +194,13 @@ export default function FixedDepositsScreen({ navigation }) {
                         placeholder="e.g. 5000"
                         placeholderTextColor={C.textLight}
                         value={form.amount}
-                        onChangeText={v => setForm(f => ({ ...f, amount: v }))}
+                        onChangeText={v => {
+                            // Strip any non-numeric characters except a single decimal point
+                            const cleaned = v.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                            setForm(f => ({ ...f, amount: cleaned }));
+                        }}
                         keyboardType="numeric"
+                        inputMode="numeric"
                     />
                     <Text style={styles.fieldLabel}>Tenure</Text>
                     <View style={styles.tenureGrid}>
@@ -274,10 +292,11 @@ export default function FixedDepositsScreen({ navigation }) {
 function getStyles(C, insets) {
     return StyleSheet.create({
         container: { flex: 1, backgroundColor: C.bg },
+        contentContainer: { paddingBottom: 16 },
         center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
         topBar: {
-            paddingHorizontal: SPACING.md, 
-            paddingTop: insets.top > 0 ? insets.top + 8 : 24, 
+            paddingHorizontal: SPACING.md,
+            paddingTop: (insets.top > 0 ? insets.top : 44) + 8,
             paddingBottom: 12,
             backgroundColor: C.card, borderBottomWidth: 1, borderBottomColor: C.border,
             flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
@@ -300,6 +319,7 @@ function getStyles(C, insets) {
         cardTitle: { ...FONTS.bold, fontSize: 16, color: C.text, marginBottom: 16 },
         rateGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
         rateCard: { width: '48%', backgroundColor: C.bg, padding: 16, borderRadius: RADIUS.lg, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)', marginBottom: 4 },
+        rateCardLastOdd: { alignSelf: 'center', width: '48%' },
         rateTenure: { ...FONTS.medium, fontSize: 13, color: C.textMuted, marginBottom: 2 },
         ratePercent: { ...FONTS.extraBold, fontSize: 22, color: C.primary, marginVertical: 2 },
         ratePa: { ...FONTS.regular, fontSize: 10, color: C.textLight, marginTop: 2 },

@@ -136,10 +136,21 @@ export default function AnalyticsScreen({ navigation }) {
                     return (
                         <View key={month} style={styles.monthRow}>
                             <Text style={styles.monthLabel}>{month}</Text>
-                            <View style={styles.monthVals}>
-                                <Text style={[styles.monthVal, { color: C.success }]}>+${income.toLocaleString()}</Text>
-                                <Text style={[styles.monthVal, { color: C.danger }]}>-${expense.toLocaleString()}</Text>
-                                <Text style={[styles.monthVal, { color: C.primary }]}>=${net.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+                            <View style={styles.monthGrid}>
+                                <View style={styles.monthCol}>
+                                    <Text style={styles.monthColLabel}>Income</Text>
+                                    <Text style={[styles.monthVal, { color: C.success }]}>${income.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+                                </View>
+                                <View style={styles.monthCol}>
+                                    <Text style={styles.monthColLabel}>Expense</Text>
+                                    <Text style={[styles.monthVal, { color: C.danger }]}>${expense.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+                                </View>
+                                <View style={[styles.monthCol, { alignItems: 'flex-end' }]}>
+                                    <Text style={styles.monthColLabel}>Net</Text>
+                                    <Text style={[styles.monthVal, { color: net >= 0 ? C.primary : C.danger }]}>
+                                        {net >= 0 ? '+' : '-'}${Math.abs(net).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                    </Text>
+                                </View>
                             </View>
                         </View>
                     );
@@ -234,10 +245,12 @@ function getStyles(C, insets) {
         barCount: { ...FONTS.regular, fontSize: 11, color: C.textMuted },
         barTrack: { height: 10, backgroundColor: C.border, borderRadius: 5, overflow: 'hidden' },
         barFill: { height: '100%', borderRadius: 5 },
-        monthRow: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
-        monthLabel: { ...FONTS.semiBold, fontSize: 13, color: C.text, marginBottom: 6 },
-        monthVals: { flexDirection: 'row', gap: 12 },
-        monthVal: { ...FONTS.bold, fontSize: 13 },
+        monthRow: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border },
+        monthLabel: { ...FONTS.bold, fontSize: 14, color: C.text, marginBottom: 12 },
+        monthGrid: { flexDirection: 'row', justifyContent: 'space-between' },
+        monthCol: { flex: 1 },
+        monthColLabel: { ...FONTS.medium, fontSize: 11, color: C.textMuted, marginBottom: 4 },
+        monthVal: { ...FONTS.semiBold, fontSize: 13 },
         miniBar: { height: 8, borderRadius: 4 },
         typeRow: { flexDirection: 'row', gap: 12 },
         typeCard: { flex: 1, borderRadius: RADIUS.md, padding: 14, alignItems: 'center' },

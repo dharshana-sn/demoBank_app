@@ -258,19 +258,19 @@ export default function TransfersScreen({ navigation, route }) {
                     style={[styles.tab, activeTab === 'internal' && styles.tabActive]}
                     onPress={() => setActiveTab('internal')}
                 >
-                    <Text style={[styles.tabText, activeTab === 'internal' && styles.tabTextActive]}>Between Accounts</Text>
+                    <Text style={[styles.tabText, activeTab === 'internal' && styles.tabTextActive]} numberOfLines={1} adjustsFontSizeToFit>Between Accounts</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.tab, activeTab === 'same-bank' && styles.tabActive]}
                     onPress={() => setActiveTab('same-bank')}
                 >
-                    <Text style={[styles.tabText, activeTab === 'same-bank' && styles.tabTextActive]}>Same Bank</Text>
+                    <Text style={[styles.tabText, activeTab === 'same-bank' && styles.tabTextActive]} numberOfLines={1} adjustsFontSizeToFit>Same Bank</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.tab, activeTab === 'pay' && styles.tabActive]}
                     onPress={() => setActiveTab('pay')}
                 >
-                    <Text style={[styles.tabText, activeTab === 'pay' && styles.tabTextActive]}>Pay to User</Text>
+                    <Text style={[styles.tabText, activeTab === 'pay' && styles.tabTextActive]} numberOfLines={1} adjustsFontSizeToFit>Pay to User</Text>
                 </TouchableOpacity>
             </View>
 
@@ -314,8 +314,12 @@ export default function TransfersScreen({ navigation, route }) {
                         placeholder="0.00"
                         placeholderTextColor={C.textLight}
                         value={form.amount}
-                        onChangeText={v => setForm(f => ({ ...f, amount: v }))}
+                        onChangeText={v => {
+                            const cleaned = v.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                            setForm(f => ({ ...f, amount: cleaned }));
+                        }}
                         keyboardType="numeric"
+                        inputMode="numeric"
                     />
                     <Text style={styles.fieldLabel}>Description (optional)</Text>
                     <TextInput
@@ -380,8 +384,12 @@ export default function TransfersScreen({ navigation, route }) {
                         placeholder="0.00"
                         placeholderTextColor={C.textLight}
                         value={sbForm.amount}
-                        onChangeText={v => setSbForm(f => ({ ...f, amount: v }))}
+                        onChangeText={v => {
+                            const cleaned = v.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                            setSbForm(f => ({ ...f, amount: cleaned }));
+                        }}
                         keyboardType="numeric"
+                        inputMode="numeric"
                     />
                     <Text style={styles.fieldLabel}>Note (optional)</Text>
                     <TextInput
@@ -461,8 +469,12 @@ export default function TransfersScreen({ navigation, route }) {
                         placeholder="0.00"
                         placeholderTextColor={C.textLight}
                         value={payForm.amount}
-                        onChangeText={v => setPayForm(f => ({ ...f, amount: v }))}
+                        onChangeText={v => {
+                            const cleaned = v.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                            setPayForm(f => ({ ...f, amount: cleaned }));
+                        }}
                         keyboardType="numeric"
+                        inputMode="numeric"
                     />
                     <Text style={styles.fieldLabel}>Note (optional)</Text>
                     <TextInput
@@ -606,9 +618,9 @@ function getStyles(C, insets) {
         statLabel: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginBottom: 4 },
         statValue: { ...FONTS.bold, fontSize: 18, color: C.primary },
         tabsRow: { flexDirection: 'row', marginHorizontal: SPACING.md, marginBottom: SPACING.md, borderRadius: RADIUS.md, overflow: 'hidden', backgroundColor: C.border },
-        tab: { flex: 1, paddingVertical: 10, alignItems: 'center' },
+        tab: { flex: 1, paddingVertical: 10, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' },
         tabActive: { backgroundColor: C.primary },
-        tabText: { ...FONTS.medium, fontSize: 13, color: C.textMuted },
+        tabText: { ...FONTS.medium, fontSize: 12, color: C.textMuted, textAlign: 'center' },
         tabTextActive: { color: '#fff' },
         card: { backgroundColor: C.card, marginHorizontal: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.md, ...SHADOWS.sm },
         cardTitle: { ...FONTS.bold, fontSize: 16, color: C.text, marginBottom: 16 },

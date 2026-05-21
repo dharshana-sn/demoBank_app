@@ -30,6 +30,9 @@ const TAB_ICONS = {
     'Accounts':   { active: '💰', inactive: '💰' },
     'Transfers':  { active: '💸', inactive: '💸' },
     'Analytics':  { active: '📊', inactive: '📊' },
+    'Credit Cards': { active: '💳', inactive: '💳' },
+    'Fixed Deposits': { active: '🏦', inactive: '🏦' },
+    'KYC':        { active: '🛡️', inactive: '🛡️' },
     'Settings':   { active: '⚙️', inactive: '⚙️' },
 };
 
@@ -72,6 +75,9 @@ function DashboardTabs() {
             <Tab.Screen name="Accounts" component={AccountsScreen} />
             <Tab.Screen name="Transfers" component={TransfersScreen} />
             <Tab.Screen name="Analytics" component={AnalyticsScreen} />
+            <Tab.Screen name="Credit Cards" component={CreditCardsScreen} />
+            <Tab.Screen name="Fixed Deposits" component={FixedDepositsScreen} />
+            <Tab.Screen name="KYC" component={KycScreen} />
             <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>
     );
@@ -107,21 +113,6 @@ function RootNavigator() {
                         name="QRScanner"
                         component={QRScannerScreen}
                         options={{ animation: 'slide_from_bottom' }}
-                    />
-                    <Stack.Screen
-                        name="Credit Cards"
-                        component={CreditCardsScreen}
-                        options={{ animation: 'slide_from_right' }}
-                    />
-                    <Stack.Screen
-                        name="Fixed Deposits"
-                        component={FixedDepositsScreen}
-                        options={{ animation: 'slide_from_right' }}
-                    />
-                    <Stack.Screen
-                        name="KYC"
-                        component={KycScreen}
-                        options={{ animation: 'slide_from_right' }}
                     />
                 </>
             ) : (

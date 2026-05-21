@@ -83,10 +83,11 @@ export default function AccountsScreen({ navigation }) {
                     renderItem={({ item: acc, index }) => {
                         const color = acc.color || ACCOUNT_COLORS[index % ACCOUNT_COLORS.length];
                         const isNeg = acc.balance < 0;
+                        const isLastOdd = index === nonCreditAccounts.length - 1 && nonCreditAccounts.length % 2 !== 0;
                         return (
                             <TouchableOpacity
                                 activeOpacity={0.8}
-                                style={[styles.accountCard, { borderTopColor: color }]}
+                                style={[styles.accountCard, { borderTopColor: color }, isLastOdd && { width: '100%' }]}
                                 onPress={() => copyToClipboard(acc.number)}
                             >
                                 <View style={[styles.accIconBadge, { backgroundColor: `${color}22` }]}>

@@ -53,7 +53,11 @@ export function AuthProvider({ children }) {
     };
 
     useEffect(() => {
-        setupNotificationHandler();
+        try {
+            setupNotificationHandler();
+        } catch (e) {
+            console.warn('[AuthContext] Notification handler setup skipped:', e.message);
+        }
     }, []);
 
     return (

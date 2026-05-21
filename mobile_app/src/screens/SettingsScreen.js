@@ -139,31 +139,6 @@ export default function SettingsScreen({ navigation }) {
                 </TouchableOpacity>
             </View>
 
-            {/* More Services */}
-            <View style={styles.card}>
-                <Text style={styles.cardTitle}>More Services</Text>
-                {[
-                    { icon: '💳', label: 'Credit Cards', sub: 'Manage your cards', screen: 'Credit Cards' },
-                    { icon: '🏦', label: 'Fixed Deposits', sub: 'Secure high-yield savings', screen: 'Fixed Deposits' },
-                    { icon: '🛡️', label: 'KYC Verification', sub: 'Upload identity documents', screen: 'KYC' },
-                ].map((item, i, arr) => (
-                    <TouchableOpacity
-                        key={item.screen}
-                        style={[styles.serviceRow, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}
-                        onPress={() => navigation.navigate(item.screen)}
-                        activeOpacity={0.7}
-                    >
-                        <View style={styles.serviceIconBox}>
-                            <Text style={{ fontSize: 20 }}>{item.icon}</Text>
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.serviceLabel}>{item.label}</Text>
-                            <Text style={styles.serviceSub}>{item.sub}</Text>
-                        </View>
-                        <Text style={{ color: C.textMuted, fontSize: 18 }}>›</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
 
             {/* Preferences */}
             <View style={styles.card}>
