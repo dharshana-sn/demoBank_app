@@ -4,6 +4,7 @@ import {
     ActivityIndicator, RefreshControl, Modal, StatusBar
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -22,8 +23,9 @@ export default function OverviewScreen({ navigation }) {
     const [showNotifs, setShowNotifs] = useState(false);
     const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
     const [selectedTxn, setSelectedTxn] = useState(null);
+    const insets = useSafeAreaInsets();
 
-    const styles = getStyles(C);
+    const styles = getStyles(C, insets);
 
     const load = useCallback(async () => {
         if (!user?.id) return;
@@ -318,12 +320,12 @@ export default function OverviewScreen({ navigation }) {
     );
 }
 
-function getStyles(C) {
+function getStyles(C, insets) {
     return StyleSheet.create({
         container: { flex: 1, backgroundColor: C.bg },
         loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
         loadingText: { ...FONTS.medium, color: C.textMuted, marginTop: 12 },
-        header: { paddingTop: 56, paddingBottom: 30, paddingHorizontal: SPACING.lg },
+        header: { paddingTop: insets.top > 0 ? insets.top + 16 : 48, paddingBottom: 30, paddingHorizontal: SPACING.lg },
         headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: SPACING.lg },
         greeting: { ...FONTS.regular, color: 'rgba(255,255,255,0.75)', fontSize: 14 },
         userName: { ...FONTS.bold, color: '#fff', fontSize: 20 },

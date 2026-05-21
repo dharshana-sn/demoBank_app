@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl, Dimensions
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getTransactions } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -20,11 +21,12 @@ const { width } = Dimensions.get('window');
 export default function AnalyticsScreen({ navigation }) {
     const { C } = useTheme();
     const { user } = useAuth();
+    const insets = useSafeAreaInsets();
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
-    const styles = getStyles(C);
+    const styles = getStyles(C, insets);
 
     const load = useCallback(async () => {
         if (!user?.id) return;
@@ -202,13 +204,15 @@ export default function AnalyticsScreen({ navigation }) {
     );
 }
 
-function getStyles(C) {
+function getStyles(C, insets) {
     return StyleSheet.create({
         container: { flex: 1, backgroundColor: C.bg },
         center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg, gap: 12 },
         loadingText: { ...FONTS.medium, color: C.textMuted, marginTop: 8 },
         topBar: {
-            paddingHorizontal: SPACING.md, paddingTop: 20, paddingBottom: 12,
+            paddingHorizontal: SPACING.md, 
+            paddingTop: insets.top > 0 ? insets.top + 8 : 24, 
+            paddingBottom: 12,
             backgroundColor: C.card, borderBottomWidth: 1, borderBottomColor: C.border,
             flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
         },

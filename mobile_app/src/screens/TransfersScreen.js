@@ -4,6 +4,7 @@ import {
     TouchableOpacity, Alert, ActivityIndicator, Modal, StatusBar
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAccounts, createTransaction, updateAccountBalance, getTransactions, sameBankTransfer } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +15,7 @@ import { mockUsers } from '../utils/mockData';
 export default function TransfersScreen({ navigation, route }) {
     const { C } = useTheme();
     const { user } = useAuth();
+    const insets = useSafeAreaInsets();
     const [accounts, setAccounts] = useState([]);
     const [form, setForm] = useState({ from: '', to: '', amount: '', description: '' });
     const [payForm, setPayForm] = useState({ from: '', recipient: '', amount: '', note: '' });
@@ -24,7 +26,7 @@ export default function TransfersScreen({ navigation, route }) {
     const [recentTransfers, setRecentTransfers] = useState([]);
     const [selectedTxn, setSelectedTxn] = useState(null);
 
-    const styles = getStyles(C);
+    const styles = getStyles(C, insets);
 
     useFocusEffect(
         useCallback(() => {
@@ -572,7 +574,7 @@ export default function TransfersScreen({ navigation, route }) {
     );
 }
 
-function getStyles(C) {
+function getStyles(C, insets) {
     return StyleSheet.create({
         container: { flex: 1, backgroundColor: C.bg },
         center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
@@ -587,7 +589,9 @@ function getStyles(C) {
         userNameText: { ...FONTS.medium, fontSize: 12, color: C.textMuted, marginTop: 4 },
         orText: { ...FONTS.medium, fontSize: 12, color: C.textMuted },
         topBar: {
-            paddingHorizontal: SPACING.md, paddingTop: 20, paddingBottom: 12,
+            paddingHorizontal: SPACING.md, 
+            paddingTop: insets.top > 0 ? insets.top + 8 : 24, 
+            paddingBottom: 12,
             backgroundColor: C.card, borderBottomWidth: 1, borderBottomColor: C.border,
             flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
         },

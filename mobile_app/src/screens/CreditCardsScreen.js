@@ -4,6 +4,7 @@ import {
     ActivityIndicator, RefreshControl, TextInput, Alert, Modal
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAccounts, getTransactions, updateAccount, createAccount, createTransaction, updateAccountBalance } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function CreditCardsScreen({ navigation }) {
     const { C } = useTheme();
     const { user } = useAuth();
+    const insets = useSafeAreaInsets();
     const [accounts, setAccounts] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -33,7 +35,7 @@ export default function CreditCardsScreen({ navigation }) {
     const [showManualTxnModal, setShowManualTxnModal] = useState(false);
     const [showStatement, setShowStatement] = useState(false);
 
-    const styles = getStyles(C);
+    const styles = getStyles(C, insets);
 
     const loadData = useCallback(async () => {
         if (!user?.id) return;
@@ -210,7 +212,7 @@ export default function CreditCardsScreen({ navigation }) {
                     <Text style={styles.pageTitle}>Credit Cards</Text>
                     <Text style={styles.pageSub}>Manage your cards and payments</Text>
                 </View>
-                <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
+                <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.goBack()}>
                     <Text style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
@@ -219,22 +221,30 @@ export default function CreditCardsScreen({ navigation }) {
                 <View style={styles.section}>
                     {/* Physical Card Visual */}
                     <LinearGradient
-                        colors={[creditCard.color || '#4F46E5', `${creditCard.color || '#4F46E5'}CC`]}
+                        colors={[creditCard.color || '#4F46E5', `${creditCard.color || '#4F46E5'}BB`]}
                         style={styles.creditCard}
                     >
                         <View style={styles.cardHeader}>
                             <Text style={styles.bankName}>{creditCard.name.toUpperCase()}</Text>
-                            <Text style={{ fontSize: 24 }}>💳</Text>
+                            <Text style={styles.contactless}>📶</Text>
                         </View>
-                        <Text style={styles.cardNumber}>{creditCard.number}</Text>
+                        
+                        <View style={styles.chipContainer}>
+                            <View style={styles.cardChip} />
+                        </View>
+
+                        <Text style={styles.cardNumber}>
+                            {creditCard.number ? creditCard.number.replace(/\*/g, '•').replace(/(.{4})/g, '$1  ').trim() : '••••  ••••  ••••  ••••'}
+                        </Text>
+                        
                         <View style={styles.cardFooter}>
                             <View>
                                 <Text style={styles.cardLabel}>CARD HOLDER</Text>
-                                <Text style={styles.cardValue}>TEST USER</Text>
+                                <Text style={styles.cardValue}>{user?.name ? user.name.toUpperCase() : 'DEMO USER'}</Text>
                             </View>
-                            <View>
+                            <View style={{ alignItems: 'flex-end' }}>
                                 <Text style={styles.cardLabel}>EXPIRES</Text>
-                                <Text style={styles.cardValue}>12/28</Text>
+                                <Text style={styles.cardValue}>12/29</Text>
                             </View>
                         </View>
                     </LinearGradient>
@@ -528,12 +538,14 @@ export default function CreditCardsScreen({ navigation }) {
     );
 }
 
-function getStyles(C) {
+function getStyles(C, insets) {
     return StyleSheet.create({
         container: { flex: 1, backgroundColor: C.bg },
         center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
         topBar: {
-            paddingHorizontal: SPACING.md, paddingTop: 20, paddingBottom: 12,
+            paddingHorizontal: SPACING.md, 
+            paddingTop: insets.top > 0 ? insets.top + 8 : 24, 
+            paddingBottom: 12,
             backgroundColor: C.card, borderBottomWidth: 1, borderBottomColor: C.border,
             flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
         },
@@ -545,15 +557,23 @@ function getStyles(C) {
         pageSub: { ...FONTS.regular, fontSize: 13, color: C.textMuted, marginTop: 2 },
         section: { paddingHorizontal: SPACING.md, marginTop: SPACING.md },
         creditCard: {
-            borderRadius: RADIUS.lg, padding: SPACING.lg, height: 200,
-            justifyContent: 'space-between', ...SHADOWS.md
+            borderRadius: RADIUS.lg, padding: SPACING.lg, height: 210,
+            justifyContent: 'space-between', ...SHADOWS.lg,
+            borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)'
         },
         cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-        bankName: { ...FONTS.bold, fontSize: 16, color: '#fff' },
-        cardNumber: { ...FONTS.bold, fontSize: 22, color: '#fff', letterSpacing: 2, textAlign: 'center', marginVertical: 20 },
-        cardFooter: { flexDirection: 'row', justifyContent: 'space-between' },
-        cardLabel: { ...FONTS.regular, fontSize: 10, color: 'rgba(255,255,255,0.6)' },
-        cardValue: { ...FONTS.bold, fontSize: 14, color: '#fff', marginTop: 2 },
+        bankName: { ...FONTS.bold, fontSize: 14, color: '#fff', opacity: 0.95, letterSpacing: 0.5 },
+        contactless: { fontSize: 20, color: '#fff', opacity: 0.8 },
+        chipContainer: { marginVertical: 4 },
+        cardChip: {
+            width: 40, height: 30, borderRadius: 6,
+            backgroundColor: '#F59E0B', opacity: 0.85,
+            borderWidth: 1, borderColor: '#D97706'
+        },
+        cardNumber: { ...FONTS.bold, fontSize: 20, color: '#fff', letterSpacing: 2, textAlign: 'center', marginVertical: 12 },
+        cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+        cardLabel: { ...FONTS.regular, fontSize: 9, color: 'rgba(255,255,255,0.5)', letterSpacing: 0.5 },
+        cardValue: { ...FONTS.bold, fontSize: 12, color: '#fff', marginTop: 2, letterSpacing: 0.5 },
         balanceGrid: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md },
         balanceItem: { flex: 1, backgroundColor: C.card, borderRadius: RADIUS.md, padding: 14, ...SHADOWS.sm },
         balanceLabel: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginBottom: 4 },

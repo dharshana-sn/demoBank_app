@@ -4,6 +4,7 @@ import {
     Alert, ActivityIndicator, Linking
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getKycStatus, deleteKycDocument, uploadKycDocument, BASE_URL } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -19,12 +20,13 @@ const DOCUMENT_TYPES = [
 export default function KycScreen({ navigation }) {
     const { C } = useTheme();
     const { user } = useAuth();
+    const insets = useSafeAreaInsets();
     const [kycStatus, setKycStatus] = useState(null);
     const [loading, setLoading] = useState(true);
     const [deleting, setDeleting] = useState(null);
     const [uploading, setUploading] = useState(null);
 
-    const styles = getStyles(C);
+    const styles = getStyles(C, insets);
 
     const load = async () => {
         if (!user?.id) return;
@@ -114,7 +116,7 @@ export default function KycScreen({ navigation }) {
                     <Text style={styles.pageTitle}>KYC Verification</Text>
                     <Text style={styles.pageSub}>Upload documents to verify your identity</Text>
                 </View>
-                <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
+                <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.goBack()}>
                     <Text style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
@@ -220,12 +222,14 @@ export default function KycScreen({ navigation }) {
     );
 }
 
-function getStyles(C) {
+function getStyles(C, insets) {
     return StyleSheet.create({
         container: { flex: 1, backgroundColor: C.bg },
         center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
         topBar: {
-            paddingHorizontal: SPACING.md, paddingTop: 20, paddingBottom: 12,
+            paddingHorizontal: SPACING.md, 
+            paddingTop: insets.top > 0 ? insets.top + 8 : 24, 
+            paddingBottom: 12,
             backgroundColor: C.card, borderBottomWidth: 1, borderBottomColor: C.border,
             flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
         },

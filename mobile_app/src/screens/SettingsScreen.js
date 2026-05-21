@@ -3,6 +3,7 @@ import {
     View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity,
     Alert, ActivityIndicator, Switch
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserProfile, updateUserProfile } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -12,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function SettingsScreen({ navigation }) {
     const { user, login, logout } = useAuth();
     const { darkMode, setDarkMode, C } = useTheme();
+    const insets = useSafeAreaInsets();
     const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '', phone: '', address: '' });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -19,7 +21,7 @@ export default function SettingsScreen({ navigation }) {
     const [notifications, setNotifications] = useState(true);
     const [biometrics, setBiometrics] = useState(false);
 
-    const styles = getStyles(C);
+    const styles = getStyles(C, insets);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -137,13 +139,38 @@ export default function SettingsScreen({ navigation }) {
                 </TouchableOpacity>
             </View>
 
+            {/* More Services */}
+            <View style={styles.card}>
+                <Text style={styles.cardTitle}>More Services</Text>
+                {[
+                    { icon: '💳', label: 'Credit Cards', sub: 'Manage your cards', screen: 'Credit Cards' },
+                    { icon: '🏦', label: 'Fixed Deposits', sub: 'Secure high-yield savings', screen: 'Fixed Deposits' },
+                    { icon: '🛡️', label: 'KYC Verification', sub: 'Upload identity documents', screen: 'KYC' },
+                ].map((item, i, arr) => (
+                    <TouchableOpacity
+                        key={item.screen}
+                        style={[styles.serviceRow, i < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}
+                        onPress={() => navigation.navigate(item.screen)}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.serviceIconBox}>
+                            <Text style={{ fontSize: 20 }}>{item.icon}</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.serviceLabel}>{item.label}</Text>
+                            <Text style={styles.serviceSub}>{item.sub}</Text>
+                        </View>
+                        <Text style={{ color: C.textMuted, fontSize: 18 }}>›</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
             {/* Preferences */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Preferences</Text>
                 {[
                     { label: '🌙 Dark Mode', sub: 'Switch to dark theme', value: darkMode, setter: setDarkMode },
                     { label: '🔔 Push Notifications', sub: 'Receive transaction alerts', value: notifications, setter: setNotifications },
-                    // { label: '👆 Biometric Login', sub: 'Use fingerprint / Face ID', value: biometrics, setter: setBiometrics },
                 ].map(pref => (
                     <View key={pref.label} style={styles.prefRow}>
                         <View style={{ flex: 1 }}>
@@ -171,13 +198,13 @@ export default function SettingsScreen({ navigation }) {
     );
 }
 
-function getStyles(C) {
+function getStyles(C, insets) {
     return StyleSheet.create({
         container: { flex: 1, backgroundColor: C.bg },
         center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
         topBar: {
             paddingHorizontal: SPACING.md,
-            paddingTop: 20,
+            paddingTop: insets.top > 0 ? insets.top + 8 : 24,
             paddingBottom: 12,
             backgroundColor: C.card,
             borderBottomWidth: 1,
@@ -217,6 +244,10 @@ function getStyles(C) {
         prefRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border },
         prefLabel: { ...FONTS.semiBold, fontSize: 14, color: C.text },
         prefSub: { ...FONTS.regular, fontSize: 12, color: C.textMuted, marginTop: 1 },
+        serviceRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 12 },
+        serviceIconBox: { width: 40, height: 40, borderRadius: 10, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: C.border },
+        serviceLabel: { ...FONTS.semiBold, fontSize: 14, color: C.text },
+        serviceSub: { ...FONTS.regular, fontSize: 12, color: C.textMuted, marginTop: 1 },
         logoutBtn: { marginHorizontal: SPACING.md, marginTop: SPACING.lg, backgroundColor: C.card, borderRadius: RADIUS.lg, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: '#FECACA' },
         logoutText: { ...FONTS.bold, fontSize: 15, color: C.danger },
         versionText: { ...FONTS.regular, textAlign: 'center', fontSize: 12, color: C.textLight, marginTop: SPACING.md },

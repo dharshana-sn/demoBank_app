@@ -3,6 +3,7 @@ import {
     View, Text, ScrollView, StyleSheet, TextInput,
     TouchableOpacity, Alert, ActivityIndicator
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getFixedDeposits, createFixedDeposit, getAccounts, updateAccountBalance } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -20,6 +21,7 @@ const TENURE_OPTIONS = [
 export default function FixedDepositsScreen({ navigation }) {
     const { C } = useTheme();
     const { user } = useAuth();
+    const insets = useSafeAreaInsets();
     const [deposits, setDeposits] = useState([]);
     const [accounts, setAccounts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -27,7 +29,7 @@ export default function FixedDepositsScreen({ navigation }) {
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ amount: '', tenure: 12, sourceAccount: '' });
 
-    const styles = getStyles(C);
+    const styles = getStyles(C, insets);
     const selectedTenure = TENURE_OPTIONS.find(t => t.value === form.tenure) || TENURE_OPTIONS[2];
 
     useEffect(() => {
@@ -109,7 +111,7 @@ export default function FixedDepositsScreen({ navigation }) {
                     <Text style={styles.pageTitle}>Fixed Deposits</Text>
                     <Text style={styles.pageSub}>Secure your future with high-yield deposits</Text>
                 </View>
-                <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
+                <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.goBack()}>
                     <Text style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
@@ -269,12 +271,14 @@ export default function FixedDepositsScreen({ navigation }) {
     );
 }
 
-function getStyles(C) {
+function getStyles(C, insets) {
     return StyleSheet.create({
         container: { flex: 1, backgroundColor: C.bg },
         center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
         topBar: {
-            paddingHorizontal: SPACING.md, paddingTop: 20, paddingBottom: 12,
+            paddingHorizontal: SPACING.md, 
+            paddingTop: insets.top > 0 ? insets.top + 8 : 24, 
+            paddingBottom: 12,
             backgroundColor: C.card, borderBottomWidth: 1, borderBottomColor: C.border,
             flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
         },

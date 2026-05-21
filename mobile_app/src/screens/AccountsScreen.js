@@ -1,107 +1,33 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-    View, Text, ScrollView, StyleSheet, TouchableOpacity,
-    ActivityIndicator, RefreshControl, Clipboard, Alert, Modal,
-    PanResponder, Animated
+    View, Text, ScrollView, FlatList, StyleSheet, TouchableOpacity,
+    ActivityIndicator, RefreshControl, Clipboard, Alert, Modal, Dimensions
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAccounts, getTransactions } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - SPACING.md * 2 - SPACING.sm) / 2;
+
 const ACCOUNT_COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
 
-function DraggableList({ data, onChange, renderItem }) {
-    const [list, setList] = useState(data);
-    const [activeIdx, setActiveIdx] = useState(-1);
-    const dragAnim = useRef(new Animated.Value(0)).current;
-    const activeRef = useRef(-1);
-    const listRef = useRef(data);
-    const itemHeightRef = useRef(80);
 
-    useEffect(() => {
-        listRef.current = data;
-        setList(data);
-    }, [data]);
-
-    const panResponder = useRef(
-        PanResponder.create({
-            onStartShouldSetPanResponder: () => false,
-            onMoveShouldSetPanResponder: () => activeRef.current >= 0,
-            onPanResponderMove: (_, { dy }) => {
-                if (activeRef.current < 0) return;
-                dragAnim.setValue(dy);
-                const h = itemHeightRef.current;
-                const target = Math.max(0, Math.min(
-                    listRef.current.length - 1,
-                    Math.round(activeRef.current + dy / h)
-                ));
-                if (target !== activeRef.current) {
-                    const next = [...listRef.current];
-                    const [item] = next.splice(activeRef.current, 1);
-                    next.splice(target, 0, item);
-                    const adj = dy - (target - activeRef.current) * h;
-                    activeRef.current = target;
-                    listRef.current = next;
-                    dragAnim.setValue(adj);
-                    setList([...next]);
-                    setActiveIdx(target);
-                }
-            },
-            onPanResponderRelease: () => {
-                Animated.spring(dragAnim, { toValue: 0, useNativeDriver: true, speed: 20 }).start();
-                onChange([...listRef.current]);
-                setActiveIdx(-1);
-                activeRef.current = -1;
-            },
-            onPanResponderTerminate: () => {
-                dragAnim.setValue(0);
-                setActiveIdx(-1);
-                activeRef.current = -1;
-            },
-        })
-    ).current;
-
-    const startDrag = useCallback((index) => {
-        activeRef.current = index;
-        setActiveIdx(index);
-        dragAnim.setValue(0);
-    }, []);
-
-    return (
-        <View {...panResponder.panHandlers}>
-            {list.map((item, index) => {
-                const isActive = index === activeIdx;
-                return (
-                    <Animated.View
-                        key={item.id ?? String(index)}
-                        onLayout={e => { itemHeightRef.current = e.nativeEvent.layout.height; }}
-                        style={isActive ? {
-                            transform: [{ translateY: dragAnim }],
-                            zIndex: 999,
-                            elevation: 8,
-                            opacity: 0.95,
-                        } : undefined}
-                    >
-                        {renderItem({ item, index, isActive, startDrag: () => startDrag(index) })}
-                    </Animated.View>
-                );
-            })}
-        </View>
-    );
-}
 
 export default function AccountsScreen({ navigation }) {
     const { C } = useTheme();
     const { user } = useAuth();
+    const insets = useSafeAreaInsets();
     const [accounts, setAccounts] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [selectedTxn, setSelectedTxn] = useState(null);
 
-    const styles = getStyles(C);
+    const styles = getStyles(C, insets);
 
     const copyToClipboard = (text) => {
         Clipboard.setString(text);
@@ -146,43 +72,32 @@ export default function AccountsScreen({ navigation }) {
                 </TouchableOpacity>
             </View>
 
-            {/* Account Cards */}
+            {/* Account Cards — 2-column grid */}
             <View style={styles.section}>
-                <DraggableList
+                <FlatList
                     data={nonCreditAccounts}
-                    onChange={(reordered) => {
-                        const creditAccounts = accounts.filter(acc => acc.type === 'credit');
-                        setAccounts([...reordered, ...creditAccounts]);
-                    }}
-                    renderItem={({ item: acc, isActive, startDrag }) => {
-                        const i = accounts.findIndex(a => a.id === acc.id);
-                        const color = acc.color || ACCOUNT_COLORS[i % ACCOUNT_COLORS.length] || ACCOUNT_COLORS[0];
+                    numColumns={2}
+                    keyExtractor={(item) => item.id ?? item.number}
+                    columnWrapperStyle={styles.gridRow}
+                    scrollEnabled={false}
+                    renderItem={({ item: acc, index }) => {
+                        const color = acc.color || ACCOUNT_COLORS[index % ACCOUNT_COLORS.length];
                         const isNeg = acc.balance < 0;
                         return (
                             <TouchableOpacity
-                                onLongPress={startDrag}
                                 activeOpacity={0.8}
-                                style={[
-                                    styles.accountCard,
-                                    { borderLeftColor: color },
-                                    isActive && { ...SHADOWS.lg }
-                                ]}
+                                style={[styles.accountCard, { borderTopColor: color }]}
+                                onPress={() => copyToClipboard(acc.number)}
                             >
-                                <View style={styles.accountCardLeft}>
-                                    <View style={[styles.accIcon, { backgroundColor: `${color}22` }]}>
-                                        <Text style={[styles.accIconText, { color }]}>💳</Text>
-                                    </View>
-                                    <TouchableOpacity onPress={() => copyToClipboard(acc.number)} style={{ flex: 1 }}>
-                                        <Text style={styles.accName}>{acc.name}</Text>
-                                        <Text style={styles.accNum}>{acc.number} · {acc.type?.charAt(0).toUpperCase() + acc.type?.slice(1)} 📋</Text>
-                                    </TouchableOpacity>
+                                <View style={[styles.accIconBadge, { backgroundColor: `${color}22` }]}>
+                                    <Text style={styles.accIconText}>💳</Text>
                                 </View>
-                                <View style={styles.accountCardRight}>
-                                    <Text style={[styles.accBalance, { color: isNeg ? C.danger : C.success }]}>
-                                        {isNeg ? '-' : '+'}${Math.abs(acc.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                    </Text>
-                                    <Text style={styles.accStatus}>Active</Text>
-                                </View>
+                                <Text style={styles.accName} numberOfLines={1}>{acc.name}</Text>
+                                <Text style={styles.accType}>{acc.type?.charAt(0).toUpperCase() + acc.type?.slice(1)}</Text>
+                                <Text style={[styles.accBalance, { color: isNeg ? C.danger : C.success }]}>
+                                    {isNeg ? '-' : ''}${Math.abs(acc.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                </Text>
+                                <Text style={styles.accNum} numberOfLines={1}>···· {acc.number?.slice(-4)} 📋</Text>
                             </TouchableOpacity>
                         );
                     }}
@@ -287,12 +202,14 @@ export default function AccountsScreen({ navigation }) {
     );
 }
 
-function getStyles(C) {
+function getStyles(C, insets) {
     return StyleSheet.create({
         container: { flex: 1, backgroundColor: C.bg },
         center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg },
         topBar: {
-            paddingHorizontal: SPACING.md, paddingTop: 20, paddingBottom: 12,
+            paddingHorizontal: SPACING.md, 
+            paddingTop: insets.top > 0 ? insets.top + 8 : 24, 
+            paddingBottom: 12,
             backgroundColor: C.card, borderBottomWidth: 1, borderBottomColor: C.border,
             flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'
         },
@@ -304,18 +221,18 @@ function getStyles(C) {
         pageSub: { ...FONTS.regular, fontSize: 13, color: C.textMuted, marginTop: 2 },
         section: { paddingHorizontal: SPACING.md, marginTop: SPACING.md },
         sectionTitle: { ...FONTS.semiBold, fontSize: 15, color: C.text, marginBottom: SPACING.sm },
+        gridRow: { justifyContent: 'space-between', marginBottom: SPACING.sm },
         accountCard: {
-            backgroundColor: C.card, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.sm,
-            flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-            borderLeftWidth: 4, ...SHADOWS.sm,
+            width: CARD_WIDTH,
+            backgroundColor: C.card, borderRadius: RADIUS.lg, padding: 14,
+            borderTopWidth: 3, ...SHADOWS.sm,
         },
-        accountCardLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-        accIcon: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+        accIconBadge: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
         accIconText: { fontSize: 18 },
-        accName: { ...FONTS.semiBold, fontSize: 14, color: C.text },
-        accNum: { ...FONTS.regular, fontSize: 11, color: C.textMuted, marginTop: 2 },
-        accountCardRight: { alignItems: 'flex-end' },
-        accBalance: { ...FONTS.bold, fontSize: 15 },
+        accName: { ...FONTS.semiBold, fontSize: 13, color: C.text, marginBottom: 2 },
+        accType: { ...FONTS.regular, fontSize: 10, color: C.textMuted, marginBottom: 6, textTransform: 'capitalize' },
+        accBalance: { ...FONTS.bold, fontSize: 14, marginBottom: 4 },
+        accNum: { ...FONTS.regular, fontSize: 10, color: C.textMuted },
         accStatus: { ...FONTS.regular, fontSize: 11, color: C.success, marginTop: 2 },
         summaryRow: { flexDirection: 'row', gap: SPACING.sm, paddingHorizontal: SPACING.md, marginTop: SPACING.sm },
         summaryCard: { flex: 1, backgroundColor: C.card, borderRadius: RADIUS.md, padding: 14, ...SHADOWS.sm },

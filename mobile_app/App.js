@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
@@ -25,14 +26,11 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const TAB_ICONS = {
-    'Overview':       { active: '🏠', inactive: '🏠' },
-    'Accounts':       { active: '💰', inactive: '💰' },
-    'Credit Cards':   { active: '💳', inactive: '💳' },
-    'Transfers':      { active: '💸', inactive: '💸' },
-    'Analytics':      { active: '📊', inactive: '📊' },
-    'Fixed Deposits': { active: '🏦', inactive: '🏦' },
-    'KYC':            { active: '🛡️', inactive: '🛡️' },
-    'Settings':       { active: '⚙️', inactive: '⚙️' },
+    'Overview':   { active: '🏠', inactive: '🏠' },
+    'Accounts':   { active: '💰', inactive: '💰' },
+    'Transfers':  { active: '💸', inactive: '💸' },
+    'Analytics':  { active: '📊', inactive: '📊' },
+    'Settings':   { active: '⚙️', inactive: '⚙️' },
 };
 
 function DashboardTabs() {
@@ -47,23 +45,23 @@ function DashboardTabs() {
                     backgroundColor: C.card,
                     borderTopColor: C.border,
                     borderTopWidth: 1,
-                    height: 70,
-                    paddingBottom: 10,
-                    paddingTop: 6,
-                    elevation: 12,
+                    height: 68,
+                    paddingBottom: 8,
+                    paddingTop: 8,
+                    elevation: 14,
                     shadowColor: '#054279',
                     shadowOffset: { width: 0, height: -4 },
-                    shadowOpacity: 0.08,
+                    shadowOpacity: 0.10,
                     shadowRadius: 12,
                 },
                 tabBarLabelStyle: {
                     ...FONTS.medium,
-                    fontSize: 10,
+                    fontSize: 11,
                 },
                 tabBarIcon: ({ focused }) => {
                     const icons = TAB_ICONS[route.name];
                     return (
-                        <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>
+                        <Text style={{ fontSize: 24, opacity: focused ? 1 : 0.45 }}>
                             {focused ? icons?.active : icons?.inactive}
                         </Text>
                     );
@@ -72,15 +70,14 @@ function DashboardTabs() {
         >
             <Tab.Screen name="Overview" component={OverviewScreen} />
             <Tab.Screen name="Accounts" component={AccountsScreen} />
-            <Tab.Screen name="Credit Cards" component={CreditCardsScreen} />
             <Tab.Screen name="Transfers" component={TransfersScreen} />
             <Tab.Screen name="Analytics" component={AnalyticsScreen} />
-            <Tab.Screen name="Fixed Deposits" component={FixedDepositsScreen} />
-            <Tab.Screen name="KYC" component={KycScreen} />
             <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>
     );
 }
+
+// Stack screens for Credit Cards, Fixed Deposits, KYC (accessed from Settings)
 
 function RootNavigator() {
     const { isAuthenticated, restoreUser } = useAuth();
@@ -111,6 +108,21 @@ function RootNavigator() {
                         component={QRScannerScreen}
                         options={{ animation: 'slide_from_bottom' }}
                     />
+                    <Stack.Screen
+                        name="Credit Cards"
+                        component={CreditCardsScreen}
+                        options={{ animation: 'slide_from_right' }}
+                    />
+                    <Stack.Screen
+                        name="Fixed Deposits"
+                        component={FixedDepositsScreen}
+                        options={{ animation: 'slide_from_right' }}
+                    />
+                    <Stack.Screen
+                        name="KYC"
+                        component={KycScreen}
+                        options={{ animation: 'slide_from_right' }}
+                    />
                 </>
             ) : (
                 <Stack.Screen name="Login" component={LoginScreen} />
@@ -121,15 +133,17 @@ function RootNavigator() {
 
 export default function App() {
     return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
-            <AuthProvider>
-                <ThemeProvider>
-                    <NavigationContainer>
-                        <RootNavigator />
-                    </NavigationContainer>
-                </ThemeProvider>
-            </AuthProvider>
-        </GestureHandlerRootView>
+        <SafeAreaProvider>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+                <AuthProvider>
+                    <ThemeProvider>
+                        <NavigationContainer>
+                            <RootNavigator />
+                        </NavigationContainer>
+                    </ThemeProvider>
+                </AuthProvider>
+            </GestureHandlerRootView>
+        </SafeAreaProvider>
     );
 }
 

@@ -4,6 +4,7 @@ import {
     Alert, Vibration, Animated, Dimensions
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, FONTS, RADIUS } from '../theme/theme';
 
 const { width } = Dimensions.get('window');
@@ -13,6 +14,7 @@ export default function QRScannerScreen({ navigation, route }) {
     const [permission, requestPermission] = useCameraPermissions();
     const [scanned, setScanned] = useState(false);
     const pulseAnim = useRef(new Animated.Value(0)).current;
+    const insets = useSafeAreaInsets();
 
     // Animate the scan line
     useEffect(() => {
@@ -98,7 +100,7 @@ export default function QRScannerScreen({ navigation, route }) {
     return (
         <View style={styles.container}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { paddingTop: insets.top > 0 ? insets.top + 8 : 24 }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <Text style={{ fontSize: 20 }}>←</Text>
                 </TouchableOpacity>
