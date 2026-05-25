@@ -80,7 +80,9 @@ export default function OverviewScreen({ navigation }) {
     }, [user?.id, transactions]);
 
     const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
-    const totalIncome = transactions.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0);
+    const totalIncome = transactions
+        .filter(t => t.type === 'credit' && accounts.find(a => a.id === t.accountId)?.type !== 'credit')
+        .reduce((s, t) => s + t.amount, 0);
     const totalExpenses = Math.abs(
         transactions
             .filter(t => t.type === 'debit' && t.category !== 'Internal Transfer')
@@ -102,8 +104,14 @@ export default function OverviewScreen({ navigation }) {
             return d.getMonth() === latestDate.getMonth() && d.getFullYear() === latestDate.getFullYear();
         });
 
-        const income = monthTxns.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0);
-        const expense = Math.abs(monthTxns.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0));
+        const income = monthTxns
+            .filter(t => t.type === 'credit' && accounts.find(a => a.id === t.accountId)?.type !== 'credit')
+            .reduce((s, t) => s + t.amount, 0);
+        const expense = Math.abs(
+            monthTxns
+                .filter(t => t.type === 'debit' && t.category !== 'Internal Transfer')
+                .reduce((s, t) => s + t.amount, 0)
+        );
 
         return { month: monthStr, income, expense };
     };

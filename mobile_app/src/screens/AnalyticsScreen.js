@@ -3,7 +3,7 @@ import {
     View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl, Dimensions
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getTransactions } from '../api/api';
+import { getTransactions, getAccounts } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
@@ -23,6 +23,7 @@ export default function AnalyticsScreen({ navigation }) {
     const { user } = useAuth();
     const insets = useSafeAreaInsets();
     const [transactions, setTransactions] = useState([]);
+    const [accounts, setAccounts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
@@ -31,8 +32,12 @@ export default function AnalyticsScreen({ navigation }) {
     const load = useCallback(async () => {
         if (!user?.id) return;
         try {
-            const txns = await getTransactions({ userId: user.id });
+            const [txns, accs] = await Promise.all([
+                getTransactions({ userId: user.id }),
+                getAccounts({ userId: user.id })
+            ]);
             setTransactions(txns);
+            setAccounts(accs);
         } catch (e) { console.error(e); }
         finally { setLoading(false); setRefreshing(false); }
     }, [user?.id]);
@@ -46,8 +51,11 @@ export default function AnalyticsScreen({ navigation }) {
         </View>
     );
 
-    const totalIncome = transactions.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0);
-    const totalExpense = Math.abs(transactions.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0));
+    const validCredits = transactions.filter(t => t.type === 'credit' && accounts.find(a => a.id === t.accountId)?.type !== 'credit');
+    const validDebits = transactions.filter(t => t.type === 'debit' && t.category !== 'Internal Transfer');
+    
+    const totalIncome = validCredits.reduce((s, t) => s + t.amount, 0);
+    const totalExpense = Math.abs(validDebits.reduce((s, t) => s + t.amount, 0));
     const netSavings = totalIncome - totalExpense;
     const savingsRate = totalIncome > 0 ? ((netSavings / totalIncome) * 100).toFixed(1) : '0.0';
 
@@ -58,9 +66,9 @@ export default function AnalyticsScreen({ navigation }) {
         if (!acc[monthYear]) {
             acc[monthYear] = { month: monthYear, income: 0, expense: 0 };
         }
-        if (t.type === 'credit') {
+        if (t.type === 'credit' && accounts.find(a => a.id === t.accountId)?.type !== 'credit') {
             acc[monthYear].income += t.amount;
-        } else if (t.type === 'debit') {
+        } else if (t.type === 'debit' && t.category !== 'Internal Transfer') {
             acc[monthYear].expense += Math.abs(t.amount);
         }
         return acc;
