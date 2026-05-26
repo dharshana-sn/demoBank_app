@@ -81,7 +81,7 @@ export default function SettingsScreen({ navigation }) {
                     <Text style={styles.pageTitle}>Settings</Text>
                     <Text style={styles.pageSub}>Manage your profile and preferences</Text>
                 </View>
-                <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
+                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
                     <Text style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
@@ -127,7 +127,7 @@ export default function SettingsScreen({ navigation }) {
                         />
                     </View>
                 ))}
-                <TouchableOpacity
+                <TouchableOpacity accessible={false}
                     style={[styles.saveBtn, saving && { opacity: 0.6 }]}
                     onPress={handleSave}
                     disabled={saving}
@@ -163,7 +163,7 @@ export default function SettingsScreen({ navigation }) {
             </View>
 
             {/* Logout */}
-            <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
+            <TouchableOpacity accessible={false} style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
                 <Text style={styles.logoutText}>🚪 Sign Out</Text>
             </TouchableOpacity>
 

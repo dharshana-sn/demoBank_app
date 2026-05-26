@@ -212,7 +212,7 @@ export default function CreditCardsScreen({ navigation }) {
                     <Text style={styles.pageTitle}>Credit Cards</Text>
                     <Text style={styles.pageSub}>Manage your cards and payments</Text>
                 </View>
-                <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.goBack()}>
+                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.goBack()}>
                     <Text style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
@@ -272,7 +272,7 @@ export default function CreditCardsScreen({ navigation }) {
                         <Text style={styles.fieldLabel}>Pay From Account</Text>
                         <View style={styles.pickerBox}>
                             {fundingAccounts.map(acc => (
-                                <TouchableOpacity
+                                <TouchableOpacity accessible={false}
                                     key={acc.id}
                                     style={[styles.accOption, sourceAccountId === acc.id && styles.accOptionSelected]}
                                     onPress={() => setSourceAccountId(acc.id)}
@@ -307,15 +307,15 @@ export default function CreditCardsScreen({ navigation }) {
                         />
 
                         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-                            <TouchableOpacity style={styles.smallBtn} onPress={() => setPayAmount(outstandingBalance.toString())}>
+                            <TouchableOpacity accessible={false} style={styles.smallBtn} onPress={() => setPayAmount(outstandingBalance.toString())}>
                                 <Text style={styles.smallBtnText}>Pay Full</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.smallBtn} onPress={() => setPayAmount((outstandingBalance * 0.1).toFixed(2))}>
+                            <TouchableOpacity accessible={false} style={styles.smallBtn} onPress={() => setPayAmount((outstandingBalance * 0.1).toFixed(2))}>
                                 <Text style={styles.smallBtnText}>Pay Min (10%)</Text>
                             </TouchableOpacity>
                         </View>
 
-                        <TouchableOpacity
+                        <TouchableOpacity accessible={false}
                             style={[styles.submitBtn, (isProcessing || outstandingBalance <= 0) && { opacity: 0.6 }]}
                             onPress={handlePayment}
                             disabled={isProcessing || outstandingBalance <= 0}
@@ -330,17 +330,17 @@ export default function CreditCardsScreen({ navigation }) {
                     <View style={[styles.card, { marginTop: SPACING.md }]}>
                         <Text style={styles.sectionTitle}>Card Settings</Text>
                         
-                        <TouchableOpacity style={styles.actionRow} onPress={() => setShowLimitModal(true)}>
+                        <TouchableOpacity accessible={false} style={styles.actionRow} onPress={() => setShowLimitModal(true)}>
                             <Text style={{ fontSize: 18 }}>➡️</Text>
                             <Text style={styles.actionText}>Manage Credit Limit</Text>
                         </TouchableOpacity>
                         
-                        <TouchableOpacity style={styles.actionRow} onPress={() => setShowStatement(!showStatement)}>
+                        <TouchableOpacity accessible={false} style={styles.actionRow} onPress={() => setShowStatement(!showStatement)}>
                             <Text style={{ fontSize: 18 }}>📄</Text>
                             <Text style={styles.actionText}>{showStatement ? 'Hide Statement' : 'View Card Statement'}</Text>
                         </TouchableOpacity>
                         
-                        <TouchableOpacity style={styles.actionRow} onPress={() => setShowManualTxnModal(true)}>
+                        <TouchableOpacity accessible={false} style={styles.actionRow} onPress={() => setShowManualTxnModal(true)}>
                             <Text style={{ fontSize: 18 }}>➕</Text>
                             <Text style={styles.actionText}>Record New Purchase</Text>
                         </TouchableOpacity>
@@ -354,7 +354,7 @@ export default function CreditCardsScreen({ navigation }) {
                                 <Text style={styles.emptyText}>No transactions found</Text>
                             ) : (
                                 statementTxns.map((t, i) => (
-                                    <TouchableOpacity 
+                                    <TouchableOpacity accessible={false} 
                                         key={t.id || i} 
                                         style={[styles.txRow, i < statementTxns.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}
                                         onPress={() => setSelectedTxn(t)}
@@ -378,7 +378,7 @@ export default function CreditCardsScreen({ navigation }) {
                     <Text style={{ fontSize: 48, marginBottom: 16 }}>💳</Text>
                     <Text style={styles.emptyTitle}>No Credit Card Found</Text>
                     <Text style={styles.emptySub}>Apply for a card to get started.</Text>
-                    <TouchableOpacity style={styles.applyBtn} onPress={() => setShowApplyModal(true)}>
+                    <TouchableOpacity accessible={false} style={styles.applyBtn} onPress={() => setShowApplyModal(true)}>
                         <LinearGradient colors={[C.gradStart, C.gradEnd]} style={styles.applyBtnInner}>
                             <Text style={styles.applyBtnText}>Apply Now</Text>
                         </LinearGradient>
@@ -434,7 +434,7 @@ export default function CreditCardsScreen({ navigation }) {
                             <Text style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
                         </View>
  
-                        <TouchableOpacity style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
+                        <TouchableOpacity accessible={false} style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
                             <Text style={styles.modalCancelText}>Close</Text>
                         </TouchableOpacity>
                     </View>
@@ -456,10 +456,10 @@ export default function CreditCardsScreen({ navigation }) {
                             keyboardType="numeric"
                         />
                         <View style={styles.modalButtons}>
-                            <TouchableOpacity style={styles.modalCancel} onPress={() => setShowLimitModal(false)}>
+                            <TouchableOpacity accessible={false} style={styles.modalCancel} onPress={() => setShowLimitModal(false)}>
                                 <Text style={styles.modalCancelText}>Cancel</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.modalSubmit} onPress={handleUpdateLimit}>
+                            <TouchableOpacity accessible={false} style={styles.modalSubmit} onPress={handleUpdateLimit}>
                                 <Text style={styles.modalSubmitText}>Update</Text>
                             </TouchableOpacity>
                         </View>
@@ -493,10 +493,10 @@ export default function CreditCardsScreen({ navigation }) {
                         />
 
                         <View style={styles.modalButtons}>
-                            <TouchableOpacity style={styles.modalCancel} onPress={() => setShowManualTxnModal(false)}>
+                            <TouchableOpacity accessible={false} style={styles.modalCancel} onPress={() => setShowManualTxnModal(false)}>
                                 <Text style={styles.modalCancelText}>Cancel</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.modalSubmit} onPress={handleManualTransaction}>
+                            <TouchableOpacity accessible={false} style={styles.modalSubmit} onPress={handleManualTransaction}>
                                 <Text style={styles.modalSubmitText}>Add</Text>
                             </TouchableOpacity>
                         </View>
@@ -511,22 +511,22 @@ export default function CreditCardsScreen({ navigation }) {
                         <Text style={styles.modalTitle}>Apply for a Credit Card</Text>
                         <Text style={styles.modalSub}>Select a card type:</Text>
                         
-                        <TouchableOpacity style={styles.cardOption} onPress={() => handleApplyNewCard('platinum')}>
+                        <TouchableOpacity accessible={false} style={styles.cardOption} onPress={() => handleApplyNewCard('platinum')}>
                             <Text style={[styles.cardOptionTitle, { color: '#4F46E5' }]}>Platinum Credit Card</Text>
                             <Text style={styles.cardOptionDetail}>Limit: $70,000 · Premium rewards</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.cardOption} onPress={() => handleApplyNewCard('gold')}>
+                        <TouchableOpacity accessible={false} style={styles.cardOption} onPress={() => handleApplyNewCard('gold')}>
                             <Text style={[styles.cardOptionTitle, { color: '#F59E0B' }]}>Gold Rewards Card</Text>
                             <Text style={styles.cardOptionDetail}>Limit: $30,000 · Everyday spending</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.cardOption} onPress={() => handleApplyNewCard('travel')}>
+                        <TouchableOpacity accessible={false} style={styles.cardOption} onPress={() => handleApplyNewCard('travel')}>
                             <Text style={[styles.cardOptionTitle, { color: '#10B981' }]}>Global Traveler Card</Text>
                             <Text style={styles.cardOptionDetail}>Limit: $50,000 · Zero forex fees</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={[styles.modalCancel, { marginTop: 12 }]} onPress={() => setShowApplyModal(false)}>
+                        <TouchableOpacity accessible={false} style={[styles.modalCancel, { marginTop: 12 }]} onPress={() => setShowApplyModal(false)}>
                             <Text style={styles.modalCancelText}>Cancel</Text>
                         </TouchableOpacity>
                     </View>

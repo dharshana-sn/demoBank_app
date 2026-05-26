@@ -141,7 +141,7 @@ export default function OverviewScreen({ navigation }) {
                         <Text style={styles.greeting}>Good day,</Text>
                         <Text style={styles.userName}>{user?.name || 'User'} </Text>
                     </View>
-                    <TouchableOpacity style={styles.notifBtn} onPress={() => setShowNotifs(p => !p)} activeOpacity={0.8}>
+                    <TouchableOpacity accessible={false} style={styles.notifBtn} onPress={() => setShowNotifs(p => !p)} activeOpacity={0.8}>
                         <Text style={{ fontSize: 22 }}>🔔</Text>
                         {unread > 0 && (
                             <View style={styles.badge}>
@@ -175,7 +175,7 @@ export default function OverviewScreen({ navigation }) {
                 <View style={styles.notifPanel}>
                     <Text style={styles.sectionTitle}>Notifications</Text>
                     {notifications.map(n => (
-                        <TouchableOpacity
+                        <TouchableOpacity accessible={false}
                             key={n.id}
                             style={[styles.notifItem, !n.unread && { opacity: 0.6 }]}
                             onPress={() => setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, unread: false } : x))}
@@ -214,7 +214,7 @@ export default function OverviewScreen({ navigation }) {
             <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Recent Transactions</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('Accounts')}>
+                    <TouchableOpacity accessible={false} onPress={() => navigation.navigate('Accounts')}>
                         <Text style={styles.seeAll}>See all</Text>
                     </TouchableOpacity>
                 </View>
@@ -222,7 +222,7 @@ export default function OverviewScreen({ navigation }) {
                     {recentTxns.length === 0
                         ? <Text style={styles.emptyText}>No transactions yet</Text>
                         : recentTxns.map((t, i) => (
-                            <TouchableOpacity
+                            <TouchableOpacity accessible={false}
                                 key={t._id || i}
                                 style={[styles.txnRow, i < recentTxns.length - 1 && styles.txnRowBorder]}
                                 onPress={() => setSelectedTxn(t)}
@@ -316,7 +316,7 @@ export default function OverviewScreen({ navigation }) {
                             <Text style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
                         </View>
 
-                        <TouchableOpacity style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
+                        <TouchableOpacity accessible={false} style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
                             <Text style={styles.modalCancelText}>Close</Text>
                         </TouchableOpacity>
                     </View>

@@ -116,7 +116,7 @@ export default function KycScreen({ navigation }) {
                     <Text style={styles.pageTitle}>KYC Verification</Text>
                     <Text style={styles.pageSub}>Upload documents to verify your identity</Text>
                 </View>
-                <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.goBack()}>
+                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.goBack()}>
                     <Text style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
@@ -164,14 +164,14 @@ export default function KycScreen({ navigation }) {
                                     <View style={styles.uploadedBadge}>
                                         <Text style={styles.uploadedText}>✓ Uploaded</Text>
                                     </View>
-                                    <TouchableOpacity
+                                    <TouchableOpacity accessible={false}
                                         style={styles.viewBtn}
                                         onPress={() => handleView(doc.id)}
                                         disabled={uploading === doc.id || deleting === doc.id}
                                     >
                                         <Text style={styles.actionBtnText}>👁️</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity
+                                    <TouchableOpacity accessible={false}
                                         style={styles.changeBtn}
                                         onPress={() => handleUpload(doc.id, true)}
                                         disabled={uploading === doc.id || deleting === doc.id}
@@ -181,7 +181,7 @@ export default function KycScreen({ navigation }) {
                                             : <Text style={styles.actionBtnText}>✏️</Text>
                                         }
                                     </TouchableOpacity>
-                                    <TouchableOpacity
+                                    <TouchableOpacity accessible={false}
                                         style={styles.deleteBtn}
                                         onPress={() => handleDelete(doc.id)}
                                         disabled={deleting === doc.id || uploading === doc.id}
@@ -193,7 +193,7 @@ export default function KycScreen({ navigation }) {
                                     </TouchableOpacity>
                                 </View>
                             ) : (
-                                <TouchableOpacity
+                                <TouchableOpacity accessible={false}
                                     style={styles.uploadBtn}
                                     onPress={() => handleUpload(doc.id)}
                                     disabled={uploading === doc.id}

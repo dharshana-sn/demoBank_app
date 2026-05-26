@@ -87,10 +87,10 @@ export default function QRScannerScreen({ navigation, route }) {
                 <Text style={styles.permSub}>
                     Allow camera access to scan QR codes and make quick payments.
                 </Text>
-                <TouchableOpacity style={styles.permBtn} onPress={requestPermission}>
+                <TouchableOpacity accessible={false} style={styles.permBtn} onPress={requestPermission}>
                     <Text style={styles.permBtnText}>Grant Permission</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 16 }}>
+                <TouchableOpacity accessible={false} onPress={() => navigation.goBack()} style={{ marginTop: 16 }}>
                     <Text style={{ ...FONTS.medium, color: COLORS.textMuted, fontSize: 14 }}>Cancel</Text>
                 </TouchableOpacity>
             </View>
@@ -101,7 +101,7 @@ export default function QRScannerScreen({ navigation, route }) {
         <View style={styles.container}>
             {/* Header */}
             <View style={[styles.header, { paddingTop: insets.top > 0 ? insets.top + 8 : 24 }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                <TouchableOpacity accessible={false} onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <Text style={{ fontSize: 20 }}>←</Text>
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Scan QR to Pay</Text>
@@ -146,7 +146,7 @@ export default function QRScannerScreen({ navigation, route }) {
                 <Text style={styles.instructionTitle}>Position the QR code inside the frame</Text>
                 <Text style={styles.instructionSub}>Scanning happens automatically</Text>
                 {scanned && (
-                    <TouchableOpacity style={styles.retryBtn} onPress={() => setScanned(false)}>
+                    <TouchableOpacity accessible={false} style={styles.retryBtn} onPress={() => setScanned(false)}>
                         <Text style={styles.retryText}>🔄 Tap to Scan Again</Text>
                     </TouchableOpacity>
                 )}

@@ -236,7 +236,7 @@ export default function TransfersScreen({ navigation, route }) {
                     <Text style={styles.pageTitle}>Fund Transfers</Text>
                     <Text style={styles.pageSub}>Move money securely</Text>
                 </View>
-                <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
+                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
                     <Text style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
@@ -254,19 +254,19 @@ export default function TransfersScreen({ navigation, route }) {
 
             {/* Tabs */}
             <View style={styles.tabsRow}>
-                <TouchableOpacity
+                <TouchableOpacity accessible={false}
                     style={[styles.tab, activeTab === 'internal' && styles.tabActive]}
                     onPress={() => setActiveTab('internal')}
                 >
                     <Text style={[styles.tabText, activeTab === 'internal' && styles.tabTextActive]} numberOfLines={1} adjustsFontSizeToFit>Between Accounts</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
+                <TouchableOpacity accessible={false}
                     style={[styles.tab, activeTab === 'same-bank' && styles.tabActive]}
                     onPress={() => setActiveTab('same-bank')}
                 >
                     <Text style={[styles.tabText, activeTab === 'same-bank' && styles.tabTextActive]} numberOfLines={1} adjustsFontSizeToFit>Same Bank</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
+                <TouchableOpacity accessible={false}
                     style={[styles.tab, activeTab === 'pay' && styles.tabActive]}
                     onPress={() => setActiveTab('pay')}
                 >
@@ -280,7 +280,7 @@ export default function TransfersScreen({ navigation, route }) {
                     <Text style={styles.fieldLabel}>From Account</Text>
                     <View style={styles.pickerBox}>
                         {accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment').map(acc => (
-                            <TouchableOpacity
+                            <TouchableOpacity accessible={false}
                                 key={acc.id}
                                 style={[styles.accOption, form.from === acc.id && styles.accOptionSelected]}
                                 onPress={() => setForm(f => ({ ...f, from: acc.id }))}
@@ -297,7 +297,7 @@ export default function TransfersScreen({ navigation, route }) {
                     <Text style={styles.fieldLabel}>To Account</Text>
                     <View style={styles.pickerBox}>
                         {accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment').map(acc => (
-                            <TouchableOpacity
+                            <TouchableOpacity accessible={false}
                                 key={acc.id}
                                 style={[styles.accOption, form.to === acc.id && styles.accOptionSelected]}
                                 onPress={() => setForm(f => ({ ...f, to: acc.id }))}
@@ -329,7 +329,7 @@ export default function TransfersScreen({ navigation, route }) {
                         value={form.description}
                         onChangeText={v => setForm(f => ({ ...f, description: v }))}
                     />
-                    <TouchableOpacity
+                    <TouchableOpacity accessible={false}
                         style={[styles.submitBtn, loading && { opacity: 0.6 }]}
                         onPress={handleTransfer}
                         disabled={loading}
@@ -348,7 +348,7 @@ export default function TransfersScreen({ navigation, route }) {
                     <Text style={styles.fieldLabel}>From Account</Text>
                     <View style={styles.pickerBox}>
                         {accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment').map(acc => (
-                            <TouchableOpacity
+                            <TouchableOpacity accessible={false}
                                 key={acc.id}
                                 style={[styles.accOption, sbForm.from === acc.id && styles.accOptionSelected]}
                                 onPress={() => setSbForm(f => ({ ...f, from: acc.id }))}
@@ -399,7 +399,7 @@ export default function TransfersScreen({ navigation, route }) {
                         value={sbForm.note}
                         onChangeText={v => setSbForm(f => ({ ...f, note: v }))}
                     />
-                    <TouchableOpacity
+                    <TouchableOpacity accessible={false}
                         style={[styles.submitBtn, loading && { opacity: 0.6 }]}
                         onPress={handleSameBankTransfer}
                         disabled={loading}
@@ -415,7 +415,7 @@ export default function TransfersScreen({ navigation, route }) {
             {activeTab === 'pay' && (
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Pay to Another User</Text>
-                    <TouchableOpacity
+                    <TouchableOpacity accessible={false}
                         style={styles.qrScanBtn}
                         onPress={() => navigation.navigate('QRScanner')}
                         activeOpacity={0.8}
@@ -433,7 +433,7 @@ export default function TransfersScreen({ navigation, route }) {
                     <Text style={styles.fieldLabel}>From Account</Text>
                     <View style={styles.pickerBox}>
                         {accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment').map(acc => (
-                            <TouchableOpacity
+                            <TouchableOpacity accessible={false}
                                 key={acc.id}
                                 style={[styles.accOption, payForm.from === acc.id && styles.accOptionSelected]}
                                 onPress={() => setPayForm(f => ({ ...f, from: acc.id }))}
@@ -450,7 +450,7 @@ export default function TransfersScreen({ navigation, route }) {
                     <Text style={styles.fieldLabel}>Select Recipient</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16, paddingVertical: 4 }}>
                         {mockUsers.filter(u => u.id !== user?.id).map(u => (
-                            <TouchableOpacity
+                            <TouchableOpacity accessible={false}
                                 key={u.id}
                                 style={styles.userOption}
                                 onPress={() => setPayForm(f => ({ ...f, recipient: u.name }))}
@@ -484,7 +484,7 @@ export default function TransfersScreen({ navigation, route }) {
                         value={payForm.note}
                         onChangeText={v => setPayForm(f => ({ ...f, note: v }))}
                     />
-                    <TouchableOpacity
+                    <TouchableOpacity accessible={false}
                         style={[styles.submitBtn, loading && { opacity: 0.6 }]}
                         onPress={handlePay}
                         disabled={loading}
@@ -501,7 +501,7 @@ export default function TransfersScreen({ navigation, route }) {
                 <View style={[styles.card, { marginTop: SPACING.md }]}>
                     <Text style={styles.cardTitle}>Transfer History</Text>
                     {recentTransfers.map((t, i) => (
-                        <TouchableOpacity 
+                        <TouchableOpacity accessible={false} 
                             key={t.id} 
                             style={[styles.txRow, i < recentTransfers.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}
                             onPress={() => setSelectedTxn(t)}
@@ -574,7 +574,7 @@ export default function TransfersScreen({ navigation, route }) {
                             <Text style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
                         </View>
  
-                        <TouchableOpacity style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
+                        <TouchableOpacity accessible={false} style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
                             <Text style={styles.modalCancelText}>Close</Text>
                         </TouchableOpacity>
                     </View>

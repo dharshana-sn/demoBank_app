@@ -67,7 +67,7 @@ export default function AccountsScreen({ navigation }) {
                     <Text style={styles.pageTitle}>My Accounts</Text>
                     <Text style={styles.pageSub}>Manage your linked accounts</Text>
                 </View>
-                <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
+                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
                     <Text style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
@@ -85,7 +85,7 @@ export default function AccountsScreen({ navigation }) {
                         const isNeg = acc.balance < 0;
                         const isLastOdd = index === nonCreditAccounts.length - 1 && nonCreditAccounts.length % 2 !== 0;
                         return (
-                            <TouchableOpacity
+                            <TouchableOpacity accessible={false}
                                 activeOpacity={0.8}
                                 style={[styles.accountCard, { borderTopColor: color }, isLastOdd && { width: '100%' }]}
                                 onPress={() => copyToClipboard(acc.number)}
@@ -125,7 +125,7 @@ export default function AccountsScreen({ navigation }) {
                     {transactions.length === 0
                         ? <Text style={styles.emptyText}>No transactions found</Text>
                         : transactions.slice(0, 20).map((t, i) => (
-                            <TouchableOpacity
+                            <TouchableOpacity accessible={false}
                                 key={t._id || i}
                                 style={[styles.txRow, i < transactions.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}
                                 onPress={() => setSelectedTxn(t)}
@@ -191,7 +191,7 @@ export default function AccountsScreen({ navigation }) {
                             <Text style={styles.detailLabel}>Status</Text>
                             <Text style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
                         </View>
-                        <TouchableOpacity style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
+                        <TouchableOpacity accessible={false} style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
                             <Text style={styles.modalCancelText}>Close</Text>
                         </TouchableOpacity>
                     </View>

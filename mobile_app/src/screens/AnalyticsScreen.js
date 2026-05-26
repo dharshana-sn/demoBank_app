@@ -97,7 +97,7 @@ export default function AnalyticsScreen({ navigation }) {
                     <Text style={styles.pageTitle}>Analytics</Text>
                     <Text style={styles.pageSub}>Visualise your spending & income trends</Text>
                 </View>
-                <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
+                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
                     <Text style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>

@@ -135,14 +135,14 @@ export default function LoginScreen() {
                                 secureTextEntry={!showPassword}
                                 autoComplete="password"
                             />
-                            <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword(p => !p)}>
+                            <TouchableOpacity accessible={false} style={styles.eyeBtn} onPress={() => setShowPassword(p => !p)}>
                                 <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
                             </TouchableOpacity>
                         </View>
                         {errors.password ? <Text style={styles.errText}>{errors.password}</Text> : null}
                     </View>
 
-                    <TouchableOpacity
+                    <TouchableOpacity accessible={false}
                         style={[styles.loginBtn, isLoading && { opacity: 0.7 }]}
                         onPress={handleLogin}
                         disabled={isLoading}
@@ -153,7 +153,7 @@ export default function LoginScreen() {
                         </LinearGradient>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.demoHint} onPress={fillDemo} activeOpacity={0.7}>
+                    <TouchableOpacity accessible={false} style={styles.demoHint} onPress={fillDemo} activeOpacity={0.7}>
                         <Text style={styles.demoHintText}>🔑 Tap to fill demo credentials</Text>
                         <Text style={styles.demoHintSub}>testUser@gmail.com / password123</Text>
                     </TouchableOpacity>

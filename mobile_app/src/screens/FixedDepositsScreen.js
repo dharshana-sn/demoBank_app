@@ -115,7 +115,7 @@ export default function FixedDepositsScreen({ navigation }) {
                     <Text style={styles.pageTitle}>Fixed Deposits</Text>
                     <Text style={styles.pageSub}>Secure your future with high-yield deposits</Text>
                 </View>
-                <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.goBack()}>
+                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.goBack()}>
                     <Text style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
@@ -154,7 +154,7 @@ export default function FixedDepositsScreen({ navigation }) {
             </View>
 
             {!showForm && (
-                <TouchableOpacity style={styles.createBtn} onPress={() => setShowForm(true)} activeOpacity={0.85}>
+                <TouchableOpacity accessible={false} style={styles.createBtn} onPress={() => setShowForm(true)} activeOpacity={0.85}>
                     <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.createBtnInner}>
                         <Text style={styles.createBtnText}>+ Open New Fixed Deposit</Text>
                     </LinearGradient>
@@ -165,7 +165,7 @@ export default function FixedDepositsScreen({ navigation }) {
                 <View style={styles.card}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                         <Text style={[styles.cardTitle, { marginBottom: 0 }]}>New Fixed Deposit</Text>
-                        <TouchableOpacity onPress={() => setShowForm(false)} style={{ padding: 4 }}>
+                        <TouchableOpacity accessible={false} onPress={() => setShowForm(false)} style={{ padding: 4 }}>
                             <Text style={{ ...FONTS.medium, color: C.danger, fontSize: 14 }}>✕ Cancel</Text>
                         </TouchableOpacity>
                     </View>
@@ -173,7 +173,7 @@ export default function FixedDepositsScreen({ navigation }) {
                     <Text style={styles.fieldLabel}>Source Account</Text>
                     <View style={styles.pickerBox}>
                         {accounts.filter(acc => acc.type === 'checking' || acc.type === 'savings').map(acc => (
-                            <TouchableOpacity
+                            <TouchableOpacity accessible={false}
                                 key={acc.id}
                                 style={[styles.accOption, form.sourceAccount === acc.id && styles.accOptionSelected]}
                                 onPress={() => setForm(f => ({ ...f, sourceAccount: acc.id }))}
@@ -205,7 +205,7 @@ export default function FixedDepositsScreen({ navigation }) {
                     <Text style={styles.fieldLabel}>Tenure</Text>
                     <View style={styles.tenureGrid}>
                         {TENURE_OPTIONS.map(opt => (
-                            <TouchableOpacity
+                            <TouchableOpacity accessible={false}
                                 key={opt.value}
                                 style={[styles.tenureOption, form.tenure === opt.value && styles.tenureSelected]}
                                 onPress={() => setForm(f => ({ ...f, tenure: opt.value }))}
@@ -244,7 +244,7 @@ export default function FixedDepositsScreen({ navigation }) {
                         </LinearGradient>
                     )}
 
-                    <TouchableOpacity
+                    <TouchableOpacity accessible={false}
                         style={[styles.submitBtn, submitting && { opacity: 0.6 }]}
                         onPress={handleCreate}
                         disabled={submitting}
