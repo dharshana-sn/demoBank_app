@@ -78,34 +78,34 @@ export default function SettingsScreen({ navigation }) {
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
             <View style={styles.topBar}>
                 <View>
-                    <Text style={styles.pageTitle}>Settings</Text>
-                    <Text style={styles.pageSub}>Manage your profile and preferences</Text>
+                    <Text testID="txt_settings_title" style={styles.pageTitle}>Settings</Text>
+                    <Text testID="txt_settings_subtitle" style={styles.pageSub}>Manage your profile and preferences</Text>
                 </View>
-                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
-                    <Text style={{ fontSize: 20 }}>🏠</Text>
+                <TouchableOpacity testID="btn_nav_home" style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
+                    <Text testID="txt_nav_home_icon" style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
 
             {/* Profile Header */}
             <LinearGradient colors={[C.gradStart, C.gradEnd]} style={styles.profileHeader}>
                 <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>{initials}</Text>
+                    <Text testID="txt_profile_initials" style={styles.avatarText}>{initials}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                    <Text style={styles.profileName}>{profile.name}</Text>
-                    <Text style={styles.profileEmail}>{profile.email}</Text>
+                    <Text testID="txt_profile_name" style={styles.profileName}>{profile.name}</Text>
+                    <Text testID="txt_profile_email" style={styles.profileEmail}>{profile.email}</Text>
                     <View style={styles.premiumBadge}>
-                        <Text style={styles.premiumBadgeText}>✨ Premium Account</Text>
+                        <Text testID="txt_premium_badge" style={styles.premiumBadgeText}>✨ Premium Account</Text>
                     </View>
                 </View>
             </LinearGradient>
 
             {/* Profile Form */}
             <View style={styles.card}>
-                <Text style={styles.cardTitle}>Profile Information</Text>
+                <Text testID="txt_section_profile_info" style={styles.cardTitle}>Profile Information</Text>
                 {saved && (
                     <View style={styles.successBanner}>
-                        <Text style={styles.successText}>✅ Profile saved successfully!</Text>
+                        <Text testID="txt_success_banner" style={styles.successText}>✅ Profile saved successfully!</Text>
                     </View>
                 )}
                 {[
@@ -115,8 +115,8 @@ export default function SettingsScreen({ navigation }) {
                     { key: 'address', label: '📍 Address', placeholder: '123 Main St, City', keyboardType: 'default' },
                 ].map(field => (
                     <View key={field.key} style={styles.fieldGroup}>
-                        <Text style={styles.fieldLabel}>{field.label}</Text>
-                        <TextInput
+                        <Text testID={`txt_label_${field.key}`} style={styles.fieldLabel}>{field.label}</Text>
+                        <TextInput testID={`input_${field.key}`}
                             style={styles.input}
                             placeholder={field.placeholder}
                             placeholderTextColor={C.textLight}
@@ -127,14 +127,13 @@ export default function SettingsScreen({ navigation }) {
                         />
                     </View>
                 ))}
-                <TouchableOpacity accessible={false}
-                    style={[styles.saveBtn, saving && { opacity: 0.6 }]}
+                <TouchableOpacity testID="btn_save_profile" style={[styles.saveBtn, saving && { opacity: 0.6 }]}
                     onPress={handleSave}
                     disabled={saving}
                     activeOpacity={0.85}
                 >
                     <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.saveBtnInner}>
-                        {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
+                        {saving ? <ActivityIndicator color="#fff" /> : <Text testID="txt_save_btn" style={styles.saveBtnText}>Save Changes</Text>}
                     </LinearGradient>
                 </TouchableOpacity>
             </View>
@@ -142,18 +141,17 @@ export default function SettingsScreen({ navigation }) {
 
             {/* Preferences */}
             <View style={styles.card}>
-                <Text style={styles.cardTitle}>Preferences</Text>
+                <Text testID="txt_section_preferences" style={styles.cardTitle}>Preferences</Text>
                 {[
                     { label: '🌙 Dark Mode', sub: 'Switch to dark theme', value: darkMode, setter: setDarkMode },
                     { label: '🔔 Push Notifications', sub: 'Receive transaction alerts', value: notifications, setter: setNotifications },
                 ].map(pref => (
                     <View key={pref.label} style={styles.prefRow}>
                         <View style={{ flex: 1 }}>
-                            <Text style={styles.prefLabel}>{pref.label}</Text>
-                            <Text style={styles.prefSub}>{pref.sub}</Text>
+                            <Text testID={`txt_pref_label_${pref.label.split(' ')[1].toLowerCase()}`} style={styles.prefLabel}>{pref.label}</Text>
+                            <Text testID={`txt_pref_sub_${pref.label.split(' ')[1].toLowerCase()}`} style={styles.prefSub}>{pref.sub}</Text>
                         </View>
-                        <Switch
-                            value={pref.value}
+                        <Switch testID={`switch_pref_${pref.label.split(' ')[1].toLowerCase()}`} value={pref.value}
                             onValueChange={pref.setter}
                             trackColor={{ true: C.primary, false: C.border }}
                             thumbColor="#fff"
@@ -163,11 +161,11 @@ export default function SettingsScreen({ navigation }) {
             </View>
 
             {/* Logout */}
-            <TouchableOpacity accessible={false} style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
-                <Text style={styles.logoutText}>🚪 Sign Out</Text>
+            <TouchableOpacity testID="btn_sign_out" style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
+                <Text testID="txt_sign_out" style={styles.logoutText}>🚪 Sign Out</Text>
             </TouchableOpacity>
 
-            <Text style={styles.versionText}>DemoBank Mobile v1.0.0</Text>
+            <Text testID="txt_app_version" style={styles.versionText}>DemoBank Mobile v1.0.0</Text>
             <View style={{ height: 32 }} />
         </ScrollView>
     );

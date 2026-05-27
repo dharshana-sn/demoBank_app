@@ -112,27 +112,27 @@ export default function FixedDepositsScreen({ navigation }) {
         >
             <View style={styles.topBar}>
                 <View>
-                    <Text style={styles.pageTitle}>Fixed Deposits</Text>
-                    <Text style={styles.pageSub}>Secure your future with high-yield deposits</Text>
+                    <Text testID="txt_fixed_deposits" style={styles.pageTitle}>Fixed Deposits</Text>
+                    <Text testID="txt_secure_your_future_with_high_y" style={styles.pageSub}>Secure your future with high-yield deposits</Text>
                 </View>
-                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.goBack()}>
-                    <Text style={{ fontSize: 20 }}>🏠</Text>
+                <TouchableOpacity testID="btn_navigation" style={styles.homeBtn} onPress={() => navigation.goBack()}>
+                    <Text testID="txt_icon" style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
 
             <LinearGradient colors={[C.gradStart, C.gradEnd]} style={styles.banner}>
                 <View>
-                    <Text style={styles.bannerLabel}>Total FD Value</Text>
-                    <Text style={styles.bannerValue}>${totalFDValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+                    <Text testID="txt_total_fd_value" style={styles.bannerLabel}>Total FD Value</Text>
+                    <Text testID="txt_totalfdvalue_tolocalestring_en" style={styles.bannerValue}>${totalFDValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
                 </View>
                 <View>
-                    <Text style={styles.bannerLabel}>Active FDs</Text>
-                    <Text style={styles.bannerValue}>{deposits.filter(d => d.status === 'active').length}</Text>
+                    <Text testID="txt_active_fds" style={styles.bannerLabel}>Active FDs</Text>
+                    <Text testID="txt_deposits_filter_d_d_status_act" style={styles.bannerValue}>{deposits.filter(d => d.status === 'active').length}</Text>
                 </View>
             </LinearGradient>
 
             <View style={styles.card}>
-                <Text style={styles.cardTitle}>🏦 Current Interest Rates</Text>
+                <Text testID="txt_current_interest_rates" style={styles.cardTitle}>🏦 Current Interest Rates</Text>
                 <View style={styles.rateGrid}>
                     {TENURE_OPTIONS.map((opt, index) => {
                         const isLastOdd = TENURE_OPTIONS.length % 2 !== 0 && index === TENURE_OPTIONS.length - 1;
@@ -144,9 +144,9 @@ export default function FixedDepositsScreen({ navigation }) {
                                     isLastOdd && styles.rateCardLastOdd
                                 ]}
                             >
-                                <Text style={styles.rateTenure}>{opt.label}</Text>
-                                <Text style={styles.ratePercent}>{opt.rate}%</Text>
-                                <Text style={styles.ratePa}>per annum</Text>
+                                <Text testID={`txt_opt_label`} style={styles.rateTenure}>{opt.label}</Text>
+                                <Text testID="txt_opt_rate" style={styles.ratePercent}>{opt.rate}%</Text>
+                                <Text testID="txt_per_annum" style={styles.ratePa}>per annum</Text>
                             </View>
                         );
                     })}
@@ -154,9 +154,9 @@ export default function FixedDepositsScreen({ navigation }) {
             </View>
 
             {!showForm && (
-                <TouchableOpacity accessible={false} style={styles.createBtn} onPress={() => setShowForm(true)} activeOpacity={0.85}>
+                <TouchableOpacity testID="btn_setshowform" style={styles.createBtn} onPress={() => setShowForm(true)} activeOpacity={0.85}>
                     <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.createBtnInner}>
-                        <Text style={styles.createBtnText}>+ Open New Fixed Deposit</Text>
+                        <Text testID="txt_open_new_fixed_deposit" style={styles.createBtnText}>+ Open New Fixed Deposit</Text>
                     </LinearGradient>
                 </TouchableOpacity>
             )}
@@ -164,32 +164,31 @@ export default function FixedDepositsScreen({ navigation }) {
             {showForm && (
                 <View style={styles.card}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                        <Text style={[styles.cardTitle, { marginBottom: 0 }]}>New Fixed Deposit</Text>
-                        <TouchableOpacity accessible={false} onPress={() => setShowForm(false)} style={{ padding: 4 }}>
-                            <Text style={{ ...FONTS.medium, color: C.danger, fontSize: 14 }}>✕ Cancel</Text>
+                        <Text testID="txt_new_fixed_deposit" style={[styles.cardTitle, { marginBottom: 0 }]}>New Fixed Deposit</Text>
+                        <TouchableOpacity testID="btn_setshowform" onPress={() => setShowForm(false)} style={{ padding: 4 }}>
+                            <Text testID="txt_cancel" style={{ ...FONTS.medium, color: C.danger, fontSize: 14 }}>✕ Cancel</Text>
                         </TouchableOpacity>
                     </View>
                     
-                    <Text style={styles.fieldLabel}>Source Account</Text>
+                    <Text testID="txt_source_account" style={styles.fieldLabel}>Source Account</Text>
                     <View style={styles.pickerBox}>
                         {accounts.filter(acc => acc.type === 'checking' || acc.type === 'savings').map(acc => (
-                            <TouchableOpacity accessible={false}
-                                key={acc.id}
+                            <TouchableOpacity testID="btn_setform" key={acc.id}
                                 style={[styles.accOption, form.sourceAccount === acc.id && styles.accOptionSelected]}
                                 onPress={() => setForm(f => ({ ...f, sourceAccount: acc.id }))}
                             >
-                                <Text style={[styles.accOptionText, form.sourceAccount === acc.id && { color: '#fff' }]}>
+                                <Text testID={`txt_acc_name`} style={[styles.accOptionText, form.sourceAccount === acc.id && { color: '#fff' }]}>
                                     {acc.name}
                                 </Text>
-                                <Text style={[styles.accBalanceText, form.sourceAccount === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
+                                <Text testID="txt_acc_balance_tolocalestring_en_" style={[styles.accBalanceText, form.sourceAccount === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
                                     ${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                 </Text>
                             </TouchableOpacity>
                         ))}
                     </View>
 
-                    <Text style={styles.fieldLabel}>Amount ($) · Min $500</Text>
-                    <TextInput
+                    <Text testID="txt_amount_min_500" style={styles.fieldLabel}>Amount ($) · Min $500</Text>
+                    <TextInput testID="input_e_g_5000"
                         style={styles.input}
                         placeholder="e.g. 5000"
                         placeholderTextColor={C.textLight}
@@ -202,18 +201,17 @@ export default function FixedDepositsScreen({ navigation }) {
                         keyboardType="numeric"
                         inputMode="numeric"
                     />
-                    <Text style={styles.fieldLabel}>Tenure</Text>
+                    <Text testID="txt_tenure" style={styles.fieldLabel}>Tenure</Text>
                     <View style={styles.tenureGrid}>
                         {TENURE_OPTIONS.map(opt => (
-                            <TouchableOpacity accessible={false}
-                                key={opt.value}
+                            <TouchableOpacity testID="btn_setform" key={opt.value}
                                 style={[styles.tenureOption, form.tenure === opt.value && styles.tenureSelected]}
                                 onPress={() => setForm(f => ({ ...f, tenure: opt.value }))}
                             >
-                                <Text style={[styles.tenureText, form.tenure === opt.value && { color: '#fff' }]}>
+                                <Text testID={`txt_opt_label`} style={[styles.tenureText, form.tenure === opt.value && { color: '#fff' }]}>
                                     {opt.label}
                                 </Text>
-                                <Text style={[styles.tenureRate, form.tenure === opt.value && { color: 'rgba(255,255,255,0.8)' }]}>
+                                <Text testID="txt_opt_rate" style={[styles.tenureRate, form.tenure === opt.value && { color: 'rgba(255,255,255,0.8)' }]}>
                                     {opt.rate}%
                                 </Text>
                             </TouchableOpacity>
@@ -222,63 +220,62 @@ export default function FixedDepositsScreen({ navigation }) {
 
                     {form.amount && parseFloat(form.amount) > 0 && (
                         <LinearGradient colors={[C.primary, '#1E3A8A']} style={styles.previewBox}>
-                            <Text style={styles.previewTitle}>Your Returns</Text>
+                            <Text testID="txt_your_returns" style={styles.previewTitle}>Your Returns</Text>
                             
                             <View style={styles.previewRateSection}>
-                                <Text style={styles.previewRateValue}>{selectedTenure.rate}%</Text>
-                                <Text style={styles.previewRateLabel}>Per Annum</Text>
+                                <Text testID="txt_selectedtenure_rate" style={styles.previewRateValue}>{selectedTenure.rate}%</Text>
+                                <Text testID="txt_per_annum" style={styles.previewRateLabel}>Per Annum</Text>
                             </View>
 
                             <View style={styles.previewRow}>
-                                <Text style={styles.previewLabel}>Principal</Text>
-                                <Text style={styles.previewValue}>${parseFloat(form.amount).toLocaleString()}</Text>
+                                <Text testID="txt_principal" style={styles.previewLabel}>Principal</Text>
+                                <Text testID="txt_parsefloat_form_amount_tolocal" style={styles.previewValue}>${parseFloat(form.amount).toLocaleString()}</Text>
                             </View>
                             <View style={styles.previewRow}>
-                                <Text style={styles.previewLabel}>Interest Earned</Text>
-                                <Text style={[styles.previewValue, { color: '#34D399' }]}>+${interestEarned()}</Text>
+                                <Text testID="txt_interest_earned" style={styles.previewLabel}>Interest Earned</Text>
+                                <Text testID="txt_interestearned" style={[styles.previewValue, { color: '#34D399' }]}>+${interestEarned()}</Text>
                             </View>
                             <View style={[styles.previewRow, { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', marginTop: 8, paddingTop: 8 }]}>
-                                <Text style={[styles.previewLabel, { ...FONTS.bold, color: '#fff' }]}>Maturity Amount</Text>
-                                <Text style={[styles.previewValue, { color: '#FCD34D', fontSize: 16 }]}>${maturityAmount()}</Text>
+                                <Text testID="txt_maturity_amount" style={[styles.previewLabel, { ...FONTS.bold, color: '#fff' }]}>Maturity Amount</Text>
+                                <Text testID="txt_maturityamount" style={[styles.previewValue, { color: '#FCD34D', fontSize: 16 }]}>${maturityAmount()}</Text>
                             </View>
                         </LinearGradient>
                     )}
 
-                    <TouchableOpacity accessible={false}
-                        style={[styles.submitBtn, submitting && { opacity: 0.6 }]}
+                    <TouchableOpacity testID="btn_handlecreate" style={[styles.submitBtn, submitting && { opacity: 0.6 }]}
                         onPress={handleCreate}
                         disabled={submitting}
                         activeOpacity={0.85}
                     >
                         <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.submitBtnInner}>
-                            {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Create Fixed Deposit</Text>}
+                            {submitting ? <ActivityIndicator color="#fff" /> : <Text testID="txt_create_fixed_deposit" style={styles.submitBtnText}>Create Fixed Deposit</Text>}
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
             )}
 
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Your Fixed Deposits</Text>
+                <Text testID="txt_your_fixed_deposits" style={styles.sectionTitle}>Your Fixed Deposits</Text>
                 {deposits.length === 0 ? (
                     <View style={styles.card}>
-                        <Text style={styles.emptyText}>No fixed deposits yet. Open your first FD above!</Text>
+                        <Text testID="txt_no_fixed_deposits_yet_open_you" style={styles.emptyText}>No fixed deposits yet. Open your first FD above!</Text>
                     </View>
                 ) : deposits.map((d, i) => (
                     <View key={d._id || i} style={styles.fdCard}>
                         <View style={styles.fdCardTop}>
                             <View>
-                                <Text style={styles.fdAmount}>${(d.principal || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
-                                <Text style={styles.fdTenure}>{d.tenure} months · {d.rate}% p.a.</Text>
+                                <Text testID="txt_d_principal_0_tolocalestring_e" style={styles.fdAmount}>${(d.principal || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+                                <Text testID="txt_d_tenure_months_d_rate_p_a" style={styles.fdTenure}>{d.tenure} months · {d.rate}% p.a.</Text>
                             </View>
                             <View style={[styles.fdStatusBadge, { backgroundColor: d.status === 'active' ? '#D1FAE5' : '#FEE2E2' }]}>
-                                <Text style={[styles.fdStatusText, { color: d.status === 'active' ? C.success : C.danger }]}>
+                                <Text testID="txt_d_status_charat_0_touppercase_" style={[styles.fdStatusText, { color: d.status === 'active' ? C.success : C.danger }]}>
                                     {d.status?.charAt(0).toUpperCase() + d.status?.slice(1)}
                                 </Text>
                             </View>
                         </View>
                         <View style={styles.fdDates}>
-                            <Text style={styles.fdDate}>Start: {d.startDate}</Text>
-                            <Text style={styles.fdDate}>Maturity: {d.maturityDate}</Text>
+                            <Text testID="txt_start_d_startdate" style={styles.fdDate}>Start: {d.startDate}</Text>
+                            <Text testID="txt_maturity_d_maturitydate" style={styles.fdDate}>Maturity: {d.maturityDate}</Text>
                         </View>
                     </View>
                 ))}

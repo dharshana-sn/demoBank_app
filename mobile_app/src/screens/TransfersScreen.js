@@ -233,11 +233,11 @@ export default function TransfersScreen({ navigation, route }) {
             <StatusBar barStyle="dark-content" backgroundColor={C.card} />
             <View style={styles.topBar}>
                 <View>
-                    <Text style={styles.pageTitle}>Fund Transfers</Text>
-                    <Text style={styles.pageSub}>Move money securely</Text>
+                    <Text testID="txt_fund_transfers" style={styles.pageTitle}>Fund Transfers</Text>
+                    <Text testID="txt_move_money_securely" style={styles.pageSub}>Move money securely</Text>
                 </View>
-                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
-                    <Text style={{ fontSize: 20 }}>🏠</Text>
+                <TouchableOpacity testID="btn_nav_overview" style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
+                    <Text testID="txt_icon" style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
 
@@ -246,70 +246,65 @@ export default function TransfersScreen({ navigation, route }) {
                 {[{ label: 'This Month', value: recentTransfers.length.toString() },
                   { label: 'Total Sent', value: `$${recentTransfers.reduce((s, t) => s + Math.abs(t.amount), 0).toFixed(2)}` }].map(s => (
                     <View key={s.label} style={styles.statCard}>
-                        <Text style={styles.statLabel}>{s.label}</Text>
-                        <Text style={styles.statValue}>{s.value}</Text>
+                        <Text testID={`txt_s_label`} style={styles.statLabel}>{s.label}</Text>
+                        <Text testID={`txt_s_value`} style={styles.statValue}>{s.value}</Text>
                     </View>
                 ))}
             </View>
 
             {/* Tabs */}
             <View style={styles.tabsRow}>
-                <TouchableOpacity accessible={false}
-                    style={[styles.tab, activeTab === 'internal' && styles.tabActive]}
+                <TouchableOpacity testID="btn_setactivetab" style={[styles.tab, activeTab === 'internal' && styles.tabActive]}
                     onPress={() => setActiveTab('internal')}
                 >
-                    <Text style={[styles.tabText, activeTab === 'internal' && styles.tabTextActive]} numberOfLines={1} adjustsFontSizeToFit>Between Accounts</Text>
+                    <Text testID="txt_between_accounts" style={[styles.tabText, activeTab === 'internal' && styles.tabTextActive]} numberOfLines={1} adjustsFontSizeToFit>Between Accounts</Text>
                 </TouchableOpacity>
-                <TouchableOpacity accessible={false}
-                    style={[styles.tab, activeTab === 'same-bank' && styles.tabActive]}
+                <TouchableOpacity testID="btn_setactivetab" style={[styles.tab, activeTab === 'same-bank' && styles.tabActive]}
                     onPress={() => setActiveTab('same-bank')}
                 >
-                    <Text style={[styles.tabText, activeTab === 'same-bank' && styles.tabTextActive]} numberOfLines={1} adjustsFontSizeToFit>Same Bank</Text>
+                    <Text testID="txt_same_bank" style={[styles.tabText, activeTab === 'same-bank' && styles.tabTextActive]} numberOfLines={1} adjustsFontSizeToFit>Same Bank</Text>
                 </TouchableOpacity>
-                <TouchableOpacity accessible={false}
-                    style={[styles.tab, activeTab === 'pay' && styles.tabActive]}
+                <TouchableOpacity testID="btn_setactivetab" style={[styles.tab, activeTab === 'pay' && styles.tabActive]}
                     onPress={() => setActiveTab('pay')}
                 >
-                    <Text style={[styles.tabText, activeTab === 'pay' && styles.tabTextActive]} numberOfLines={1} adjustsFontSizeToFit>Pay to User</Text>
+                    <Text testID="txt_pay_to_user" style={[styles.tabText, activeTab === 'pay' && styles.tabTextActive]} numberOfLines={1} adjustsFontSizeToFit>Pay to User</Text>
                 </TouchableOpacity>
             </View>
 
             {activeTab === 'internal' && (
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Transfer Between Accounts</Text>
-                    <Text style={styles.fieldLabel}>From Account</Text>
+                    <Text testID="txt_transfer_between_accounts" style={styles.cardTitle}>Transfer Between Accounts</Text>
+                    <Text testID="txt_from_account" style={styles.fieldLabel}>From Account</Text>
                     <View style={styles.pickerBox}>
                         {accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment').map(acc => (
-                            <TouchableOpacity accessible={false}
-                                key={acc.id}
+                            <TouchableOpacity testID="btn_setform" key={acc.id}
                                 style={[styles.accOption, form.from === acc.id && styles.accOptionSelected]}
                                 onPress={() => setForm(f => ({ ...f, from: acc.id }))}
                             >
-                                <Text style={[styles.accOptionText, form.from === acc.id && { color: '#fff' }]}>
+                                <Text testID={`txt_acc_name`} style={[styles.accOptionText, form.from === acc.id && { color: '#fff' }]}>
                                     {acc.name}
                                 </Text>
-                                <Text style={[styles.accBalanceText, form.from === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
+                                <Text testID="txt_acc_balance_tolocalestring_en_" style={[styles.accBalanceText, form.from === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
                                     ${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                 </Text>
                             </TouchableOpacity>
                         ))}
                     </View>
-                    <Text style={styles.fieldLabel}>To Account</Text>
+                    <Text testID="txt_to_account" style={styles.fieldLabel}>To Account</Text>
                     <View style={styles.pickerBox}>
                         {accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment').map(acc => (
-                            <TouchableOpacity accessible={false}
-                                key={acc.id}
+                            <TouchableOpacity testID="btn_setform" key={acc.id}
                                 style={[styles.accOption, form.to === acc.id && styles.accOptionSelected]}
                                 onPress={() => setForm(f => ({ ...f, to: acc.id }))}
                             >
-                                <Text style={[styles.accOptionText, form.to === acc.id && { color: '#fff' }]}>
+                                <Text testID={`txt_acc_name`} style={[styles.accOptionText, form.to === acc.id && { color: '#fff' }]}>
                                     {acc.name}
                                 </Text>
                             </TouchableOpacity>
                         ))}
                     </View>
-                    <Text style={styles.fieldLabel}>Amount ($)</Text>
-                    <TextInput
+                    <Text testID="txt_amount" style={styles.fieldLabel}>Amount ($)</Text>
+                    <TextInput testID="input_0_00"
                         style={styles.input}
                         placeholder="0.00"
                         placeholderTextColor={C.textLight}
@@ -321,22 +316,21 @@ export default function TransfersScreen({ navigation, route }) {
                         keyboardType="numeric"
                         inputMode="numeric"
                     />
-                    <Text style={styles.fieldLabel}>Description (optional)</Text>
-                    <TextInput
+                    <Text testID="txt_description_optional" style={styles.fieldLabel}>Description (optional)</Text>
+                    <TextInput testID="input_e_g_monthly_savings"
                         style={styles.input}
                         placeholder="e.g. Monthly savings"
                         placeholderTextColor={C.textLight}
                         value={form.description}
                         onChangeText={v => setForm(f => ({ ...f, description: v }))}
                     />
-                    <TouchableOpacity accessible={false}
-                        style={[styles.submitBtn, loading && { opacity: 0.6 }]}
+                    <TouchableOpacity testID="btn_handletransfer" style={[styles.submitBtn, loading && { opacity: 0.6 }]}
                         onPress={handleTransfer}
                         disabled={loading}
                         activeOpacity={0.85}
                     >
                         <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.submitBtnInner}>
-                            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Transfer Now</Text>}
+                            {loading ? <ActivityIndicator color="#fff" /> : <Text testID="txt_transfer_now" style={styles.submitBtnText}>Transfer Now</Text>}
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
@@ -344,42 +338,41 @@ export default function TransfersScreen({ navigation, route }) {
 
             {activeTab === 'same-bank' && (
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Same Bank Transfer</Text>
-                    <Text style={styles.fieldLabel}>From Account</Text>
+                    <Text testID="txt_same_bank_transfer" style={styles.cardTitle}>Same Bank Transfer</Text>
+                    <Text testID="txt_from_account" style={styles.fieldLabel}>From Account</Text>
                     <View style={styles.pickerBox}>
                         {accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment').map(acc => (
-                            <TouchableOpacity accessible={false}
-                                key={acc.id}
+                            <TouchableOpacity testID="btn_setsbform" key={acc.id}
                                 style={[styles.accOption, sbForm.from === acc.id && styles.accOptionSelected]}
                                 onPress={() => setSbForm(f => ({ ...f, from: acc.id }))}
                             >
-                                <Text style={[styles.accOptionText, sbForm.from === acc.id && { color: '#fff' }]}>
+                                <Text testID={`txt_acc_name`} style={[styles.accOptionText, sbForm.from === acc.id && { color: '#fff' }]}>
                                     {acc.name}
                                 </Text>
-                                <Text style={[styles.accBalanceText, sbForm.from === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
+                                <Text testID="txt_acc_balance_tolocalestring_en_" style={[styles.accBalanceText, sbForm.from === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
                                     ${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                 </Text>
                             </TouchableOpacity>
                         ))}
                     </View>
-                    <Text style={styles.fieldLabel}>Recipient Account Number</Text>
-                    <TextInput
+                    <Text testID="txt_recipient_account_number" style={styles.fieldLabel}>Recipient Account Number</Text>
+                    <TextInput testID="input_enter_account_number"
                         style={styles.input}
                         placeholder="Enter account number"
                         placeholderTextColor={C.textLight}
                         value={sbForm.recipientAccount}
                         onChangeText={v => setSbForm(f => ({ ...f, recipientAccount: v }))}
                     />
-                    <Text style={styles.fieldLabel}>Recipient Name</Text>
-                    <TextInput
+                    <Text testID="txt_recipient_name" style={styles.fieldLabel}>Recipient Name</Text>
+                    <TextInput testID="input_e_g_john_doe"
                         style={styles.input}
                         placeholder="e.g. John Doe"
                         placeholderTextColor={C.textLight}
                         value={sbForm.recipientName}
                         onChangeText={v => setSbForm(f => ({ ...f, recipientName: v }))}
                     />
-                    <Text style={styles.fieldLabel}>Amount ($)</Text>
-                    <TextInput
+                    <Text testID="txt_amount" style={styles.fieldLabel}>Amount ($)</Text>
+                    <TextInput testID="input_0_00"
                         style={styles.input}
                         placeholder="0.00"
                         placeholderTextColor={C.textLight}
@@ -391,22 +384,21 @@ export default function TransfersScreen({ navigation, route }) {
                         keyboardType="numeric"
                         inputMode="numeric"
                     />
-                    <Text style={styles.fieldLabel}>Note (optional)</Text>
-                    <TextInput
+                    <Text testID="txt_note_optional" style={styles.fieldLabel}>Note (optional)</Text>
+                    <TextInput testID="input_e_g_rent_gift"
                         style={styles.input}
                         placeholder="e.g. Rent, Gift"
                         placeholderTextColor={C.textLight}
                         value={sbForm.note}
                         onChangeText={v => setSbForm(f => ({ ...f, note: v }))}
                     />
-                    <TouchableOpacity accessible={false}
-                        style={[styles.submitBtn, loading && { opacity: 0.6 }]}
+                    <TouchableOpacity testID="btn_handlesamebanktransfer" style={[styles.submitBtn, loading && { opacity: 0.6 }]}
                         onPress={handleSameBankTransfer}
                         disabled={loading}
                         activeOpacity={0.85}
                     >
                         <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.submitBtnInner}>
-                            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Transfer Funds</Text>}
+                            {loading ? <ActivityIndicator color="#fff" /> : <Text testID="txt_transfer_funds" style={styles.submitBtnText}>Transfer Funds</Text>}
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
@@ -414,57 +406,54 @@ export default function TransfersScreen({ navigation, route }) {
 
             {activeTab === 'pay' && (
                 <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Pay to Another User</Text>
-                    <TouchableOpacity accessible={false}
-                        style={styles.qrScanBtn}
+                    <Text testID="txt_pay_to_another_user" style={styles.cardTitle}>Pay to Another User</Text>
+                    <TouchableOpacity testID="btn_nav_qrscanner" style={styles.qrScanBtn}
                         onPress={() => navigation.navigate('QRScanner')}
                         activeOpacity={0.8}
                     >
                         <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.qrScanBtnInner}>
-                            <Text style={{ fontSize: 20, marginRight: 8 }}>📷</Text>
-                            <Text style={styles.qrScanBtnText}>Scan QR Code</Text>
+                            <Text testID="txt_icon" style={{ fontSize: 20, marginRight: 8 }}>📷</Text>
+                            <Text testID="txt_scan_qr_code" style={styles.qrScanBtnText}>Scan QR Code</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                     <View style={styles.orDivider}>
                         <View style={styles.orLine} />
-                        <Text style={styles.orText}>or enter manually</Text>
+                        <Text testID="txt_or_enter_manually" style={styles.orText}>or enter manually</Text>
                         <View style={styles.orLine} />
                     </View>
-                    <Text style={styles.fieldLabel}>From Account</Text>
+                    <Text testID="txt_from_account" style={styles.fieldLabel}>From Account</Text>
                     <View style={styles.pickerBox}>
                         {accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment').map(acc => (
-                            <TouchableOpacity accessible={false}
-                                key={acc.id}
+                            <TouchableOpacity testID="btn_setpayform" key={acc.id}
                                 style={[styles.accOption, payForm.from === acc.id && styles.accOptionSelected]}
                                 onPress={() => setPayForm(f => ({ ...f, from: acc.id }))}
                             >
-                                <Text style={[styles.accOptionText, payForm.from === acc.id && { color: '#fff' }]}>
+                                <Text testID={`txt_acc_name`} style={[styles.accOptionText, payForm.from === acc.id && { color: '#fff' }]}>
                                     {acc.name}
                                 </Text>
-                                <Text style={[styles.accBalanceText, payForm.from === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
+                                <Text testID="txt_acc_balance_tolocalestring_en_" style={[styles.accBalanceText, payForm.from === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
                                     ${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                 </Text>
                             </TouchableOpacity>
                         ))}
                     </View>
-                    <Text style={styles.fieldLabel}>Select Recipient</Text>
+                    <Text testID="txt_select_recipient" style={styles.fieldLabel}>Select Recipient</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16, paddingVertical: 4 }}>
                         {mockUsers.filter(u => u.id !== user?.id).map(u => (
-                            <TouchableOpacity accessible={false}
-                                key={u.id}
+                            <TouchableOpacity testID="btn_setpayform" key={u.id}
                                 style={styles.userOption}
                                 onPress={() => setPayForm(f => ({ ...f, recipient: u.name }))}
                                 activeOpacity={0.8}
                             >
                                 <View style={[styles.userAvatar, payForm.recipient === u.name && { backgroundColor: C.primary, borderColor: C.primary }]}>
-                                    <Text style={[styles.userAvatarText, payForm.recipient === u.name && { color: '#fff' }]}>{u.avatar}</Text>
+                                    <Text testID={`txt_u_avatar`} style={[styles.userAvatarText, payForm.recipient === u.name && { color: '#fff' }]}>{u.avatar}</Text>
                                 </View>
-                                <Text style={[styles.userNameText, payForm.recipient === u.name && { color: C.primary, ...FONTS.bold }]}>{u.name.split(' ')[0]}</Text>
+                                <Text testID="txt_u_name_split_0" style={[styles.userNameText, payForm.recipient === u.name && { color: C.primary, ...FONTS.bold }]}>{u.name.split(' ')[0]}</Text>
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
-                    <Text style={styles.fieldLabel}>Amount ($)</Text>
-                    <TextInput
+                    <Text testID="txt_amount" style={styles.fieldLabel}>Amount ($)</Text>
+                    <TextInput testID="input_0_00"
                         style={styles.input}
                         placeholder="0.00"
                         placeholderTextColor={C.textLight}
@@ -476,22 +465,21 @@ export default function TransfersScreen({ navigation, route }) {
                         keyboardType="numeric"
                         inputMode="numeric"
                     />
-                    <Text style={styles.fieldLabel}>Note (optional)</Text>
-                    <TextInput
+                    <Text testID="txt_note_optional" style={styles.fieldLabel}>Note (optional)</Text>
+                    <TextInput testID="input_e_g_rent_payment"
                         style={styles.input}
                         placeholder="e.g. Rent payment"
                         placeholderTextColor={C.textLight}
                         value={payForm.note}
                         onChangeText={v => setPayForm(f => ({ ...f, note: v }))}
                     />
-                    <TouchableOpacity accessible={false}
-                        style={[styles.submitBtn, loading && { opacity: 0.6 }]}
+                    <TouchableOpacity testID="btn_handlepay" style={[styles.submitBtn, loading && { opacity: 0.6 }]}
                         onPress={handlePay}
                         disabled={loading}
                         activeOpacity={0.85}
                     >
                         <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.submitBtnInner}>
-                            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Send Payment</Text>}
+                            {loading ? <ActivityIndicator color="#fff" /> : <Text testID="txt_send_payment" style={styles.submitBtnText}>Send Payment</Text>}
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
@@ -499,24 +487,23 @@ export default function TransfersScreen({ navigation, route }) {
 
             {recentTransfers.length > 0 && (
                 <View style={[styles.card, { marginTop: SPACING.md }]}>
-                    <Text style={styles.cardTitle}>Transfer History</Text>
+                    <Text testID="txt_transfer_history" style={styles.cardTitle}>Transfer History</Text>
                     {recentTransfers.map((t, i) => (
-                        <TouchableOpacity accessible={false} 
-                            key={t.id} 
+                        <TouchableOpacity testID="btn_setselectedtxn" key={t.id} 
                             style={[styles.txRow, i < recentTransfers.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}
                             onPress={() => setSelectedTxn(t)}
                             activeOpacity={0.7}
                         >
-                            <Text style={{ fontSize: 20, marginRight: 10 }}>
+                            <Text testID="txt_t_category_internal_transfer" style={{ fontSize: 20, marginRight: 10 }}>
                                 {t.category === 'Internal Transfer' ? '🔄' : '💸'}
                             </Text>
                             <View style={{ flex: 1 }}>
-                                <Text style={styles.txDesc}>{t.description}</Text>
-                                <Text style={styles.txMeta}>
+                                <Text testID={`txt_t_description`} style={styles.txDesc}>{t.description}</Text>
+                                <Text testID="txt_t_category_internal_transfer_b" style={styles.txMeta}>
                                     {t.category === 'Internal Transfer' ? 'Between Accounts' : 'Payment'} · {t.date}
                                 </Text>
                             </View>
-                            <Text style={{ ...FONTS.bold, color: t.category === 'Internal Transfer' ? C.textMuted : (t.type === 'credit' ? C.success : C.danger) }}>
+                            <Text testID="txt_t_category_internal_transfer_t" style={{ ...FONTS.bold, color: t.category === 'Internal Transfer' ? C.textMuted : (t.type === 'credit' ? C.success : C.danger) }}>
                                 {t.category === 'Internal Transfer' ? '↔' : (t.type === 'credit' ? '+' : '-')}${Math.abs(t.amount).toFixed(2)}
                             </Text>
                         </TouchableOpacity>
@@ -528,16 +515,16 @@ export default function TransfersScreen({ navigation, route }) {
             <Modal visible={!!selectedTxn} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Transaction Details</Text>
+                        <Text testID="txt_transaction_details" style={styles.modalTitle}>Transaction Details</Text>
                         
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Description</Text>
-                            <Text style={styles.detailValue}>{selectedTxn?.description}</Text>
+                            <Text testID="txt_description" style={styles.detailLabel}>Description</Text>
+                            <Text testID="txt_selectedtxn_description" style={styles.detailValue}>{selectedTxn?.description}</Text>
                         </View>
 
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Recipient</Text>
-                            <Text style={styles.detailValue}>
+                            <Text testID="txt_recipient" style={styles.detailLabel}>Recipient</Text>
+                            <Text testID="txt_const_desc_selectedtxn_descrip" style={styles.detailValue}>
                                 {(() => {
                                     const desc = selectedTxn?.description;
                                     if (!desc) return 'N/A';
@@ -553,29 +540,29 @@ export default function TransfersScreen({ navigation, route }) {
                         </View>
                         
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Amount</Text>
-                            <Text style={[styles.detailValue, { color: selectedTxn?.type === 'credit' ? C.success : C.danger }]}>
+                            <Text testID="txt_amount" style={styles.detailLabel}>Amount</Text>
+                            <Text testID="txt_selectedtxn_type_credit_math_a" style={[styles.detailValue, { color: selectedTxn?.type === 'credit' ? C.success : C.danger }]}>
                                 {selectedTxn?.type === 'credit' ? '+' : '-'}${Math.abs(selectedTxn?.amount || 0).toFixed(2)}
                             </Text>
                         </View>
                         
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Date</Text>
-                            <Text style={styles.detailValue}>{selectedTxn?.date}</Text>
+                            <Text testID="txt_date" style={styles.detailLabel}>Date</Text>
+                            <Text testID="txt_selectedtxn_date" style={styles.detailValue}>{selectedTxn?.date}</Text>
                         </View>
                         
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Category</Text>
-                            <Text style={styles.detailValue}>{selectedTxn?.category}</Text>
+                            <Text testID="txt_category" style={styles.detailLabel}>Category</Text>
+                            <Text testID="txt_selectedtxn_category" style={styles.detailValue}>{selectedTxn?.category}</Text>
                         </View>
                         
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Status</Text>
-                            <Text style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
+                            <Text testID="txt_status" style={styles.detailLabel}>Status</Text>
+                            <Text testID="txt_selectedtxn_status_completed" style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
                         </View>
  
-                        <TouchableOpacity accessible={false} style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
-                            <Text style={styles.modalCancelText}>Close</Text>
+                        <TouchableOpacity testID="btn_setselectedtxn" style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
+                            <Text testID="txt_close" style={styles.modalCancelText}>Close</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

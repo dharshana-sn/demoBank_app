@@ -74,7 +74,7 @@ export default function QRScannerScreen({ navigation, route }) {
     if (!permission) {
         return (
             <View style={styles.center}>
-                <Text style={styles.infoText}>Checking camera permission…</Text>
+                <Text testID="txt_checking_camera_permission" style={styles.infoText}>Checking camera permission…</Text>
             </View>
         );
     }
@@ -82,16 +82,16 @@ export default function QRScannerScreen({ navigation, route }) {
     if (!permission.granted) {
         return (
             <View style={styles.center}>
-                <Text style={{ fontSize: 48, marginBottom: 16 }}>📷</Text>
-                <Text style={styles.permTitle}>Camera Access Needed</Text>
-                <Text style={styles.permSub}>
+                <Text testID="txt_icon" style={{ fontSize: 48, marginBottom: 16 }}>📷</Text>
+                <Text testID="txt_camera_access_needed" style={styles.permTitle}>Camera Access Needed</Text>
+                <Text testID="txt_allow_camera_access_to_scan_qr" style={styles.permSub}>
                     Allow camera access to scan QR codes and make quick payments.
                 </Text>
-                <TouchableOpacity accessible={false} style={styles.permBtn} onPress={requestPermission}>
-                    <Text style={styles.permBtnText}>Grant Permission</Text>
+                <TouchableOpacity testID="btn_requestpermission" style={styles.permBtn} onPress={requestPermission}>
+                    <Text testID="txt_grant_permission" style={styles.permBtnText}>Grant Permission</Text>
                 </TouchableOpacity>
-                <TouchableOpacity accessible={false} onPress={() => navigation.goBack()} style={{ marginTop: 16 }}>
-                    <Text style={{ ...FONTS.medium, color: COLORS.textMuted, fontSize: 14 }}>Cancel</Text>
+                <TouchableOpacity testID="btn_navigation" onPress={() => navigation.goBack()} style={{ marginTop: 16 }}>
+                    <Text testID="txt_cancel" style={{ ...FONTS.medium, color: COLORS.textMuted, fontSize: 14 }}>Cancel</Text>
                 </TouchableOpacity>
             </View>
         );
@@ -101,10 +101,10 @@ export default function QRScannerScreen({ navigation, route }) {
         <View style={styles.container}>
             {/* Header */}
             <View style={[styles.header, { paddingTop: insets.top > 0 ? insets.top + 8 : 24 }]}>
-                <TouchableOpacity accessible={false} onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <Text style={{ fontSize: 20 }}>←</Text>
+                <TouchableOpacity testID="btn_navigation" onPress={() => navigation.goBack()} style={styles.backBtn}>
+                    <Text testID="txt_icon" style={{ fontSize: 20 }}>←</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Scan QR to Pay</Text>
+                <Text testID="txt_scan_qr_to_pay" style={styles.headerTitle}>Scan QR to Pay</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -143,11 +143,11 @@ export default function QRScannerScreen({ navigation, route }) {
 
             {/* Instructions */}
             <View style={styles.instructionWrap}>
-                <Text style={styles.instructionTitle}>Position the QR code inside the frame</Text>
-                <Text style={styles.instructionSub}>Scanning happens automatically</Text>
+                <Text testID="txt_position_the_qr_code_inside_th" style={styles.instructionTitle}>Position the QR code inside the frame</Text>
+                <Text testID="txt_scanning_happens_automatically" style={styles.instructionSub}>Scanning happens automatically</Text>
                 {scanned && (
-                    <TouchableOpacity accessible={false} style={styles.retryBtn} onPress={() => setScanned(false)}>
-                        <Text style={styles.retryText}>🔄 Tap to Scan Again</Text>
+                    <TouchableOpacity testID="btn_setscanned" style={styles.retryBtn} onPress={() => setScanned(false)}>
+                        <Text testID="txt_tap_to_scan_again" style={styles.retryText}>🔄 Tap to Scan Again</Text>
                     </TouchableOpacity>
                 )}
             </View>

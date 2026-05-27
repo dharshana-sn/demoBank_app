@@ -64,11 +64,11 @@ export default function AccountsScreen({ navigation }) {
         >
             <View style={styles.topBar}>
                 <View>
-                    <Text style={styles.pageTitle}>My Accounts</Text>
-                    <Text style={styles.pageSub}>Manage your linked accounts</Text>
+                    <Text testID="txt_my_accounts" style={styles.pageTitle}>My Accounts</Text>
+                    <Text testID="txt_manage_your_linked_accounts" style={styles.pageSub}>Manage your linked accounts</Text>
                 </View>
-                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
-                    <Text style={{ fontSize: 20 }}>🏠</Text>
+                <TouchableOpacity testID="btn_nav_overview" style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
+                    <Text testID="txt_icon" style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
 
@@ -85,20 +85,19 @@ export default function AccountsScreen({ navigation }) {
                         const isNeg = acc.balance < 0;
                         const isLastOdd = index === nonCreditAccounts.length - 1 && nonCreditAccounts.length % 2 !== 0;
                         return (
-                            <TouchableOpacity accessible={false}
-                                activeOpacity={0.8}
+                            <TouchableOpacity testID="btn_copytoclipboard" activeOpacity={0.8}
                                 style={[styles.accountCard, { borderTopColor: color }, isLastOdd && { width: '100%' }]}
                                 onPress={() => copyToClipboard(acc.number)}
                             >
                                 <View style={[styles.accIconBadge, { backgroundColor: `${color}22` }]}>
-                                    <Text style={styles.accIconText}>💳</Text>
+                                    <Text testID="txt_icon" style={styles.accIconText}>💳</Text>
                                 </View>
-                                <Text style={styles.accName} numberOfLines={1}>{acc.name}</Text>
-                                <Text style={styles.accType}>{acc.type?.charAt(0).toUpperCase() + acc.type?.slice(1)}</Text>
-                                <Text style={[styles.accBalance, { color: isNeg ? C.danger : C.success }]}>
+                                <Text testID={`txt_acc_name`} style={styles.accName} numberOfLines={1}>{acc.name}</Text>
+                                <Text testID="txt_acc_type_charat_0_touppercase_" style={styles.accType}>{acc.type?.charAt(0).toUpperCase() + acc.type?.slice(1)}</Text>
+                                <Text testID="txt_isneg_math_abs_acc_balance_tol" style={[styles.accBalance, { color: isNeg ? C.danger : C.success }]}>
                                     {isNeg ? '-' : ''}${Math.abs(acc.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                 </Text>
-                                <Text style={styles.accNum} numberOfLines={1}>···· {acc.number?.slice(-4)} 📋</Text>
+                                <Text testID="txt_acc_number_slice_4" style={styles.accNum} numberOfLines={1}>···· {acc.number?.slice(-4)} 📋</Text>
                             </TouchableOpacity>
                         );
                     }}
@@ -112,37 +111,36 @@ export default function AccountsScreen({ navigation }) {
                     { label: 'Total Balance', value: `$${accounts.reduce((s, a) => s + a.balance, 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}` },
                 ].map(item => (
                     <View key={item.label} style={styles.summaryCard}>
-                        <Text style={styles.summaryLabel}>{item.label}</Text>
-                        <Text style={styles.summaryValue}>{item.value}</Text>
+                        <Text testID={`txt_item_label`} style={styles.summaryLabel}>{item.label}</Text>
+                        <Text testID={`txt_item_value`} style={styles.summaryValue}>{item.value}</Text>
                     </View>
                 ))}
             </View>
 
             {/* Recent Transactions */}
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Recent Transactions</Text>
+                <Text testID="txt_recent_transactions" style={styles.sectionTitle}>Recent Transactions</Text>
                 <View style={styles.card}>
                     {transactions.length === 0
-                        ? <Text style={styles.emptyText}>No transactions found</Text>
+                        ? <Text testID="txt_no_transactions_found" style={styles.emptyText}>No transactions found</Text>
                         : transactions.slice(0, 20).map((t, i) => (
-                            <TouchableOpacity accessible={false}
-                                key={t._id || i}
+                            <TouchableOpacity testID="btn_setselectedtxn" key={t._id || i}
                                 style={[styles.txRow, i < transactions.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}
                                 onPress={() => setSelectedTxn(t)}
                                 activeOpacity={0.7}
                             >
                                 <View style={[styles.txIcon, { backgroundColor: t.type === 'credit' ? '#D1FAE5' : '#FEE2E2' }]}>
-                                    <Text style={{ fontSize: 14 }}>{t.type === 'credit' ? '📈' : '📉'}</Text>
+                                    <Text testID="txt_t_type_credit" style={{ fontSize: 14 }}>{t.type === 'credit' ? '📈' : '📉'}</Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={styles.txDesc} numberOfLines={1}>{t.description}</Text>
-                                    <Text style={styles.txMeta}>{t.category} · {t.date}</Text>
+                                    <Text testID={`txt_t_description`} style={styles.txDesc} numberOfLines={1}>{t.description}</Text>
+                                    <Text testID="txt_t_category_t_date" style={styles.txMeta}>{t.category} · {t.date}</Text>
                                 </View>
                                 <View style={{ alignItems: 'flex-end' }}>
-                                    <Text style={[styles.txAmount, { color: t.type === 'credit' ? C.success : C.danger }]}>
+                                    <Text testID="txt_t_type_credit_math_abs_t_amoun" style={[styles.txAmount, { color: t.type === 'credit' ? C.success : C.danger }]}>
                                         {t.type === 'credit' ? '+' : '-'}${Math.abs(t.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                     </Text>
-                                    <Text style={[styles.txStatus, {
+                                    <Text testID={`txt_t_status`} style={[styles.txStatus, {
                                         color: t.status === 'Completed' ? C.success : t.status === 'Pending' ? C.warning : C.danger
                                     }]}>{t.status}</Text>
                                 </View>
@@ -156,14 +154,14 @@ export default function AccountsScreen({ navigation }) {
             <Modal visible={!!selectedTxn} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Transaction Details</Text>
+                        <Text testID="txt_transaction_details" style={styles.modalTitle}>Transaction Details</Text>
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Description</Text>
-                            <Text style={styles.detailValue}>{selectedTxn?.description}</Text>
+                            <Text testID="txt_description" style={styles.detailLabel}>Description</Text>
+                            <Text testID="txt_selectedtxn_description" style={styles.detailValue}>{selectedTxn?.description}</Text>
                         </View>
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Recipient</Text>
-                            <Text style={styles.detailValue}>
+                            <Text testID="txt_recipient" style={styles.detailLabel}>Recipient</Text>
+                            <Text testID="txt_selectedtxn_description_starts" style={styles.detailValue}>
                                 {selectedTxn?.description?.startsWith('Payment to ')
                                     ? selectedTxn.description.substring(11).split(':')[0].trim()
                                     : (selectedTxn?.description?.startsWith('Transfer to account ')
@@ -174,25 +172,25 @@ export default function AccountsScreen({ navigation }) {
                             </Text>
                         </View>
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Amount</Text>
-                            <Text style={[styles.detailValue, { color: selectedTxn?.type === 'credit' ? C.success : C.danger }]}>
+                            <Text testID="txt_amount" style={styles.detailLabel}>Amount</Text>
+                            <Text testID="txt_selectedtxn_type_credit_math_a" style={[styles.detailValue, { color: selectedTxn?.type === 'credit' ? C.success : C.danger }]}>
                                 {selectedTxn?.type === 'credit' ? '+' : '-'}${Math.abs(selectedTxn?.amount || 0).toFixed(2)}
                             </Text>
                         </View>
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Date</Text>
-                            <Text style={styles.detailValue}>{selectedTxn?.date}</Text>
+                            <Text testID="txt_date" style={styles.detailLabel}>Date</Text>
+                            <Text testID="txt_selectedtxn_date" style={styles.detailValue}>{selectedTxn?.date}</Text>
                         </View>
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Category</Text>
-                            <Text style={styles.detailValue}>{selectedTxn?.category}</Text>
+                            <Text testID="txt_category" style={styles.detailLabel}>Category</Text>
+                            <Text testID="txt_selectedtxn_category" style={styles.detailValue}>{selectedTxn?.category}</Text>
                         </View>
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Status</Text>
-                            <Text style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
+                            <Text testID="txt_status" style={styles.detailLabel}>Status</Text>
+                            <Text testID="txt_selectedtxn_status_completed" style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
                         </View>
-                        <TouchableOpacity accessible={false} style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
-                            <Text style={styles.modalCancelText}>Close</Text>
+                        <TouchableOpacity testID="btn_setselectedtxn" style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
+                            <Text testID="txt_close" style={styles.modalCancelText}>Close</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

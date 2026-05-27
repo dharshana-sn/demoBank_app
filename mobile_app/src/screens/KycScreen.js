@@ -113,11 +113,11 @@ export default function KycScreen({ navigation }) {
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
             <View style={styles.topBar}>
                 <View>
-                    <Text style={styles.pageTitle}>KYC Verification</Text>
-                    <Text style={styles.pageSub}>Upload documents to verify your identity</Text>
+                    <Text testID="txt_kyc_verification" style={styles.pageTitle}>KYC Verification</Text>
+                    <Text testID="txt_upload_documents_to_verify_you" style={styles.pageSub}>Upload documents to verify your identity</Text>
                 </View>
-                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.goBack()}>
-                    <Text style={{ fontSize: 20 }}>🏠</Text>
+                <TouchableOpacity testID="btn_navigation" style={styles.homeBtn} onPress={() => navigation.goBack()}>
+                    <Text testID="txt_icon" style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
 
@@ -125,12 +125,12 @@ export default function KycScreen({ navigation }) {
                 colors={isVerified ? ['#059669', '#10B981'] : [C.gradStart, C.gradEnd]}
                 style={styles.statusBanner}
             >
-                <Text style={{ fontSize: 40 }}>{isVerified ? '✅' : '🔐'}</Text>
+                <Text testID="txt_isverified" style={{ fontSize: 40 }}>{isVerified ? '✅' : '🔐'}</Text>
                 <View style={{ flex: 1, marginLeft: 16 }}>
-                    <Text style={styles.statusTitle}>
+                    <Text testID="txt_isverified_identity_verified_v" style={styles.statusTitle}>
                         {isVerified ? 'Identity Verified' : 'Verification Pending'}
                     </Text>
-                    <Text style={styles.statusSub}>
+                    <Text testID="txt_uploadedcount_of_document_type" style={styles.statusSub}>
                         {uploadedCount} of {DOCUMENT_TYPES.length} documents uploaded
                     </Text>
                 </View>
@@ -138,8 +138,8 @@ export default function KycScreen({ navigation }) {
 
             <View style={styles.progressCard}>
                 <View style={styles.progressHeader}>
-                    <Text style={styles.progressLabel}>Verification Progress</Text>
-                    <Text style={styles.progressPct}>{Math.round((uploadedCount / DOCUMENT_TYPES.length) * 100)}%</Text>
+                    <Text testID="txt_verification_progress" style={styles.progressLabel}>Verification Progress</Text>
+                    <Text testID="txt_math_round_uploadedcount_docum" style={styles.progressPct}>{Math.round((uploadedCount / DOCUMENT_TYPES.length) * 100)}%</Text>
                 </View>
                 <View style={styles.progressTrack}>
                     <View style={[styles.progressFill, { width: `${(uploadedCount / DOCUMENT_TYPES.length) * 100}%` }]} />
@@ -147,61 +147,57 @@ export default function KycScreen({ navigation }) {
             </View>
 
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Required Documents</Text>
+                <Text testID="txt_required_documents" style={styles.sectionTitle}>Required Documents</Text>
                 {DOCUMENT_TYPES.map(doc => {
                     const isUploaded = !!uploadedDocs[doc.id];
                     return (
                         <View key={doc.id} style={styles.docCard}>
                             <View style={styles.docLeft}>
-                                <Text style={{ fontSize: 28, marginRight: 12 }}>{doc.icon}</Text>
+                                <Text testID={`txt_doc_icon`} style={{ fontSize: 28, marginRight: 12 }}>{doc.icon}</Text>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={styles.docLabel}>{doc.label}</Text>
-                                    <Text style={styles.docDesc}>{doc.desc}</Text>
+                                    <Text testID={`txt_doc_label`} style={styles.docLabel}>{doc.label}</Text>
+                                    <Text testID={`txt_doc_desc`} style={styles.docDesc}>{doc.desc}</Text>
                                 </View>
                             </View>
                             {isUploaded ? (
                                 <View style={styles.docActions}>
                                     <View style={styles.uploadedBadge}>
-                                        <Text style={styles.uploadedText}>✓ Uploaded</Text>
+                                        <Text testID="txt_uploaded" style={styles.uploadedText}>✓ Uploaded</Text>
                                     </View>
-                                    <TouchableOpacity accessible={false}
-                                        style={styles.viewBtn}
+                                    <TouchableOpacity testID="btn_handleview" style={styles.viewBtn}
                                         onPress={() => handleView(doc.id)}
                                         disabled={uploading === doc.id || deleting === doc.id}
                                     >
-                                        <Text style={styles.actionBtnText}>👁️</Text>
+                                        <Text testID="txt_icon" style={styles.actionBtnText}>👁️</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity accessible={false}
-                                        style={styles.changeBtn}
+                                    <TouchableOpacity testID="btn_handleupload" style={styles.changeBtn}
                                         onPress={() => handleUpload(doc.id, true)}
                                         disabled={uploading === doc.id || deleting === doc.id}
                                     >
                                         {uploading === doc.id
                                             ? <ActivityIndicator size="small" color={C.primary} />
-                                            : <Text style={styles.actionBtnText}>✏️</Text>
+                                            : <Text testID="txt_icon" style={styles.actionBtnText}>✏️</Text>
                                         }
                                     </TouchableOpacity>
-                                    <TouchableOpacity accessible={false}
-                                        style={styles.deleteBtn}
+                                    <TouchableOpacity testID="btn_handledelete" style={styles.deleteBtn}
                                         onPress={() => handleDelete(doc.id)}
                                         disabled={deleting === doc.id || uploading === doc.id}
                                     >
                                         {deleting === doc.id
                                             ? <ActivityIndicator size="small" color={C.danger} />
-                                            : <Text style={styles.actionBtnText}>🗑️</Text>
+                                            : <Text testID="txt_icon" style={styles.actionBtnText}>🗑️</Text>
                                         }
                                     </TouchableOpacity>
                                 </View>
                             ) : (
-                                <TouchableOpacity accessible={false}
-                                    style={styles.uploadBtn}
+                                <TouchableOpacity testID="btn_handleupload" style={styles.uploadBtn}
                                     onPress={() => handleUpload(doc.id)}
                                     disabled={uploading === doc.id}
                                     activeOpacity={0.8}
                                 >
                                     {uploading === doc.id
                                         ? <ActivityIndicator size="small" color="#fff" />
-                                        : <Text style={styles.uploadBtnText}>Upload</Text>
+                                        : <Text testID="txt_upload" style={styles.uploadBtnText}>Upload</Text>
                                     }
                                 </TouchableOpacity>
                             )}
@@ -211,8 +207,8 @@ export default function KycScreen({ navigation }) {
             </View>
 
             <View style={styles.infoBox}>
-                <Text style={styles.infoTitle}>🔒 Your documents are encrypted</Text>
-                <Text style={styles.infoText}>
+                <Text testID="txt_your_documents_are_encrypted" style={styles.infoTitle}>🔒 Your documents are encrypted</Text>
+                <Text testID="txt_all_uploaded_documents_are_sto" style={styles.infoText}>
                     All uploaded documents are stored securely with AES-256 encryption. Your data is never shared without your consent.
                 </Text>
             </View>

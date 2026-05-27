@@ -122,7 +122,7 @@ export default function OverviewScreen({ navigation }) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={C.primary} />
-                <Text style={styles.loadingText}>Loading your dashboard...</Text>
+                <Text testID="txt_loading_your_dashboard" style={styles.loadingText}>Loading your dashboard...</Text>
             </View>
         );
     }
@@ -138,14 +138,14 @@ export default function OverviewScreen({ navigation }) {
             <LinearGradient colors={[C.gradStart, C.gradEnd]} style={styles.header}>
                 <View style={styles.headerRow}>
                     <View>
-                        <Text style={styles.greeting}>Good day,</Text>
-                        <Text style={styles.userName}>{user?.name || 'User'} </Text>
+                        <Text testID="txt_good_day" style={styles.greeting}>Good day,</Text>
+                        <Text testID="txt_user_name_user" style={styles.userName}>{user?.name || 'User'} </Text>
                     </View>
-                    <TouchableOpacity accessible={false} style={styles.notifBtn} onPress={() => setShowNotifs(p => !p)} activeOpacity={0.8}>
-                        <Text style={{ fontSize: 22 }}>🔔</Text>
+                    <TouchableOpacity testID="btn_setshownotifs" style={styles.notifBtn} onPress={() => setShowNotifs(p => !p)} activeOpacity={0.8}>
+                        <Text testID="txt_icon" style={{ fontSize: 22 }}>🔔</Text>
                         {unread > 0 && (
                             <View style={styles.badge}>
-                                <Text style={styles.badgeText}>{unread}</Text>
+                                <Text testID={`txt_unread`} style={styles.badgeText}>{unread}</Text>
                             </View>
                         )}
                     </TouchableOpacity>
@@ -153,18 +153,18 @@ export default function OverviewScreen({ navigation }) {
 
                 {/* Balance Card */}
                 <View style={styles.balanceCard}>
-                    <Text style={styles.balanceLabel}>Total Net Worth</Text>
-                    <Text style={styles.balanceAmount}>
+                    <Text testID="txt_total_net_worth" style={styles.balanceLabel}>Total Net Worth</Text>
+                    <Text testID="txt_totalbalance_tolocalestring_en" style={styles.balanceAmount}>
                         ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </Text>
                     <View style={styles.balanceRow}>
                         <View style={styles.balanceSub}>
-                            <Text style={styles.balanceSubLabel}>Income</Text>
-                            <Text style={[styles.balanceSubValue, { color: C.success }]}>+${totalIncome.toLocaleString()}</Text>
+                            <Text testID="txt_income" style={styles.balanceSubLabel}>Income</Text>
+                            <Text testID="txt_totalincome_tolocalestring" style={[styles.balanceSubValue, { color: C.success }]}>+${totalIncome.toLocaleString()}</Text>
                         </View>
                         <View style={[styles.balanceSub, { borderLeftWidth: 1, borderLeftColor: 'rgba(255,255,255,0.2)', paddingLeft: 20 }]}>
-                            <Text style={styles.balanceSubLabel}>Expenses</Text>
-                            <Text style={[styles.balanceSubValue, { color: '#FCA5A5' }]}>-${totalExpenses.toLocaleString()}</Text>
+                            <Text testID="txt_expenses" style={styles.balanceSubLabel}>Expenses</Text>
+                            <Text testID="txt_totalexpenses_tolocalestring" style={[styles.balanceSubValue, { color: '#FCA5A5' }]}>-${totalExpenses.toLocaleString()}</Text>
                         </View>
                     </View>
                 </View>
@@ -173,18 +173,17 @@ export default function OverviewScreen({ navigation }) {
             {/* Notification Panel */}
             {showNotifs && (
                 <View style={styles.notifPanel}>
-                    <Text style={styles.sectionTitle}>Notifications</Text>
+                    <Text testID="txt_notifications" style={styles.sectionTitle}>Notifications</Text>
                     {notifications.map(n => (
-                        <TouchableOpacity accessible={false}
-                            key={n.id}
+                        <TouchableOpacity testID="btn_setnotifications" key={n.id}
                             style={[styles.notifItem, !n.unread && { opacity: 0.6 }]}
                             onPress={() => setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, unread: false } : x))}
                         >
-                            <Text style={{ fontSize: 24, marginRight: 12 }}>{n.icon}</Text>
+                            <Text testID={`txt_n_icon`} style={{ fontSize: 24, marginRight: 12 }}>{n.icon}</Text>
                             <View style={{ flex: 1 }}>
-                                <Text style={styles.notifTitle}>{n.title}</Text>
-                                <Text style={styles.notifMsg}>{n.message}</Text>
-                                <Text style={styles.notifTime}>{n.time}</Text>
+                                <Text testID={`txt_n_title`} style={styles.notifTitle}>{n.title}</Text>
+                                <Text testID={`txt_n_message`} style={styles.notifMsg}>{n.message}</Text>
+                                <Text testID={`txt_n_time`} style={styles.notifTime}>{n.time}</Text>
                             </View>
                             {n.unread && <View style={styles.unreadDot} />}
                         </TouchableOpacity>
@@ -195,16 +194,16 @@ export default function OverviewScreen({ navigation }) {
             {/* Summary Strip */}
             <View style={styles.summaryStrip}>
                 <View style={styles.summaryCard}>
-                    <Text style={styles.summaryLabel}>Active Accounts</Text>
-                    <Text style={styles.summaryValue}>{accounts.length.toString()}</Text>
+                    <Text testID="txt_active_accounts" style={styles.summaryLabel}>Active Accounts</Text>
+                    <Text testID="txt_accounts_length_tostring" style={styles.summaryValue}>{accounts.length.toString()}</Text>
                 </View>
                 <View style={styles.summaryCard}>
-                    <Text style={styles.summaryLabel}>Transactions</Text>
-                    <Text style={styles.summaryValue}>{transactions.length.toString()}</Text>
+                    <Text testID="txt_transactions" style={styles.summaryLabel}>Transactions</Text>
+                    <Text testID="txt_transactions_length_tostring" style={styles.summaryValue}>{transactions.length.toString()}</Text>
                 </View>
                 <View style={styles.summaryCard}>
-                    <Text style={styles.summaryLabel}>Net Savings</Text>
-                    <Text style={[styles.summaryValue, { color: C.success }]}>{`$${(totalIncome - totalExpenses).toLocaleString()}`}</Text>
+                    <Text testID="txt_net_savings" style={styles.summaryLabel}>Net Savings</Text>
+                    <Text testID="txt_totalincome_totalexpenses_tolo" style={[styles.summaryValue, { color: C.success }]}>{`$${(totalIncome - totalExpenses).toLocaleString()}`}</Text>
                 </View>
             </View>
 
@@ -213,29 +212,28 @@ export default function OverviewScreen({ navigation }) {
             {/* Recent Transactions */}
             <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Recent Transactions</Text>
-                    <TouchableOpacity accessible={false} onPress={() => navigation.navigate('Accounts')}>
-                        <Text style={styles.seeAll}>See all</Text>
+                    <Text testID="txt_recent_transactions" style={styles.sectionTitle}>Recent Transactions</Text>
+                    <TouchableOpacity testID="btn_nav_accounts" onPress={() => navigation.navigate('Accounts')}>
+                        <Text testID="txt_see_all" style={styles.seeAll}>See all</Text>
                     </TouchableOpacity>
                 </View>
                 <View style={styles.card}>
                     {recentTxns.length === 0
-                        ? <Text style={styles.emptyText}>No transactions yet</Text>
+                        ? <Text testID="txt_no_transactions_yet" style={styles.emptyText}>No transactions yet</Text>
                         : recentTxns.map((t, i) => (
-                            <TouchableOpacity accessible={false}
-                                key={t._id || i}
+                            <TouchableOpacity testID="btn_setselectedtxn" key={t._id || i}
                                 style={[styles.txnRow, i < recentTxns.length - 1 && styles.txnRowBorder]}
                                 onPress={() => setSelectedTxn(t)}
                                 activeOpacity={0.7}
                             >
                                 <View style={[styles.txnIcon, { backgroundColor: t.type === 'credit' ? '#D1FAE5' : '#FEE2E2' }]}>
-                                    <Text style={{ fontSize: 16 }}>{t.type === 'credit' ? '📈' : '📉'}</Text>
+                                    <Text testID="txt_t_type_credit" style={{ fontSize: 16 }}>{t.type === 'credit' ? '📈' : '📉'}</Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={styles.txnDesc} numberOfLines={1}>{t.description}</Text>
-                                    <Text style={styles.txnMeta}>{t.category} · {t.date}</Text>
+                                    <Text testID={`txt_t_description`} style={styles.txnDesc} numberOfLines={1}>{t.description}</Text>
+                                    <Text testID="txt_t_category_t_date" style={styles.txnMeta}>{t.category} · {t.date}</Text>
                                 </View>
-                                <Text style={[styles.txnAmount, { color: t.type === 'credit' ? C.success : C.danger }]}>
+                                <Text testID="txt_t_type_credit_math_abs_t_amoun" style={[styles.txnAmount, { color: t.type === 'credit' ? C.success : C.danger }]}>
                                     {t.type === 'credit' ? '+' : '-'}${Math.abs(t.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                 </Text>
                             </TouchableOpacity>
@@ -246,17 +244,17 @@ export default function OverviewScreen({ navigation }) {
 
             {/* Month Highlights */}
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Monthly Highlight</Text>
+                <Text testID="txt_monthly_highlight" style={styles.sectionTitle}>Monthly Highlight</Text>
                 <View style={[styles.card, { backgroundColor: C.primary }]}>
-                    <Text style={{ ...FONTS.semiBold, color: 'rgba(255,255,255,0.75)', fontSize: 12, marginBottom: 4 }}>{latestMonth.month}</Text>
+                    <Text testID={`txt_latestMonth_month`} style={{ ...FONTS.semiBold, color: 'rgba(255,255,255,0.75)', fontSize: 12, marginBottom: 4 }}>{latestMonth.month}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                         <View>
-                            <Text style={{ ...FONTS.regular, color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>Income</Text>
-                            <Text style={{ ...FONTS.bold, color: '#6EE7B7', fontSize: 20 }}>+${latestMonth.income.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+                            <Text testID="txt_income" style={{ ...FONTS.regular, color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>Income</Text>
+                            <Text testID="txt_latestmonth_income_tolocalestr" style={{ ...FONTS.bold, color: '#6EE7B7', fontSize: 20 }}>+${latestMonth.income.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
                         </View>
                         <View style={{ alignItems: 'flex-end' }}>
-                            <Text style={{ ...FONTS.regular, color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>Expenses</Text>
-                            <Text style={{ ...FONTS.bold, color: '#FCA5A5', fontSize: 20 }}>-${latestMonth.expense.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+                            <Text testID="txt_expenses" style={{ ...FONTS.regular, color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>Expenses</Text>
+                            <Text testID="txt_latestmonth_expense_tolocalest" style={{ ...FONTS.bold, color: '#FCA5A5', fontSize: 20 }}>-${latestMonth.expense.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
                         </View>
                     </View>
                 </View>
@@ -266,11 +264,11 @@ export default function OverviewScreen({ navigation }) {
             <Modal visible={!!selectedTxn} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Transaction Details</Text>
+                        <Text testID="txt_transaction_details" style={styles.modalTitle}>Transaction Details</Text>
 
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Description</Text>
-                            <Text style={styles.detailValue}>{selectedTxn?.description}</Text>
+                            <Text testID="txt_description" style={styles.detailLabel}>Description</Text>
+                            <Text testID="txt_selectedtxn_description" style={styles.detailValue}>{selectedTxn?.description}</Text>
                         </View>
 
                         {(() => {
@@ -288,36 +286,36 @@ export default function OverviewScreen({ navigation }) {
 
                             return (
                                 <View style={styles.detailRow}>
-                                    <Text style={styles.detailLabel}>Recipient/Sender</Text>
-                                    <Text style={styles.detailValue}>{recipient}</Text>
+                                    <Text testID="txt_recipient_sender" style={styles.detailLabel}>Recipient/Sender</Text>
+                                    <Text testID={`txt_recipient`} style={styles.detailValue}>{recipient}</Text>
                                 </View>
                             );
                         })()}
 
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Amount</Text>
-                            <Text style={[styles.detailValue, { color: selectedTxn?.type === 'credit' ? C.success : C.danger }]}>
+                            <Text testID="txt_amount" style={styles.detailLabel}>Amount</Text>
+                            <Text testID="txt_selectedtxn_type_credit_math_a" style={[styles.detailValue, { color: selectedTxn?.type === 'credit' ? C.success : C.danger }]}>
                                 {selectedTxn?.type === 'credit' ? '+' : '-'}${Math.abs(selectedTxn?.amount || 0).toFixed(2)}
                             </Text>
                         </View>
 
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Date</Text>
-                            <Text style={styles.detailValue}>{selectedTxn?.date}</Text>
+                            <Text testID="txt_date" style={styles.detailLabel}>Date</Text>
+                            <Text testID="txt_selectedtxn_date" style={styles.detailValue}>{selectedTxn?.date}</Text>
                         </View>
 
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Category</Text>
-                            <Text style={styles.detailValue}>{selectedTxn?.category}</Text>
+                            <Text testID="txt_category" style={styles.detailLabel}>Category</Text>
+                            <Text testID="txt_selectedtxn_category" style={styles.detailValue}>{selectedTxn?.category}</Text>
                         </View>
 
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Status</Text>
-                            <Text style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
+                            <Text testID="txt_status" style={styles.detailLabel}>Status</Text>
+                            <Text testID="txt_selectedtxn_status_completed" style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
                         </View>
 
-                        <TouchableOpacity accessible={false} style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
-                            <Text style={styles.modalCancelText}>Close</Text>
+                        <TouchableOpacity testID="btn_setselectedtxn" style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
+                            <Text testID="txt_close" style={styles.modalCancelText}>Close</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

@@ -209,11 +209,11 @@ export default function CreditCardsScreen({ navigation }) {
         >
             <View style={styles.topBar}>
                 <View>
-                    <Text style={styles.pageTitle}>Credit Cards</Text>
-                    <Text style={styles.pageSub}>Manage your cards and payments</Text>
+                    <Text testID="txt_credit_cards" style={styles.pageTitle}>Credit Cards</Text>
+                    <Text testID="txt_manage_your_cards_and_payments" style={styles.pageSub}>Manage your cards and payments</Text>
                 </View>
-                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.goBack()}>
-                    <Text style={{ fontSize: 20 }}>🏠</Text>
+                <TouchableOpacity testID="btn_navigation" style={styles.homeBtn} onPress={() => navigation.goBack()}>
+                    <Text testID="txt_icon" style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
 
@@ -225,26 +225,26 @@ export default function CreditCardsScreen({ navigation }) {
                         style={styles.creditCard}
                     >
                         <View style={styles.cardHeader}>
-                            <Text style={styles.bankName}>{creditCard.name.toUpperCase()}</Text>
-                            <Text style={styles.contactless}>📶</Text>
+                            <Text testID="txt_creditcard_name_touppercase" style={styles.bankName}>{creditCard.name.toUpperCase()}</Text>
+                            <Text testID="txt_icon" style={styles.contactless}>📶</Text>
                         </View>
                         
                         <View style={styles.chipContainer}>
                             <View style={styles.cardChip} />
                         </View>
 
-                        <Text style={styles.cardNumber}>
+                        <Text testID="txt_creditcard_number_creditcard_n" style={styles.cardNumber}>
                             {creditCard.number ? creditCard.number.replace(/\*/g, '•').replace(/(.{4})/g, '$1  ').trim() : '••••  ••••  ••••  ••••'}
                         </Text>
                         
                         <View style={styles.cardFooter}>
                             <View>
-                                <Text style={styles.cardLabel}>CARD HOLDER</Text>
-                                <Text style={styles.cardValue}>{user?.name ? user.name.toUpperCase() : 'DEMO USER'}</Text>
+                                <Text testID="txt_card_holder" style={styles.cardLabel}>CARD HOLDER</Text>
+                                <Text testID="txt_user_name_user_name_touppercas" style={styles.cardValue}>{user?.name ? user.name.toUpperCase() : 'DEMO USER'}</Text>
                             </View>
                             <View style={{ alignItems: 'flex-end' }}>
-                                <Text style={styles.cardLabel}>EXPIRES</Text>
-                                <Text style={styles.cardValue}>12/29</Text>
+                                <Text testID="txt_expires" style={styles.cardLabel}>EXPIRES</Text>
+                                <Text testID="txt_12_29" style={styles.cardValue}>12/29</Text>
                             </View>
                         </View>
                     </LinearGradient>
@@ -252,14 +252,14 @@ export default function CreditCardsScreen({ navigation }) {
                     {/* Balance Info */}
                     <View style={styles.balanceGrid}>
                         <View style={styles.balanceItem}>
-                            <Text style={styles.balanceLabel}>Due Amount</Text>
-                            <Text style={[styles.balanceValue, { color: C.danger }]}>
+                            <Text testID="txt_due_amount" style={styles.balanceLabel}>Due Amount</Text>
+                            <Text testID="txt_outstandingbalance_tolocalestr" style={[styles.balanceValue, { color: C.danger }]}>
                                 ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                             </Text>
                         </View>
                         <View style={styles.balanceItem}>
-                            <Text style={styles.balanceLabel}>Available Limit</Text>
-                            <Text style={[styles.balanceValue, { color: C.success }]}>
+                            <Text testID="txt_available_limit" style={styles.balanceLabel}>Available Limit</Text>
+                            <Text testID="txt_availablelimit_tolocalestring_" style={[styles.balanceValue, { color: C.success }]}>
                                 ${availableLimit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                             </Text>
                         </View>
@@ -267,28 +267,27 @@ export default function CreditCardsScreen({ navigation }) {
 
                     {/* Quick Pay */}
                     <View style={styles.card}>
-                        <Text style={styles.sectionTitle}>Quick Pay</Text>
+                        <Text testID="txt_quick_pay" style={styles.sectionTitle}>Quick Pay</Text>
                         
-                        <Text style={styles.fieldLabel}>Pay From Account</Text>
+                        <Text testID="txt_pay_from_account" style={styles.fieldLabel}>Pay From Account</Text>
                         <View style={styles.pickerBox}>
                             {fundingAccounts.map(acc => (
-                                <TouchableOpacity accessible={false}
-                                    key={acc.id}
+                                <TouchableOpacity testID="btn_setsourceaccountid" key={acc.id}
                                     style={[styles.accOption, sourceAccountId === acc.id && styles.accOptionSelected]}
                                     onPress={() => setSourceAccountId(acc.id)}
                                 >
-                                    <Text style={[styles.accOptionText, sourceAccountId === acc.id && { color: '#fff' }]}>
+                                    <Text testID={`txt_acc_name`} style={[styles.accOptionText, sourceAccountId === acc.id && { color: '#fff' }]}>
                                         {acc.name}
                                     </Text>
-                                    <Text style={[styles.accBalanceText, sourceAccountId === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
+                                    <Text testID="txt_acc_balance_tolocalestring_en_" style={[styles.accBalanceText, sourceAccountId === acc.id && { color: 'rgba(255,255,255,0.75)' }]}>
                                         ${acc.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                     </Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
 
-                        <Text style={styles.fieldLabel}>Amount ($)</Text>
-                        <TextInput
+                        <Text testID="txt_amount" style={styles.fieldLabel}>Amount ($)</Text>
+                        <TextInput testID="input_0_00"
                             style={styles.input}
                             placeholder="0.00"
                             placeholderTextColor={C.textLight}
@@ -297,8 +296,8 @@ export default function CreditCardsScreen({ navigation }) {
                             keyboardType="numeric"
                         />
 
-                        <Text style={styles.fieldLabel}>Notes (optional)</Text>
-                        <TextInput
+                        <Text testID="txt_notes_optional" style={styles.fieldLabel}>Notes (optional)</Text>
+                        <TextInput testID="input_e_g_monthly_payment"
                             style={styles.input}
                             placeholder="e.g. Monthly payment"
                             placeholderTextColor={C.textLight}
@@ -307,64 +306,62 @@ export default function CreditCardsScreen({ navigation }) {
                         />
 
                         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-                            <TouchableOpacity accessible={false} style={styles.smallBtn} onPress={() => setPayAmount(outstandingBalance.toString())}>
-                                <Text style={styles.smallBtnText}>Pay Full</Text>
+                            <TouchableOpacity testID="btn_setpayamount" style={styles.smallBtn} onPress={() => setPayAmount(outstandingBalance.toString())}>
+                                <Text testID="txt_pay_full" style={styles.smallBtnText}>Pay Full</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity accessible={false} style={styles.smallBtn} onPress={() => setPayAmount((outstandingBalance * 0.1).toFixed(2))}>
-                                <Text style={styles.smallBtnText}>Pay Min (10%)</Text>
+                            <TouchableOpacity testID="btn_setpayamount" style={styles.smallBtn} onPress={() => setPayAmount((outstandingBalance * 0.1).toFixed(2))}>
+                                <Text testID="txt_pay_min_10" style={styles.smallBtnText}>Pay Min (10%)</Text>
                             </TouchableOpacity>
                         </View>
 
-                        <TouchableOpacity accessible={false}
-                            style={[styles.submitBtn, (isProcessing || outstandingBalance <= 0) && { opacity: 0.6 }]}
+                        <TouchableOpacity testID="btn_handlepayment" style={[styles.submitBtn, (isProcessing || outstandingBalance <= 0) && { opacity: 0.6 }]}
                             onPress={handlePayment}
                             disabled={isProcessing || outstandingBalance <= 0}
                         >
                             <LinearGradient colors={[C.gradStart, C.gradEnd]} style={styles.submitBtnInner}>
-                                {isProcessing ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Make Payment</Text>}
+                                {isProcessing ? <ActivityIndicator color="#fff" /> : <Text testID="txt_make_payment" style={styles.submitBtnText}>Make Payment</Text>}
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>
 
                     {/* Settings / Actions */}
                     <View style={[styles.card, { marginTop: SPACING.md }]}>
-                        <Text style={styles.sectionTitle}>Card Settings</Text>
+                        <Text testID="txt_card_settings" style={styles.sectionTitle}>Card Settings</Text>
                         
-                        <TouchableOpacity accessible={false} style={styles.actionRow} onPress={() => setShowLimitModal(true)}>
-                            <Text style={{ fontSize: 18 }}>➡️</Text>
-                            <Text style={styles.actionText}>Manage Credit Limit</Text>
+                        <TouchableOpacity testID="btn_setshowlimitmodal" style={styles.actionRow} onPress={() => setShowLimitModal(true)}>
+                            <Text testID="txt_icon" style={{ fontSize: 18 }}>➡️</Text>
+                            <Text testID="txt_manage_credit_limit" style={styles.actionText}>Manage Credit Limit</Text>
                         </TouchableOpacity>
                         
-                        <TouchableOpacity accessible={false} style={styles.actionRow} onPress={() => setShowStatement(!showStatement)}>
-                            <Text style={{ fontSize: 18 }}>📄</Text>
-                            <Text style={styles.actionText}>{showStatement ? 'Hide Statement' : 'View Card Statement'}</Text>
+                        <TouchableOpacity testID="btn_setshowstatement" style={styles.actionRow} onPress={() => setShowStatement(!showStatement)}>
+                            <Text testID="txt_icon" style={{ fontSize: 18 }}>📄</Text>
+                            <Text testID="txt_showstatement_hide_statement_v" style={styles.actionText}>{showStatement ? 'Hide Statement' : 'View Card Statement'}</Text>
                         </TouchableOpacity>
                         
-                        <TouchableOpacity accessible={false} style={styles.actionRow} onPress={() => setShowManualTxnModal(true)}>
-                            <Text style={{ fontSize: 18 }}>➕</Text>
-                            <Text style={styles.actionText}>Record New Purchase</Text>
+                        <TouchableOpacity testID="btn_setshowmanualtxnmodal" style={styles.actionRow} onPress={() => setShowManualTxnModal(true)}>
+                            <Text testID="txt_icon" style={{ fontSize: 18 }}>➕</Text>
+                            <Text testID="txt_record_new_purchase" style={styles.actionText}>Record New Purchase</Text>
                         </TouchableOpacity>
                     </View>
 
                     {/* Statement Section */}
                     {showStatement && (
                         <View style={[styles.card, { marginTop: SPACING.md }]}>
-                            <Text style={styles.sectionTitle}>Card Statement</Text>
+                            <Text testID="txt_card_statement" style={styles.sectionTitle}>Card Statement</Text>
                             {statementTxns.length === 0 ? (
-                                <Text style={styles.emptyText}>No transactions found</Text>
+                                <Text testID="txt_no_transactions_found" style={styles.emptyText}>No transactions found</Text>
                             ) : (
                                 statementTxns.map((t, i) => (
-                                    <TouchableOpacity accessible={false} 
-                                        key={t.id || i} 
+                                    <TouchableOpacity testID="btn_setselectedtxn" key={t.id || i} 
                                         style={[styles.txRow, i < statementTxns.length - 1 && { borderBottomWidth: 1, borderBottomColor: C.border }]}
                                         onPress={() => setSelectedTxn(t)}
                                         activeOpacity={0.7}
                                     >
                                         <View style={{ flex: 1 }}>
-                                            <Text style={styles.txDesc}>{t.description}</Text>
-                                            <Text style={styles.txMeta}>{t.category} · {t.date}</Text>
+                                            <Text testID={`txt_t_description`} style={styles.txDesc}>{t.description}</Text>
+                                            <Text testID="txt_t_category_t_date" style={styles.txMeta}>{t.category} · {t.date}</Text>
                                         </View>
-                                        <Text style={{ ...FONTS.bold, color: t.amount < 0 ? C.danger : C.success }}>
+                                        <Text testID="txt_t_amount" style={{ ...FONTS.bold, color: t.amount < 0 ? C.danger : C.success }}>
                                             {t.amount < 0 ? '-' : '+'}${Math.abs(t.amount).toFixed(2)}
                                         </Text>
                                     </TouchableOpacity>
@@ -375,12 +372,12 @@ export default function CreditCardsScreen({ navigation }) {
                 </View>
             ) : (
                 <View style={styles.emptyContainer}>
-                    <Text style={{ fontSize: 48, marginBottom: 16 }}>💳</Text>
-                    <Text style={styles.emptyTitle}>No Credit Card Found</Text>
-                    <Text style={styles.emptySub}>Apply for a card to get started.</Text>
-                    <TouchableOpacity accessible={false} style={styles.applyBtn} onPress={() => setShowApplyModal(true)}>
+                    <Text testID="txt_icon" style={{ fontSize: 48, marginBottom: 16 }}>💳</Text>
+                    <Text testID="txt_no_credit_card_found" style={styles.emptyTitle}>No Credit Card Found</Text>
+                    <Text testID="txt_apply_for_a_card_to_get_starte" style={styles.emptySub}>Apply for a card to get started.</Text>
+                    <TouchableOpacity testID="btn_setshowapplymodal" style={styles.applyBtn} onPress={() => setShowApplyModal(true)}>
                         <LinearGradient colors={[C.gradStart, C.gradEnd]} style={styles.applyBtnInner}>
-                            <Text style={styles.applyBtnText}>Apply Now</Text>
+                            <Text testID="txt_apply_now" style={styles.applyBtnText}>Apply Now</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
@@ -392,16 +389,16 @@ export default function CreditCardsScreen({ navigation }) {
             <Modal visible={!!selectedTxn} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Transaction Details</Text>
+                        <Text testID="txt_transaction_details" style={styles.modalTitle}>Transaction Details</Text>
                         
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Description</Text>
-                            <Text style={styles.detailValue}>{selectedTxn?.description}</Text>
+                            <Text testID="txt_description" style={styles.detailLabel}>Description</Text>
+                            <Text testID="txt_selectedtxn_description" style={styles.detailValue}>{selectedTxn?.description}</Text>
                         </View>
  
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Recipient</Text>
-                            <Text style={styles.detailValue}>
+                            <Text testID="txt_recipient" style={styles.detailLabel}>Recipient</Text>
+                            <Text testID="txt_selectedtxn_description_starts" style={styles.detailValue}>
                                 {selectedTxn?.description?.startsWith('Payment to ') 
                                     ? selectedTxn.description.substring(11).split(':')[0].trim()
                                     : (selectedTxn?.description?.startsWith('Transfer to account ')
@@ -413,29 +410,29 @@ export default function CreditCardsScreen({ navigation }) {
                         </View>
                         
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Amount</Text>
-                            <Text style={[styles.detailValue, { color: selectedTxn?.amount < 0 ? C.danger : C.success }]}>
+                            <Text testID="txt_amount" style={styles.detailLabel}>Amount</Text>
+                            <Text testID="txt_selectedtxn_amount" style={[styles.detailValue, { color: selectedTxn?.amount < 0 ? C.danger : C.success }]}>
                                 {selectedTxn?.amount < 0 ? '-' : '+'}${Math.abs(selectedTxn?.amount || 0).toFixed(2)}
                             </Text>
                         </View>
                         
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Date</Text>
-                            <Text style={styles.detailValue}>{selectedTxn?.date}</Text>
+                            <Text testID="txt_date" style={styles.detailLabel}>Date</Text>
+                            <Text testID="txt_selectedtxn_date" style={styles.detailValue}>{selectedTxn?.date}</Text>
                         </View>
                         
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Category</Text>
-                            <Text style={styles.detailValue}>{selectedTxn?.category}</Text>
+                            <Text testID="txt_category" style={styles.detailLabel}>Category</Text>
+                            <Text testID="txt_selectedtxn_category" style={styles.detailValue}>{selectedTxn?.category}</Text>
                         </View>
                         
                         <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Status</Text>
-                            <Text style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
+                            <Text testID="txt_status" style={styles.detailLabel}>Status</Text>
+                            <Text testID="txt_selectedtxn_status_completed" style={[styles.detailValue, { color: C.success }]}>{selectedTxn?.status || 'Completed'}</Text>
                         </View>
  
-                        <TouchableOpacity accessible={false} style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
-                            <Text style={styles.modalCancelText}>Close</Text>
+                        <TouchableOpacity testID="btn_setselectedtxn" style={[styles.modalCancel, { marginTop: 20, alignSelf: 'flex-end' }]} onPress={() => setSelectedTxn(null)}>
+                            <Text testID="txt_close" style={styles.modalCancelText}>Close</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -445,9 +442,9 @@ export default function CreditCardsScreen({ navigation }) {
             <Modal visible={showLimitModal} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Manage Credit Limit</Text>
-                        <Text style={styles.fieldLabel}>New Requested Limit ($)</Text>
-                        <TextInput
+                        <Text testID="txt_manage_credit_limit" style={styles.modalTitle}>Manage Credit Limit</Text>
+                        <Text testID="txt_new_requested_limit" style={styles.fieldLabel}>New Requested Limit ($)</Text>
+                        <TextInput testID="input_enter_new_limit"
                             style={styles.input}
                             placeholder="Enter new limit"
                             placeholderTextColor={C.textLight}
@@ -456,11 +453,11 @@ export default function CreditCardsScreen({ navigation }) {
                             keyboardType="numeric"
                         />
                         <View style={styles.modalButtons}>
-                            <TouchableOpacity accessible={false} style={styles.modalCancel} onPress={() => setShowLimitModal(false)}>
-                                <Text style={styles.modalCancelText}>Cancel</Text>
+                            <TouchableOpacity testID="btn_setshowlimitmodal" style={styles.modalCancel} onPress={() => setShowLimitModal(false)}>
+                                <Text testID="txt_cancel" style={styles.modalCancelText}>Cancel</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity accessible={false} style={styles.modalSubmit} onPress={handleUpdateLimit}>
-                                <Text style={styles.modalSubmitText}>Update</Text>
+                            <TouchableOpacity testID="btn_handleupdatelimit" style={styles.modalSubmit} onPress={handleUpdateLimit}>
+                                <Text testID="txt_update" style={styles.modalSubmitText}>Update</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -471,10 +468,10 @@ export default function CreditCardsScreen({ navigation }) {
             <Modal visible={showManualTxnModal} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Record New Purchase</Text>
+                        <Text testID="txt_record_new_purchase" style={styles.modalTitle}>Record New Purchase</Text>
                         
-                        <Text style={styles.fieldLabel}>Description</Text>
-                        <TextInput
+                        <Text testID="txt_description" style={styles.fieldLabel}>Description</Text>
+                        <TextInput testID="input_e_g_apple_store"
                             style={styles.input}
                             placeholder="e.g. Apple Store"
                             placeholderTextColor={C.textLight}
@@ -482,8 +479,8 @@ export default function CreditCardsScreen({ navigation }) {
                             onChangeText={v => setManualTxn({ ...manualTxn, description: v })}
                         />
 
-                        <Text style={styles.fieldLabel}>Amount ($)</Text>
-                        <TextInput
+                        <Text testID="txt_amount" style={styles.fieldLabel}>Amount ($)</Text>
+                        <TextInput testID="input_0_00"
                             style={styles.input}
                             placeholder="0.00"
                             placeholderTextColor={C.textLight}
@@ -493,11 +490,11 @@ export default function CreditCardsScreen({ navigation }) {
                         />
 
                         <View style={styles.modalButtons}>
-                            <TouchableOpacity accessible={false} style={styles.modalCancel} onPress={() => setShowManualTxnModal(false)}>
-                                <Text style={styles.modalCancelText}>Cancel</Text>
+                            <TouchableOpacity testID="btn_setshowmanualtxnmodal" style={styles.modalCancel} onPress={() => setShowManualTxnModal(false)}>
+                                <Text testID="txt_cancel" style={styles.modalCancelText}>Cancel</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity accessible={false} style={styles.modalSubmit} onPress={handleManualTransaction}>
-                                <Text style={styles.modalSubmitText}>Add</Text>
+                            <TouchableOpacity testID="btn_handlemanualtransaction" style={styles.modalSubmit} onPress={handleManualTransaction}>
+                                <Text testID="txt_add" style={styles.modalSubmitText}>Add</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -508,26 +505,26 @@ export default function CreditCardsScreen({ navigation }) {
             <Modal visible={showApplyModal} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Apply for a Credit Card</Text>
-                        <Text style={styles.modalSub}>Select a card type:</Text>
+                        <Text testID="txt_apply_for_a_credit_card" style={styles.modalTitle}>Apply for a Credit Card</Text>
+                        <Text testID="txt_select_a_card_type" style={styles.modalSub}>Select a card type:</Text>
                         
-                        <TouchableOpacity accessible={false} style={styles.cardOption} onPress={() => handleApplyNewCard('platinum')}>
-                            <Text style={[styles.cardOptionTitle, { color: '#4F46E5' }]}>Platinum Credit Card</Text>
-                            <Text style={styles.cardOptionDetail}>Limit: $70,000 · Premium rewards</Text>
+                        <TouchableOpacity testID="btn_handleapplynewcard" style={styles.cardOption} onPress={() => handleApplyNewCard('platinum')}>
+                            <Text testID="txt_platinum_credit_card" style={[styles.cardOptionTitle, { color: '#4F46E5' }]}>Platinum Credit Card</Text>
+                            <Text testID="txt_limit_70_000_premium_rewards" style={styles.cardOptionDetail}>Limit: $70,000 · Premium rewards</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity accessible={false} style={styles.cardOption} onPress={() => handleApplyNewCard('gold')}>
-                            <Text style={[styles.cardOptionTitle, { color: '#F59E0B' }]}>Gold Rewards Card</Text>
-                            <Text style={styles.cardOptionDetail}>Limit: $30,000 · Everyday spending</Text>
+                        <TouchableOpacity testID="btn_handleapplynewcard" style={styles.cardOption} onPress={() => handleApplyNewCard('gold')}>
+                            <Text testID="txt_gold_rewards_card" style={[styles.cardOptionTitle, { color: '#F59E0B' }]}>Gold Rewards Card</Text>
+                            <Text testID="txt_limit_30_000_everyday_spending" style={styles.cardOptionDetail}>Limit: $30,000 · Everyday spending</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity accessible={false} style={styles.cardOption} onPress={() => handleApplyNewCard('travel')}>
-                            <Text style={[styles.cardOptionTitle, { color: '#10B981' }]}>Global Traveler Card</Text>
-                            <Text style={styles.cardOptionDetail}>Limit: $50,000 · Zero forex fees</Text>
+                        <TouchableOpacity testID="btn_handleapplynewcard" style={styles.cardOption} onPress={() => handleApplyNewCard('travel')}>
+                            <Text testID="txt_global_traveler_card" style={[styles.cardOptionTitle, { color: '#10B981' }]}>Global Traveler Card</Text>
+                            <Text testID="txt_limit_50_000_zero_forex_fees" style={styles.cardOptionDetail}>Limit: $50,000 · Zero forex fees</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity accessible={false} style={[styles.modalCancel, { marginTop: 12 }]} onPress={() => setShowApplyModal(false)}>
-                            <Text style={styles.modalCancelText}>Cancel</Text>
+                        <TouchableOpacity testID="btn_setshowapplymodal" style={[styles.modalCancel, { marginTop: 12 }]} onPress={() => setShowApplyModal(false)}>
+                            <Text testID="txt_cancel" style={styles.modalCancelText}>Cancel</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

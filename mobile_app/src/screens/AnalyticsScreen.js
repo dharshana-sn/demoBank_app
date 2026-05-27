@@ -47,7 +47,7 @@ export default function AnalyticsScreen({ navigation }) {
     if (loading) return (
         <View style={styles.center}>
             <ActivityIndicator size="large" color={C.primary} />
-            <Text style={styles.loadingText}>Analyzing your data...</Text>
+            <Text testID="txt_analyzing_your_data" style={styles.loadingText}>Analyzing your data...</Text>
         </View>
     );
 
@@ -94,11 +94,11 @@ export default function AnalyticsScreen({ navigation }) {
         >
             <View style={styles.topBar}>
                 <View>
-                    <Text style={styles.pageTitle}>Analytics</Text>
-                    <Text style={styles.pageSub}>Visualise your spending & income trends</Text>
+                    <Text testID="txt_analytics" style={styles.pageTitle}>Analytics</Text>
+                    <Text testID="txt_visualise_your_spending_income" style={styles.pageSub}>Visualise your spending & income trends</Text>
                 </View>
-                <TouchableOpacity accessible={false} style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
-                    <Text style={{ fontSize: 20 }}>🏠</Text>
+                <TouchableOpacity testID="btn_nav_overview" style={styles.homeBtn} onPress={() => navigation.navigate('Overview')}>
+                    <Text testID="txt_icon" style={{ fontSize: 20 }}>🏠</Text>
                 </TouchableOpacity>
             </View>
 
@@ -111,20 +111,20 @@ export default function AnalyticsScreen({ navigation }) {
                     { label: 'Savings Rate', value: `${savingsRate}%`, color: C.purple },
                 ].map(item => (
                     <View key={item.label} style={styles.summaryCard}>
-                        <Text style={styles.summaryLabel}>{item.label}</Text>
-                        <Text style={[styles.summaryValue, { color: item.color }]}>{item.value}</Text>
+                        <Text testID={`txt_item_label`} style={styles.summaryLabel}>{item.label}</Text>
+                        <Text testID={`txt_item_value`} style={[styles.summaryValue, { color: item.color }]}>{item.value}</Text>
                     </View>
                 ))}
             </View>
 
             {/* Bar Chart: Spending by Category */}
             <View style={styles.card}>
-                <Text style={styles.cardTitle}>📊 Spending by Category</Text>
+                <Text testID="txt_spending_by_category" style={styles.cardTitle}>📊 Spending by Category</Text>
                 {categoryTotals.map(({ cat, total, count }) => (
                     <View key={cat} style={styles.barRow}>
                         <View style={styles.barMeta}>
-                            <Text style={styles.barLabel}>{cat}</Text>
-                            <Text style={styles.barCount}>{count} txns · ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+                            <Text testID={`txt_cat`} style={styles.barLabel}>{cat}</Text>
+                            <Text testID="txt_count_txns_total_tolocalestrin" style={styles.barCount}>{count} txns · ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
                         </View>
                         <View style={styles.barTrack}>
                             <View style={[styles.barFill, {
@@ -138,24 +138,24 @@ export default function AnalyticsScreen({ navigation }) {
 
             {/* Monthly Breakdown */}
             <View style={styles.card}>
-                <Text style={styles.cardTitle}>📅 Monthly Breakdown</Text>
+                <Text testID="txt_monthly_breakdown" style={styles.cardTitle}>📅 Monthly Breakdown</Text>
                 {monthlyDataArray.map(({ month, income, expense }) => {
                     const net = income - expense;
                     return (
                         <View key={month} style={styles.monthRow}>
-                            <Text style={styles.monthLabel}>{month}</Text>
+                            <Text testID={`txt_month`} style={styles.monthLabel}>{month}</Text>
                             <View style={styles.monthGrid}>
                                 <View style={styles.monthCol}>
-                                    <Text style={styles.monthColLabel}>Income</Text>
-                                    <Text style={[styles.monthVal, { color: C.success }]}>${income.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+                                    <Text testID="txt_income" style={styles.monthColLabel}>Income</Text>
+                                    <Text testID="txt_income_tolocalestring_en_us_mi" style={[styles.monthVal, { color: C.success }]}>${income.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
                                 </View>
                                 <View style={styles.monthCol}>
-                                    <Text style={styles.monthColLabel}>Expense</Text>
-                                    <Text style={[styles.monthVal, { color: C.danger }]}>${expense.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+                                    <Text testID="txt_expense" style={styles.monthColLabel}>Expense</Text>
+                                    <Text testID="txt_expense_tolocalestring_en_us_m" style={[styles.monthVal, { color: C.danger }]}>${expense.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
                                 </View>
                                 <View style={[styles.monthCol, { alignItems: 'flex-end' }]}>
-                                    <Text style={styles.monthColLabel}>Net</Text>
-                                    <Text style={[styles.monthVal, { color: net >= 0 ? C.primary : C.danger }]}>
+                                    <Text testID="txt_net" style={styles.monthColLabel}>Net</Text>
+                                    <Text testID="txt_0_c_primary_c_danger_net_0_mat" style={[styles.monthVal, { color: net >= 0 ? C.primary : C.danger }]}>
                                         {net >= 0 ? '+' : '-'}${Math.abs(net).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                     </Text>
                                 </View>
@@ -167,14 +167,14 @@ export default function AnalyticsScreen({ navigation }) {
 
             {/* Income vs Expenses bars */}
             <View style={styles.card}>
-                <Text style={styles.cardTitle}>📈 Income vs Expenses</Text>
+                <Text testID="txt_income_vs_expenses" style={styles.cardTitle}>📈 Income vs Expenses</Text>
                 {monthlyDataArray.map(({ month, income, expense }) => {
                     const maxVal = Math.max(...monthlyDataArray.map(m => m.income)) || 1;
                     const incomeW = (income / maxVal) * (width - 80);
                     const expenseW = (expense / maxVal) * (width - 80);
                     return (
                         <View key={month} style={{ marginBottom: 16 }}>
-                            <Text style={styles.barLabel}>{month}</Text>
+                            <Text testID={`txt_month`} style={styles.barLabel}>{month}</Text>
                             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                                 <View style={[styles.miniBar, { width: incomeW, backgroundColor: C.success }]} />
                             </View>
@@ -182,8 +182,8 @@ export default function AnalyticsScreen({ navigation }) {
                                 <View style={[styles.miniBar, { width: expenseW, backgroundColor: C.danger }]} />
                             </View>
                             <View style={{ flexDirection: 'row', gap: 16, marginTop: 4 }}>
-                                <Text style={{ ...FONTS.regular, fontSize: 11, color: C.success }}>● Income: ${income.toLocaleString()}</Text>
-                                <Text style={{ ...FONTS.regular, fontSize: 11, color: C.danger }}>● Expenses: ${expense.toLocaleString()}</Text>
+                                <Text testID="txt_income_income_tolocalestring" style={{ ...FONTS.regular, fontSize: 11, color: C.success }}>● Income: ${income.toLocaleString()}</Text>
+                                <Text testID="txt_expenses_expense_tolocalestrin" style={{ ...FONTS.regular, fontSize: 11, color: C.danger }}>● Expenses: ${expense.toLocaleString()}</Text>
                             </View>
                         </View>
                     );
@@ -192,28 +192,28 @@ export default function AnalyticsScreen({ navigation }) {
 
             {/* Transaction Breakdown */}
             <View style={styles.card}>
-                <Text style={styles.cardTitle}>🔢 Transaction Breakdown</Text>
+                <Text testID="txt_transaction_breakdown" style={styles.cardTitle}>🔢 Transaction Breakdown</Text>
                 <View style={styles.typeRow}>
                     <View style={[styles.typeCard, { backgroundColor: '#D1FAE5' }]}>
-                        <Text style={styles.typeIcon}>💰</Text>
-                        <Text style={[styles.typeCount, { color: C.success }]}>
+                        <Text testID="txt_icon" style={styles.typeIcon}>💰</Text>
+                        <Text testID="txt_transactions_filter_t_t_type_c" style={[styles.typeCount, { color: C.success }]}>
                             {transactions.filter(t => t.type === 'credit').length}
                         </Text>
-                        <Text style={styles.typeLabel}>Credits</Text>
+                        <Text testID="txt_credits" style={styles.typeLabel}>Credits</Text>
                     </View>
                     <View style={[styles.typeCard, { backgroundColor: '#FEE2E2' }]}>
-                        <Text style={styles.typeIcon}>💸</Text>
-                        <Text style={[styles.typeCount, { color: C.danger }]}>
+                        <Text testID="txt_icon" style={styles.typeIcon}>💸</Text>
+                        <Text testID="txt_transactions_filter_t_t_type_d" style={[styles.typeCount, { color: C.danger }]}>
                             {transactions.filter(t => t.type === 'debit').length}
                         </Text>
-                        <Text style={styles.typeLabel}>Debits</Text>
+                        <Text testID="txt_debits" style={styles.typeLabel}>Debits</Text>
                     </View>
                     <View style={[styles.typeCard, { backgroundColor: '#EDE9FE' }]}>
-                        <Text style={styles.typeIcon}>📋</Text>
-                        <Text style={[styles.typeCount, { color: C.purple }]}>
+                        <Text testID="txt_icon" style={styles.typeIcon}>📋</Text>
+                        <Text testID={`txt_transactions_length`} style={[styles.typeCount, { color: C.purple }]}>
                             {transactions.length}
                         </Text>
-                        <Text style={styles.typeLabel}>Total</Text>
+                        <Text testID="txt_total" style={styles.typeLabel}>Total</Text>
                     </View>
                 </View>
             </View>

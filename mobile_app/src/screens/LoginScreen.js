@@ -87,17 +87,17 @@ export default function LoginScreen() {
                     <View style={[styles.decor, { width: 120, height: 120, top: 40, left: -30, opacity: 0.08 }]} />
                     <View style={styles.brandRow}>
                         <View style={styles.brandIcon}>
-                            <Text style={styles.brandIconText}>🏦</Text>
+                            <Text testID="txt_brand_icon" style={styles.brandIconText}>🏦</Text>
                         </View>
-                        <Text style={styles.brandName}>DemoBank</Text>
+                        <Text testID="txt_brand_name" style={styles.brandName}>DemoBank</Text>
                     </View>
-                    <Text style={styles.heroTitle}>Secure. Smart.{'\n'}Modern Banking.</Text>
-                    <Text style={styles.heroSub}>Your complete financial hub — manage accounts, track transactions, and transfer funds with confidence.</Text>
+                    <Text testID="txt_hero_title" style={styles.heroTitle}>Secure. Smart.{'\n'}Modern Banking.</Text>
+                    <Text testID="txt_hero_subtitle" style={styles.heroSub}>Your complete financial hub — manage accounts, track transactions, and transfer funds with confidence.</Text>
                     <View style={styles.features}>
                         {['256-bit SSL Encryption', 'Real-time Notifications', 'Multi-factor Auth'].map(f => (
                             <View key={f} style={styles.featureRow}>
-                                <Text style={styles.featureIcon}>✅</Text>
-                                <Text style={styles.featureText}>{f}</Text>
+                                <Text testID={`txt_feature_icon_${f.split(' ')[0].toLowerCase()}`} style={styles.featureIcon}>✅</Text>
+                                <Text testID={`txt_feature_text_${f.split(' ')[0].toLowerCase()}`} style={styles.featureText}>{f}</Text>
                             </View>
                         ))}
                     </View>
@@ -105,12 +105,12 @@ export default function LoginScreen() {
 
                 {/* Form Panel */}
                 <View style={styles.formPanel}>
-                    <Text style={styles.formTitle}>Welcome Back</Text>
-                    <Text style={styles.formSubtitle}>Sign in to your account</Text>
+                    <Text testID="txt_form_title" style={styles.formTitle}>Welcome Back</Text>
+                    <Text testID="txt_form_subtitle" style={styles.formSubtitle}>Sign in to your account</Text>
 
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Email Address</Text>
-                        <TextInput
+                        <Text testID="txt_label_email" style={styles.label}>Email Address</Text>
+                        <TextInput testID="input_email"
                             style={[styles.input, errors.email && styles.inputError]}
                             placeholder="testUser@gmail.com"
                             placeholderTextColor={C.textLight}
@@ -120,13 +120,13 @@ export default function LoginScreen() {
                             autoCapitalize="none"
                             autoComplete="email"
                         />
-                        {errors.email ? <Text style={styles.errText}>{errors.email}</Text> : null}
+                        {errors.email ? <Text testID="txt_error_email" style={styles.errText}>{errors.email}</Text> : null}
                     </View>
 
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Password</Text>
+                        <Text testID="txt_label_password" style={styles.label}>Password</Text>
                         <View style={styles.pwdRow}>
-                            <TextInput
+                            <TextInput testID="input_password"
                                 style={[styles.input, styles.inputPwd, errors.password && styles.inputError]}
                                 placeholder="Enter your password"
                                 placeholderTextColor={C.textLight}
@@ -135,27 +135,26 @@ export default function LoginScreen() {
                                 secureTextEntry={!showPassword}
                                 autoComplete="password"
                             />
-                            <TouchableOpacity accessible={false} style={styles.eyeBtn} onPress={() => setShowPassword(p => !p)}>
-                                <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+                            <TouchableOpacity testID="btn_toggle_password_visibility" style={styles.eyeBtn} onPress={() => setShowPassword(p => !p)}>
+                                <Text testID="txt_eye_icon" style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
                             </TouchableOpacity>
                         </View>
-                        {errors.password ? <Text style={styles.errText}>{errors.password}</Text> : null}
+                        {errors.password ? <Text testID="txt_error_password" style={styles.errText}>{errors.password}</Text> : null}
                     </View>
 
-                    <TouchableOpacity accessible={false}
-                        style={[styles.loginBtn, isLoading && { opacity: 0.7 }]}
+                    <TouchableOpacity testID="btn_sign_in" style={[styles.loginBtn, isLoading && { opacity: 0.7 }]}
                         onPress={handleLogin}
                         disabled={isLoading}
                         activeOpacity={0.85}
                     >
                         <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.loginBtnGrad}>
-                            {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginBtnText}>Sign In</Text>}
+                            {isLoading ? <ActivityIndicator color="#fff" /> : <Text testID="txt_sign_in_btn" style={styles.loginBtnText}>Sign In</Text>}
                         </LinearGradient>
                     </TouchableOpacity>
 
-                    <TouchableOpacity accessible={false} style={styles.demoHint} onPress={fillDemo} activeOpacity={0.7}>
-                        <Text style={styles.demoHintText}>🔑 Tap to fill demo credentials</Text>
-                        <Text style={styles.demoHintSub}>testUser@gmail.com / password123</Text>
+                    <TouchableOpacity testID="btn_demo_hint" style={styles.demoHint} onPress={fillDemo} activeOpacity={0.7}>
+                        <Text testID="txt_demo_hint_title" style={styles.demoHintText}>🔑 Tap to fill demo credentials</Text>
+                        <Text testID="txt_demo_hint_subtitle" style={styles.demoHintSub}>testUser@gmail.com / password123</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
