@@ -135,8 +135,8 @@ export default function OverviewScreen({ navigation }) {
         >
             <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
             {/* Header */}
-            <LinearGradient colors={[C.gradStart, C.gradEnd]} style={styles.header}>
-                <View style={styles.headerRow}>
+            <LinearGradient colors={[C.gradStart, C.gradEnd]} style={styles.header} accessible={false}>
+                <View style={styles.headerRow} accessible={false}>
                     <View>
                         <Text testID="txt_good_day" style={styles.greeting}>Good day,</Text>
                         <Text testID="txt_user_name_user" style={styles.userName}>{user?.name || 'User'} </Text>

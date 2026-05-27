@@ -42,6 +42,7 @@ function DashboardTabs() {
         <Tab.Navigator
             screenOptions={({ route }) => ({
                 headerShown: false,
+                tabBarTestID: `tab_${route.name.replace(/ /g, '_').toLowerCase()}`,
                 tabBarActiveTintColor: C.primary,
                 tabBarInactiveTintColor: C.textLight,
                 tabBarStyle: {
