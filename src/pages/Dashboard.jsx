@@ -90,20 +90,20 @@ function OverviewPage({ filteredTransactions, globalSearchQuery, selectedCategor
         <>
             <section className="summary-strip fade-in" data-testid="summary-strip">
                 <div className="summary-card">
-                    <span className="summary-label">Total Net Worth</span>
-                    <span className="summary-value">${totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                    <span className="summary-label" data-testid="total-net-worth-label">Total Net Worth</span>
+                    <span className="summary-value" data-testid="total-net-worth-value">${totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="summary-card">
-                    <span className="summary-label">Total Income</span>
-                    <span className="summary-value credit">+${totalIncome.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                    <span className="summary-label" data-testid="total-income-label">Total Income</span>
+                    <span className="summary-value credit" data-testid="total-income-value">+${totalIncome.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="summary-card">
-                    <span className="summary-label">Total Expenses</span>
-                    <span className="summary-value debit">-${totalExpenses.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                    <span className="summary-label" data-testid="total-expenses-label">Total Expenses</span>
+                    <span className="summary-value debit" data-testid="total-expenses-value">-${totalExpenses.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="summary-card">
-                    <span className="summary-label">Active Accounts</span>
-                    <span className="summary-value">{accounts.length}</span>
+                    <span className="summary-label" data-testid="active-accounts-label">Active Accounts</span>
+                    <span className="summary-value" data-testid="active-accounts-value">{accounts.length}</span>
                 </div>
             </section>
 
@@ -223,11 +223,12 @@ function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
                                         <Wallet size={22} />
                                     </div>
                                     <div className="acc-det-info">
-                                        <div className="acc-det-name">{account.name}</div>
+                                        <div className="acc-det-name" data-testid={`account-name-${account.id}`}>{account.name}</div>
                                         <div
                                             className="acc-det-num"
                                             title="Click to copy account number"
                                             style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                            data-testid={`account-number-${account.id}`}
                                             onClick={() => {
                                                 const textToCopy = account.number;
                                                 
@@ -269,7 +270,7 @@ function AccountsPage({ globalSearchQuery, accounts, allTransactions }) {
                                             <span id={`copy-hint-${account.id}`} style={{ fontSize: '0.72rem', color: 'var(--success)', opacity: 0, transition: 'opacity 0.3s' }}>✅ Copied!</span>
                                         </div>
                                     </div>
-                                    <div className={`acc-det-bal ${isNegative ? "debit" : "credit"}`}>
+                                    <div className={`acc-det-bal ${isNegative ? "debit" : "credit"}`} data-testid={`account-balance-${account.id}`}>
                                         {isNegative ? "-" : "+"}${Math.abs(account.balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                     </div>
                                     {/* <button className="btn btn-secondary btn-sm" data-testid={`btn-manage-${account.id}`}>Manage</button> */}
@@ -329,20 +330,20 @@ function TransfersPage({ globalSearchQuery, allTransactions, onTransferComplete,
         <div className="page-content fade-in" data-testid="transfers-page">
             <section className="summary-strip">
                 <div className="summary-card">
-                    <span className="summary-label">Transfers This Month</span>
-                    <span className="summary-value">{transferHistory.length}</span>
+                    <span className="summary-label" data-testid="transfers-this-month-label">Transfers This Month</span>
+                    <span className="summary-value" data-testid="transfers-this-month-value">{transferHistory.length}</span>
                 </div>
                 <div className="summary-card">
-                    <span className="summary-label">Total Sent</span>
-                    <span className="summary-value debit">-${Math.abs(transferHistory.filter(t => t.type === "debit").reduce((s, t) => s + t.amount, 0)).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                    <span className="summary-label" data-testid="total-sent-label">Total Sent</span>
+                    <span className="summary-value debit" data-testid="total-sent-value">-${Math.abs(transferHistory.filter(t => t.type === "debit").reduce((s, t) => s + t.amount, 0)).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="summary-card">
-                    <span className="summary-label">Total Received</span>
-                    <span className="summary-value credit">+${transferHistory.filter(t => t.type === "credit").reduce((s, t) => s + t.amount, 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+                    <span className="summary-label" data-testid="total-received-label">Total Received</span>
+                    <span className="summary-value credit" data-testid="total-received-value">+${transferHistory.filter(t => t.type === "credit").reduce((s, t) => s + t.amount, 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="summary-card">
-                    <span className="summary-label">Pending</span>
-                    <span className="summary-value" style={{ color: "var(--warning)" }}>{transferHistory.filter(t => t.status === "Pending").length}</span>
+                    <span className="summary-label" data-testid="pending-label">Pending</span>
+                    <span className="summary-value" data-testid="pending-value" style={{ color: "var(--warning)" }}>{transferHistory.filter(t => t.status === "Pending").length}</span>
                 </div>
             </section>
 

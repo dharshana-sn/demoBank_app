@@ -139,7 +139,7 @@ export default function SameBankTransferForm({ onTransferComplete, accounts = []
                         data-testid="select-sb-from-account"
                     >
                         {filteredAccounts.map(acc => (
-                            <option key={acc.id} value={acc.id}>
+                            <option key={acc.id} value={acc.id} data-testid={`option-sb-from-account-${acc.id}`}>
                                 {acc.name} — ${acc.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                             </option>
                         ))}

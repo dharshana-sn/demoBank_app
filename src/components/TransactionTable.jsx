@@ -233,19 +233,19 @@ const TransactionTable = forwardRef(({ transactions, globalSearch }, ref) => {
                                     className={`txn-row ${index % 2 === 0 ? "even" : "odd"}`}
                                     data-testid={`txn-row-${transaction.id}`}
                                 >
-                                    <td className="td-date">{new Date(transaction.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
-                                    <td className="td-cid">{getHighlightedText(transaction.customerId || '—', globalSearch)}</td>
-                                    <td className="td-desc">{getHighlightedText(transaction.description, globalSearch)}</td>
-                                    <td>
-                                        <span className="cat-dot" style={{ background: categoryStyle.bg, color: categoryStyle.color }}>
+                                    <td className="td-date" data-testid={`txn-date-${transaction.id}`}>{new Date(transaction.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
+                                    <td className="td-cid" data-testid={`txn-cid-${transaction.id}`}>{getHighlightedText(transaction.customerId || '—', globalSearch)}</td>
+                                    <td className="td-desc" data-testid={`txn-desc-${transaction.id}`}>{getHighlightedText(transaction.description, globalSearch)}</td>
+                                    <td data-testid={`txn-category-${transaction.id}`}>
+                                        <span className="cat-dot" style={{ background: categoryStyle.bg, color: categoryStyle.color }} data-testid={`txn-category-badge-${transaction.id}`}>
                                             {getHighlightedText(transaction.category, globalSearch)}
                                         </span>
                                     </td>
-                                    <td className={`td-amount ${transaction.type}`}>
+                                    <td className={`td-amount ${transaction.type}`} data-testid={`txn-amount-${transaction.id}`}>
                                         {transaction.type === "credit" ? "+" : ""}${Math.abs(transaction.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                     </td>
-                                    <td>
-                                        <span className={`badge ${getStatusBadgeClass(transaction.status)}`}>{transaction.status}</span>
+                                    <td data-testid={`txn-status-${transaction.id}`}>
+                                        <span className={`badge ${getStatusBadgeClass(transaction.status)}`} data-testid={`txn-status-badge-${transaction.id}`}>{transaction.status}</span>
                                     </td>
                                 </tr>
                             );

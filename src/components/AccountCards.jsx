@@ -59,11 +59,12 @@ function AccountCard({ account }) {
             </div>
             <div className="ac-header">
                 <div>
-                    <p className="ac-name">{account.name}</p>
+                    <p className="ac-name" data-testid={`account-card-name-${account.id}`}>{account.name}</p>
                     <p
                         className="ac-number"
                         title="Click to copy"
                         style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        data-testid={`account-card-number-${account.id}`}
                         onClick={e => {
                             e.stopPropagation();
                             navigator.clipboard.writeText(account.number);
@@ -81,7 +82,7 @@ function AccountCard({ account }) {
             </div>
             <div className="ac-balance">
                 <span className="ac-bal-label">Balance</span>
-                <span className="ac-bal-value">
+                <span className="ac-bal-value" data-testid={`account-card-balance-${account.id}`}>
                     {isBalanceNegative ? "-" : ""}${Math.abs(account.balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </span>
             </div>

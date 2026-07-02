@@ -56,13 +56,14 @@ function formatDate(date) {
 function durationString(days) {
     const years = Math.floor(days / 365);
     const months = Math.floor((days % 365) / 30);
-    const remainingDays = days % 30;
+    const remainingDays = (days % 365) % 30;
     let parts = [];
     if (years > 0) parts.push(`${years}Y`);
     if (months > 0) parts.push(`${months}M`);
     if (remainingDays > 0 || parts.length === 0) parts.push(`${remainingDays}D`);
     return parts.join(' ');
 }
+
 
 /**
  * Calculate interest based on payout type.
@@ -116,6 +117,18 @@ export default function FDManager({ accounts = [], onTransferComplete, user }) {
     const [amount, setAmount] = useState(500000);
     const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id || '');
     const [durationDays, setDurationDays] = useState(1095);
+    const [durationY, setDurationY] = useState('3');
+    const [durationM, setDurationM] = useState('0');
+    const [durationD, setDurationD] = useState('0');
+
+    const syncDurationFields = (totalDays) => {
+        const years = Math.floor(totalDays / 365);
+        const months = Math.floor((totalDays % 365) / 30);
+        const days = (totalDays % 365) % 30;
+        setDurationY(String(years));
+        setDurationM(String(months));
+        setDurationD(String(days));
+    };
     const [payoutOption, setPayoutOption] = useState('maturity');
     const [showRatesModal, setShowRatesModal] = useState(false);
     const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -175,15 +188,68 @@ export default function FDManager({ accounts = [], onTransferComplete, user }) {
         // Allow typing freely, but keep it within a reasonable max for the slider's sake
         setAmount(Math.min(num, 50000000));
     };
+    const handleAmountBlur = () => {
+        if (amount < 10000) {
+            setAmount(10000);
+        }
+    };
 
     const handleAccountChange = (e) => setSelectedAccountId(e.target.value);
 
-    const handleDurationSlider = (e) => setDurationDays(Number(e.target.value));
+    const handleDurationSlider = (e) => {
+        const days = Number(e.target.value);
+        setDurationDays(days);
+        syncDurationFields(days);
+    };
+
+    const handleYChange = (e) => {
+        const val = e.target.value.replace(/[^0-9]/g, '');
+        setDurationY(val);
+        const yrs = parseInt(val, 10) || 0;
+        const mths = parseInt(durationM, 10) || 0;
+        const dys = parseInt(durationD, 10) || 0;
+        setDurationDays(Math.min(3650, Math.max(7, yrs * 365 + mths * 30 + dys)));
+    };
+
+    const handleMChange = (e) => {
+        const val = e.target.value.replace(/[^0-9]/g, '');
+        setDurationM(val);
+        const yrs = parseInt(durationY, 10) || 0;
+        const mths = parseInt(val, 10) || 0;
+        const dys = parseInt(durationD, 10) || 0;
+        setDurationDays(Math.min(3650, Math.max(7, yrs * 365 + mths * 30 + dys)));
+    };
+
+    const handleDChange = (e) => {
+        const val = e.target.value.replace(/[^0-9]/g, '');
+        setDurationD(val);
+        const yrs = parseInt(durationY, 10) || 0;
+        const mths = parseInt(durationM, 10) || 0;
+        const dys = parseInt(val, 10) || 0;
+        setDurationDays(Math.min(3650, Math.max(7, yrs * 365 + mths * 30 + dys)));
+    };
+
+    const handleDurationBlur = () => {
+        const yrs = parseInt(durationY, 10) || 0;
+        const mths = parseInt(durationM, 10) || 0;
+        const dys = parseInt(durationD, 10) || 0;
+        const totalDays = yrs * 365 + mths * 30 + dys;
+        const clampedDays = Math.min(3650, Math.max(7, totalDays));
+        setDurationDays(clampedDays);
+        syncDurationFields(clampedDays);
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.target.blur();
+        }
+    };
 
     // Clicking a rate card sets duration to mid-point of that slab
     const handleRateCardClick = (slab) => {
         const midDays = Math.round((slab.minDays + slab.maxDays) / 2);
         setDurationDays(midDays);
+        syncDurationFields(midDays);
     };
 
     const MAX_FDS = 8;
@@ -211,6 +277,7 @@ export default function FDManager({ accounts = [], onTransferComplete, user }) {
         const matDate = new Date(Date.now() + durationDays * 86400000).toISOString().split('T')[0];
         const fd = {
             id: `fd-${Date.now()}`,
+            userId: user.id,
             principal: amount,
             rate: interestRate,
             tenure: calculation.duration,
@@ -361,6 +428,7 @@ export default function FDManager({ accounts = [], onTransferComplete, user }) {
                                             className="fd-amount-input"
                                             value={amount.toLocaleString('en-US')}
                                             onChange={handleAmountInput}
+                                            onBlur={handleAmountBlur}
                                             data-testid="input-fd-amount"
                                         />
                                     </div>
@@ -370,7 +438,7 @@ export default function FDManager({ accounts = [], onTransferComplete, user }) {
                                     className="fd-slider"
                                     min="10000"
                                     max="50000000"
-                                    step="10000"
+                                    step="1"
                                     value={amount}
                                     onChange={handleAmountSlider}
                                     data-testid="slider-fd-amount"
@@ -385,7 +453,48 @@ export default function FDManager({ accounts = [], onTransferComplete, user }) {
                             <div className="fd-control-block">
                                 <div className="fd-control-label">
                                     <span><Clock size={14} /> Investment Duration</span>
-                                    <span className="fd-duration-display">{durationString(durationDays)}</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <div className="fd-amount-input-wrap" style={{ padding: '4px 6px' }}>
+                                            <input
+                                                type="text"
+                                                className="fd-amount-input"
+                                                style={{ width: '32px', textAlign: 'center', fontSize: '0.85rem' }}
+                                                value={durationY}
+                                                onChange={handleYChange}
+                                                onBlur={handleDurationBlur}
+                                                onKeyDown={handleKeyDown}
+                                                data-testid="input-fd-years"
+                                            />
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', marginLeft: '2px', color: 'var(--blue-600)' }}>Y</span>
+                                        </div>
+                                        <div className="fd-amount-input-wrap" style={{ padding: '4px 6px' }}>
+                                            <input
+                                                type="text"
+                                                className="fd-amount-input"
+                                                style={{ width: '32px', textAlign: 'center', fontSize: '0.85rem' }}
+                                                value={durationM}
+                                                onChange={handleMChange}
+                                                onBlur={handleDurationBlur}
+                                                onKeyDown={handleKeyDown}
+                                                data-testid="input-fd-months"
+                                            />
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', marginLeft: '2px', color: 'var(--blue-600)' }}>M</span>
+                                        </div>
+                                        <div className="fd-amount-input-wrap" style={{ padding: '4px 6px' }}>
+                                            <input
+                                                type="text"
+                                                className="fd-amount-input"
+                                                style={{ width: '32px', textAlign: 'center', fontSize: '0.85rem' }}
+                                                value={durationD}
+                                                onChange={handleDChange}
+                                                onBlur={handleDurationBlur}
+                                                onKeyDown={handleKeyDown}
+                                                data-testid="input-fd-days"
+                                            />
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', marginLeft: '2px', color: 'var(--blue-600)' }}>D</span>
+                                        </div>
+                                        <span className="fd-duration-display">{durationString(durationDays)}</span>
+                                    </div>
                                 </div>
                                 <input
                                     type="range"

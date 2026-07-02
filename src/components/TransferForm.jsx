@@ -103,7 +103,8 @@ export default function TransferForm({ onTransferComplete, accounts = [] }) {
             if (onTransferComplete) await onTransferComplete(newTransaction);
             
             setIsTransferSuccessful(true);
-            setTransferFormData(prev => ({ ...prev, amount: "", note: "" }));
+            // Preserve the amount field to match Same Bank / Pay To Contact forms and prevent it from being erased during recording
+            setTransferFormData(prev => ({ ...prev, note: "" }));
         } catch (error) {
             console.error("Transfer failed, preserving inputs:", error);
         } finally {
@@ -118,12 +119,6 @@ export default function TransferForm({ onTransferComplete, accounts = [] }) {
     };
 
     const filteredAccounts = accounts.filter(acc => acc.type !== 'credit' && acc.type !== 'investment');
-
-    const availableAccountOptions = filteredAccounts.map(account => (
-        <option key={account.id} value={account.id}>
-            {account.name} ({account.number})
-        </option>
-    ));
 
     return (
         <div className="card" data-testid="transfer-form-section">
@@ -150,8 +145,12 @@ export default function TransferForm({ onTransferComplete, accounts = [] }) {
                         onChange={handleFormInputChange}
                         data-testid="select-from-account"
                     >
-                        <option value="">Select source account</option>
-                        {availableAccountOptions}
+                        <option value="" data-testid="option-from-placeholder">Select source account</option>
+                        {filteredAccounts.map(account => (
+                            <option key={account.id} value={account.id} data-testid={`option-from-account-${account.id}`}>
+                                {account.name} ({account.number})
+                            </option>
+                        ))}
                     </select>
                     {inputErrors.from && <span className="form-error">{inputErrors.from}</span>}
                 </div>
@@ -166,8 +165,12 @@ export default function TransferForm({ onTransferComplete, accounts = [] }) {
                         onChange={handleFormInputChange}
                         data-testid="select-to-account"
                     >
-                        <option value="">Select destination account</option>
-                        {availableAccountOptions}
+                        <option value="" data-testid="option-to-placeholder">Select destination account</option>
+                        {filteredAccounts.map(account => (
+                            <option key={account.id} value={account.id} data-testid={`option-to-account-${account.id}`}>
+                                {account.name} ({account.number})
+                            </option>
+                        ))}
                     </select>
                     {inputErrors.to && <span className="form-error">{inputErrors.to}</span>}
                 </div>
@@ -200,9 +203,9 @@ export default function TransferForm({ onTransferComplete, accounts = [] }) {
                             onChange={handleFormInputChange}
                             data-testid="select-priority"
                         >
-                            <option value="normal">Normal (1–3 days)</option>
-                            <option value="express">Express (Same day)</option>
-                            <option value="instant">Instant Transfer</option>
+                            <option value="normal" data-testid="option-priority-normal">Normal (1–3 days)</option>
+                            <option value="express" data-testid="option-priority-express">Express (Same day)</option>
+                            <option value="instant" data-testid="option-priority-instant">Instant Transfer</option>
                         </select>
                     </div>
                 </div>

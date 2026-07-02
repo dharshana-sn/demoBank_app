@@ -125,20 +125,20 @@ export default function PayToUser({ onPaymentComplete, accounts = [], user }) {
                 <div className="ptu-modal-details">
                     <div className="ptu-modal-row">
                         <span>Recipient</span>
-                        <strong>{selectedUser?.name}</strong>
+                        <strong data-testid="confirm-recipient">{selectedUser?.name}</strong>
                     </div>
                     <div className="ptu-modal-row">
                         <span>Account</span>
-                        <strong>{selectedUser?.accountNumber}</strong>
+                        <strong data-testid="confirm-account">{selectedUser?.accountNumber}</strong>
                     </div>
                     <div className="ptu-modal-row">
                         <span>Amount</span>
-                        <strong className="ptu-modal-amount">${Number(amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong>
+                        <strong className="ptu-modal-amount" data-testid="confirm-amount">${Number(amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}</strong>
                     </div>
                     {note && (
                         <div className="ptu-modal-row">
                             <span>Note</span>
-                            <strong>{note}</strong>
+                            <strong data-testid="confirm-note">{note}</strong>
                         </div>
                     )}
                 </div>
@@ -187,7 +187,7 @@ export default function PayToUser({ onPaymentComplete, accounts = [], user }) {
                         data-testid="select-pay-from-account"
                     >
                         {filteredAccounts.map(acc => (
-                            <option key={acc.id} value={acc.id}>
+                            <option key={acc.id} value={acc.id} data-testid={`option-pay-from-account-${acc.id}`}>
                                 {acc.name} — ${acc.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                             </option>
                         ))}
