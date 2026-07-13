@@ -1,33 +1,41 @@
 {
   "expo": {
-    "name": "mobile_app",
+    "name": "Test Bank",
     "slug": "mobile_app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/8450dd9b-b6ee-4a15-942d-303ee8941487/test_bank_logo_1783926859678.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/8450dd9b-b6ee-4a15-942d-303ee8941487/test_bank_logo_1783926859678.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0A1F44"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#0A1F44",
+        "foregroundImage": "./assets/8450dd9b-b6ee-4a15-942d-303ee8941487/test_bank_logo_1783926859678.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.anonymous.mobile_app"
+      "package": "com.testbank.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/8450dd9b-b6ee-4a15-942d-303ee8941487/test_bank_logo_1783926859678.png"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

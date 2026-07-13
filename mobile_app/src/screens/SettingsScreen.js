@@ -165,7 +165,7 @@ export default function SettingsScreen({ navigation }) {
                 <Text style={styles.logoutText}>🚪 Sign Out</Text>
             </TouchableOpacity>
 
-            <Text style={styles.versionText}>DemoBank Mobile v1.0.0</Text>
+            <Text style={styles.versionText}>Test Bank Mobile v1.0.0</Text>
             <View style={{ height: 32 }} />
         </ScrollView>
     );

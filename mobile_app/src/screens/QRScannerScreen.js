@@ -36,12 +36,13 @@ export default function QRScannerScreen({ navigation, route }) {
         setScanned(true);
         Vibration.vibrate(100);
         try {
-            // Expected format: demobank://pay?recipient=CUST002&amount=50&note=Rent
+            // Expected format: testbank://pay?recipient=CUST002&amount=50&note=Rent
             let recipient = '';
             let amount = '';
             let note = '';
 
-            if (data.startsWith('demobank://pay')) {
+
+            if (data.startsWith('testbank://pay')) {
                 const url = new URL(data);
                 recipient = url.searchParams.get('recipient') || '';
                 amount = url.searchParams.get('amount') || '';
@@ -63,7 +64,7 @@ export default function QRScannerScreen({ navigation, route }) {
         } catch {
             Alert.alert(
                 '❌ Invalid QR Code',
-                'This QR code is not supported. Please scan a valid DemoBank payment QR code.',
+                'This QR code is not supported. Please scan a valid Test Bank payment QR code.',
                 [{ text: 'Retry', onPress: () => setScanned(false) }]
             );
         }

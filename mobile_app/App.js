@@ -93,7 +93,7 @@ function RootNavigator() {
         return (
             <View style={[styles.splashContainer, { backgroundColor: C.primary }]}>
                 <Text style={styles.splashLogo}>🏦</Text>
-                <Text style={styles.splashTitle}>DemoBank</Text>
+                <Text style={styles.splashTitle}>Test Bank</Text>
                 <ActivityIndicator color="#fff" style={{ marginTop: 24 }} />
             </View>
         );

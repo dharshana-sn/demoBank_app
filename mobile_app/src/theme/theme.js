@@ -1,4 +1,4 @@
-// Design tokens for the DemoBank mobile app
+// Design tokens for the Test Bank mobile app
 export const DARK_COLORS = {
     primary: '#3B82F6',
     primaryDark: '#1D4ED8',

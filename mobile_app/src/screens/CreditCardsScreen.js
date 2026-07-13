@@ -89,22 +89,45 @@ export default function CreditCardsScreen({ navigation }) {
 
         setIsProcessing(true);
         try {
-            const txn = {
+            const today = new Date().toISOString().split('T')[0];
+
+            // 1. Debit transaction — money leaves the source (checking/savings) account
+            const debitTxn = {
                 description: `Credit Card Payment - ${creditCard.name}`,
                 category: 'Credit Card',
-                amount: -amt,
+                amount: -amt,               // negative = money going out
                 status: 'Completed',
                 type: 'debit',
                 fromAccountId: sourceAccountId,
                 toAccountId: creditCard.id,
-                accountId: sourceAccountId,
-                date: new Date().toISOString().split('T')[0],
+                accountId: sourceAccountId, // belongs to the source account's ledger
+                date: today,
                 userId: user.id,
-                note: payNote
+                note: payNote || ''
             };
 
-            await createTransaction(txn);
+            // 2. Credit transaction — payment reduces the outstanding balance on the card
+            const creditTxn = {
+                description: `Payment Received - ${sourceAccount.name}`,
+                category: 'Credit Card',
+                amount: +amt,               // positive = debt reduced / money coming in
+                status: 'Completed',
+                type: 'credit',
+                fromAccountId: sourceAccountId,
+                toAccountId: creditCard.id,
+                accountId: creditCard.id,   // belongs to the credit card's ledger
+                date: today,
+                userId: user.id,
+                note: payNote || ''
+            };
+
+            // Save both transactions first, then update balances
+            await createTransaction(debitTxn);
+            await createTransaction(creditTxn);
+
+            // Debit the source account (balance goes down)
             await updateAccountBalance(sourceAccountId, -amt);
+            // Credit the card account (balance goes up toward 0, reducing the debt)
             await updateAccountBalance(creditCard.id, +amt);
 
             Alert.alert('Success', `Successfully paid $${amt.toLocaleString()} to ${creditCard.name}`);
@@ -230,7 +253,7 @@ export default function CreditCardsScreen({ navigation }) {
                         <View style={styles.cardFooter}>
                             <View>
                                 <Text style={styles.cardLabel}>CARD HOLDER</Text>
-                                <Text style={styles.cardValue}>TEST USER</Text>
+                                <Text style={styles.cardValue}>{user?.name ? user.name.toUpperCase() : 'USER'}</Text>
                             </View>
                             <View>
                                 <Text style={styles.cardLabel}>EXPIRES</Text>

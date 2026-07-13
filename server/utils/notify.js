@@ -11,7 +11,7 @@ export async function sendPushNotification(pushToken, message) {
     const messages = [{
         to: pushToken,
         sound: 'default',
-        title: message.title || 'DemoBank Update',
+        title: message.title || 'Test Bank Update',
         body: message.body || 'You have a new update.',
         data: message.data || {},
     }];

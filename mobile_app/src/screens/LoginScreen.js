@@ -89,7 +89,7 @@ export default function LoginScreen() {
                         <View style={styles.brandIcon}>
                             <Text style={styles.brandIconText}>🏦</Text>
                         </View>
-                        <Text style={styles.brandName}>DemoBank</Text>
+                        <Text style={styles.brandName}>Test Bank</Text>
                     </View>
                     <Text style={styles.heroTitle}>Secure. Smart.{'\n'}Modern Banking.</Text>
                     <Text style={styles.heroSub}>Your complete financial hub — manage accounts, track transactions, and transfer funds with confidence.</Text>
