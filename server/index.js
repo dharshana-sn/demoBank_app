@@ -10,14 +10,20 @@ import fixedDepositRoutes from './routes/fixedDeposits.js';
 import userRoutes from './routes/users.js';
 import authRoutes from './routes/auth.js';
 import kycRoutes from './routes/kyc.js';
+import otpRoutes from './routes/otp.js';
 import User from './models/User.js';
 import { sendPushNotification } from './utils/notify.js';
+import { authenticateToken } from './middleware/auth.js';
+// ── External (Third-Party) API ────────────────────────────────────────
+import externalAuthRoutes from './routes/external/auth.js';
+import externalUserRoutes from './routes/external/users.js';
+import { authenticateExternalToken } from './middleware/externalAuth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 
 app.use(cors({
@@ -27,16 +33,27 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Routes
-app.use('/api/accounts', accountRoutes);
-app.use('/api/transactions', transactionRoutes);
-app.use('/api/fixed-deposits', fixedDepositRoutes);
-app.use('/api/users', userRoutes);
+// Unprotected Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/kyc', kycRoutes);
+
+// Protected Routes
+app.use('/api/accounts', authenticateToken, accountRoutes);
+app.use('/api/transactions', authenticateToken, transactionRoutes);
+app.use('/api/fixed-deposits', authenticateToken, fixedDepositRoutes);
+app.use('/api/users', authenticateToken, userRoutes);
+app.use('/api/kyc', authenticateToken, kycRoutes);
+app.use('/api/otp', authenticateToken, otpRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+
+// ── External (Third-Party) API ────────────────────────────────────────
+// Unprotected: register + get token
+app.use('/external/api/auth', externalAuthRoutes);
+// Protected: all data endpoints
+app.use('/external/api/users', authenticateExternalToken, externalUserRoutes);
+// External health check
+app.get('/external/api/health', (req, res) => res.json({ status: 'ok', api: 'external' }));
 
 // Send push notification (Test)
 app.post('/api/notify', async (req, res) => {

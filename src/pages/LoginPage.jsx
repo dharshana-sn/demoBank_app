@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { Eye, EyeOff, Building2, ShieldCheck, AlertCircle /*, RefreshCcw */ } from "lucide-react";
-import { checkHealth } from "../api.js";
+import { checkHealth, loginUser } from "../api.js";
 import "./LoginPage.css";
 
 const DEMO_USERS = [
@@ -131,29 +131,22 @@ export default function LoginPage() {
         // 1. Check if backend is reachable
         const isUp = await checkHealth();
         if (!isUp) {
-            setAuthErrorMessage("Something went wrong. Server is unreachable. Please try again later.");
+            setAuthErrorMessage("Server is unreachable. Please make sure the server is running.");
             setIsSubmitting(false);
             return;
         }
 
-        // 2. Simulate a network delay for a more realistic feel
-        await new Promise(resolve => setTimeout(resolve, 900));
-
-        const matchedUser = DEMO_USERS.find(u => u.email === formData.email && u.password === formData.password);
-
-        if (matchedUser) {
-            login({
-                id: matchedUser.id,
-                name: matchedUser.name,
-                email: matchedUser.email,
-                avatar: matchedUser.avatar,
-                loginMethod: "credentials"
-            });
+        // 2. Call the backend login endpoint to get a JWT token
+        try {
+            const response = await loginUser(formData.email, formData.password);
+            // response = { user, token }
+            login(response); // stores user + token in sessionStorage via AuthContext
             navigate("/dashboard");
-        } else {
-            setAuthErrorMessage("Invalid email or password. Use testUser@gmail.com or john.doe@example.com with password123");
+        } catch (err) {
+            setAuthErrorMessage(err.message || "Invalid email or password.");
+        } finally {
+            setIsSubmitting(false);
         }
-        setIsSubmitting(false);
     };
 
     /*

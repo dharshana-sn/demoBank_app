@@ -5,7 +5,7 @@ import {
     Smartphone, Settings2, ChevronRight, X, PlusCircle, FileText, History as HistoryIcon,
     RefreshCcw, CreditCard as CardIcon
 } from 'lucide-react';
-import { updateAccount, createAccount, getAccounts, deleteAccount, getTransactions, createTransaction } from '../api.js';
+import { updateAccount, updateAccountBalance, createAccount, getAccounts, deleteAccount, getTransactions, createTransaction } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import './CreditCardPage.css';
 
@@ -89,29 +89,57 @@ export default function CreditCardPage({ accounts: initialAccounts = [], onTrans
         setIsProcessing(true);
         setStatus({ type: '', message: '' });
         try {
-            const result = await onTransferComplete({
-                id: `txn-cc-${Date.now()}`,
-                customerId: 'CID-001',
+            const today = new Date().toISOString().split('T')[0];
+
+            // 1. Debit transaction — money leaves the source (checking/savings) account
+            const debitTxn = {
+                id: `txn-cc-debit-${Date.now()}`,
                 userId: user.id,
-                date: new Date().toISOString().split('T')[0],
+                date: today,
                 description: `Credit Card Payment - ${creditCard.name}`,
                 category: 'Credit Card',
-                amount: -payAmount,
+                amount: -payAmount,         // negative = money going out
                 status: 'Completed',
                 type: 'debit',
                 fromAccountId: sourceAccountId,
                 toAccountId: creditCard.id,
-                accountId: sourceAccountId
-            });
+                accountId: sourceAccountId  // belongs to the source account's ledger
+            };
 
-            // Optimistically update local state for immediate feedback
+            // 2. Credit transaction — payment reduces the outstanding balance on the card
+            const creditTxn = {
+                id: `txn-cc-credit-${Date.now() + 1}`,
+                userId: user.id,
+                date: today,
+                description: `Payment Received - ${sourceAccount.name}`,
+                category: 'Credit Card',
+                amount: +payAmount,         // positive = debt reduced / money coming in
+                status: 'Completed',
+                type: 'credit',
+                fromAccountId: sourceAccountId,
+                toAccountId: creditCard.id,
+                accountId: creditCard.id    // belongs to the credit card's ledger
+            };
+
+            // Save both transaction records
+            await createTransaction(debitTxn);
+            await createTransaction(creditTxn);
+
+            // Update both account balances in the DB
+            const [updatedSource, updatedCard] = await Promise.all([
+                updateAccountBalance(sourceAccountId, -payAmount),  // debit source
+                updateAccountBalance(creditCard.id, +payAmount),    // credit card (debt reduces)
+            ]);
+
+            // Update local state immediately for snappy UI
             const updatedAccounts = accounts.map(acc => {
-                if (acc.id === sourceAccountId) return { ...acc, balance: acc.balance - payAmount };
-                if (acc.id === creditCard.id) return { ...acc, balance: acc.balance + payAmount };
+                if (acc.id === sourceAccountId) return updatedSource;
+                if (acc.id === creditCard.id) return updatedCard;
                 return acc;
             });
             setAccounts(updatedAccounts);
             lastParentAccounts.current = updatedAccounts;
+            if (onAccountsRefresh) onAccountsRefresh(updatedAccounts);
 
             setStatus({ type: 'success', message: `Successfully paid $${payAmount.toLocaleString()} to ${creditCard.name}` });
             setAmount('');

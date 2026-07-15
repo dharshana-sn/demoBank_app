@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, ScrollView, StyleSheet, TextInput,
-    TouchableOpacity, Alert, ActivityIndicator
+    TouchableOpacity, Alert, ActivityIndicator, Modal
 } from 'react-native';
-import { getFixedDeposits, createFixedDeposit, getAccounts, updateAccountBalance } from '../api/api';
+import { getFixedDeposits, createFixedDeposit, getAccounts, updateAccountBalance, sendSmsOtp, verifySmsOtp } from '../api/api';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
@@ -26,6 +26,14 @@ export default function FixedDepositsScreen({ navigation }) {
     const [submitting, setSubmitting] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ amount: '', tenure: 12, sourceAccount: '' });
+
+    // OTP State
+    const [showOtpModal, setShowOtpModal] = useState(false);
+    const [otpInput, setOtpInput] = useState('');
+    const [isSendingOtp, setIsSendingOtp] = useState(false);
+    const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+    const [otpError, setOtpError] = useState('');
+    const [pendingFdData, setPendingFdData] = useState(null);
 
     const styles = getStyles(C);
     const selectedTenure = TENURE_OPTIONS.find(t => t.value === form.tenure) || TENURE_OPTIONS[2];
@@ -72,6 +80,7 @@ export default function FixedDepositsScreen({ navigation }) {
             const startDate = new Date();
             const endDate = new Date(startDate);
             endDate.setMonth(endDate.getMonth() + form.tenure);
+            
             const newFD = {
                 userId: user.id,
                 principal: parseFloat(form.amount),
@@ -82,6 +91,50 @@ export default function FixedDepositsScreen({ navigation }) {
                 maturityAmount: parseFloat(maturityAmount()),
                 status: 'active',
             };
+            
+            setPendingFdData(newFD);
+            
+            // Send OTP
+            setIsSendingOtp(true);
+            await sendSmsOtp(user.id);
+            setIsSendingOtp(false);
+            
+            setShowOtpModal(true);
+            setOtpInput('');
+            setOtpError('');
+        } catch (err) {
+            setIsSendingOtp(false);
+            Alert.alert('Error', err.message || 'Failed to send OTP.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        if (otpInput.length < 6) {
+            setOtpError('Please enter a 6-digit OTP.');
+            return;
+        }
+
+        try {
+            setIsVerifyingOtp(true);
+            setOtpError('');
+            await verifySmsOtp(user.id, otpInput);
+            
+            // Proceed to create FD
+            await proceedCreateFD(pendingFdData);
+            
+            setIsVerifyingOtp(false);
+            setShowOtpModal(false);
+            setPendingFdData(null);
+        } catch (err) {
+            setIsVerifyingOtp(false);
+            setOtpError(err.message || 'Invalid OTP.');
+        }
+    };
+
+    const proceedCreateFD = async (newFD) => {
+        try {
             const saved = await createFixedDeposit(newFD);
             await updateAccountBalance(form.sourceAccount, -parseFloat(form.amount));
             
@@ -90,9 +143,7 @@ export default function FixedDepositsScreen({ navigation }) {
             setShowForm(false);
             Alert.alert('✅ Success', `Fixed Deposit of $${newFD.principal} created!`);
         } catch (err) {
-            Alert.alert('Error', err.message);
-        } finally {
-            setSubmitting(false);
+            Alert.alert('Error', err.message || 'Failed to create Fixed Deposit.');
         }
     };
 
@@ -225,13 +276,13 @@ export default function FixedDepositsScreen({ navigation }) {
                     )}
 
                     <TouchableOpacity
-                        style={[styles.submitBtn, submitting && { opacity: 0.6 }]}
+                        style={[styles.submitBtn, (submitting || isSendingOtp) && { opacity: 0.6 }]}
                         onPress={handleCreate}
-                        disabled={submitting}
+                        disabled={submitting || isSendingOtp}
                         activeOpacity={0.85}
                     >
                         <LinearGradient colors={[C.gradStart, C.gradEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.submitBtnInner}>
-                            {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Create Fixed Deposit</Text>}
+                            {submitting || isSendingOtp ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Create Fixed Deposit</Text>}
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>
@@ -265,6 +316,51 @@ export default function FixedDepositsScreen({ navigation }) {
             </View>
 
             <View style={{ height: 24 }} />
+
+            {/* OTP Modal */}
+            <Modal
+                visible={showOtpModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowOtpModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Verify OTP</Text>
+                            <TouchableOpacity onPress={() => setShowOtpModal(false)}>
+                                <Text style={{ fontSize: 20, color: C.text }}>✕</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <Text style={styles.modalSub}>
+                            We've sent a 6-digit OTP to your registered mobile number via SMS.
+                        </Text>
+                        
+                        <TextInput
+                            style={styles.otpInput}
+                            placeholder="• • • • • •"
+                            placeholderTextColor={C.textMuted}
+                            keyboardType="numeric"
+                            maxLength={6}
+                            value={otpInput}
+                            onChangeText={v => setOtpInput(v.replace(/[^0-9]/g, ''))}
+                        />
+                        {otpError ? <Text style={styles.errorText}>{otpError}</Text> : null}
+
+                        <TouchableOpacity 
+                            style={[styles.verifyBtn, isVerifyingOtp && { opacity: 0.7 }]} 
+                            onPress={handleVerifyOtp}
+                            disabled={isVerifyingOtp}
+                        >
+                            {isVerifyingOtp ? <ActivityIndicator color="#fff" /> : <Text style={styles.verifyBtnText}>Verify & Create FD</Text>}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.resendBtn} onPress={handleCreate} disabled={isSendingOtp}>
+                            <Text style={styles.resendBtnText}>{isSendingOtp ? 'Sending...' : 'Resend OTP'}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </ScrollView>
     );
 }
@@ -346,5 +442,20 @@ function getStyles(C) {
         fdDates: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: C.border },
         fdDate: { ...FONTS.regular, fontSize: 12, color: C.textMuted },
         emptyText: { ...FONTS.regular, color: C.textMuted, textAlign: 'center', padding: 24 },
+        modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+        modalContent: { width: '85%', backgroundColor: C.card, borderRadius: RADIUS.lg, padding: 20, ...SHADOWS.lg },
+        modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+        modalTitle: { ...FONTS.bold, fontSize: 18, color: C.text },
+        modalSub: { ...FONTS.regular, fontSize: 14, color: C.textMuted, marginBottom: 20, textAlign: 'center' },
+        otpInput: { 
+            borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, 
+            padding: 15, fontSize: 24, textAlign: 'center', letterSpacing: 8, 
+            ...FONTS.bold, color: C.text, marginBottom: 10 
+        },
+        errorText: { ...FONTS.medium, color: C.danger, fontSize: 12, marginBottom: 10, textAlign: 'center' },
+        verifyBtn: { backgroundColor: C.primary, padding: 15, borderRadius: RADIUS.md, alignItems: 'center', marginTop: 10 },
+        verifyBtnText: { ...FONTS.bold, color: '#fff', fontSize: 16 },
+        resendBtn: { padding: 15, alignItems: 'center', marginTop: 5 },
+        resendBtnText: { ...FONTS.semiBold, color: C.primary, fontSize: 14 },
     });
 }

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { getFixedDeposits, createFixedDeposit } from '../api.js';
+import { getFixedDeposits, createFixedDeposit, sendSmsOtp, verifySmsOtp } from '../api.js';
 import { PiggyBank, Calculator, TrendingUp, Lock, Globe, Shield, Calendar, Percent, DollarSign, Clock, Award, ChevronRight, X, CheckCircle, Info, Wallet } from 'lucide-react';
 import './FDManager.css';
 
@@ -132,8 +132,17 @@ export default function FDManager({ accounts = [], onTransferComplete, user }) {
     const [payoutOption, setPayoutOption] = useState('maturity');
     const [showRatesModal, setShowRatesModal] = useState(false);
     const [showSuccessToast, setShowSuccessToast] = useState(false);
-    const [openedFD, setOpenedFD] = useState(null);
     const [activeFDs, setActiveFDs] = useState([]);
+    
+    // OTP Modal State
+    const [showOtpModal, setShowOtpModal] = useState(false);
+    const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+    const [otpInput, setOtpInput] = useState('');
+    const [isSendingOtp, setIsSendingOtp] = useState(false);
+    const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+    const [otpError, setOtpError] = useState('');
+    const [pendingFdData, setPendingFdData] = useState(null);
+    const [openedFD, setOpenedFD] = useState(null);
 
     // Fetch active FDs from MongoDB on mount
     useEffect(() => {
@@ -287,7 +296,71 @@ export default function FDManager({ accounts = [], onTransferComplete, user }) {
         };
 
         try {
+            setIsSendingOtp(true);
+            const res = await sendSmsOtp(user.id);
+            setIsSendingOtp(false);
+            setPendingFdData(fd);
+            setShowOtpModal(true);
+            setOtpDigits(['', '', '', '', '', '']);
+            setOtpInput('');
+            setOtpError('');
+        } catch (err) {
+            setIsSendingOtp(false);
+            alert(err.message || 'Failed to send OTP. Please try again.');
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        if (otpInput.length < 6) {
+            setOtpError('Please enter a 6-digit OTP.');
+            return;
+        }
+
+        try {
+            setIsVerifyingOtp(true);
+            setOtpError('');
+            await verifySmsOtp(user.id, otpInput);
+            
+            // OTP verified, now create FD
+            await proceedCreateFD(pendingFdData);
+            
+            setIsVerifyingOtp(false);
+            setShowOtpModal(false);
+            setPendingFdData(null);
+        } catch (err) {
+            setIsVerifyingOtp(false);
+            setOtpError(err.message || 'Invalid OTP. Please try again.');
+        }
+    };
+
+    const handleDigitChange = (val, index) => {
+        const numOnly = val.replace(/[^0-9]/g, '');
+        const newDigits = [...otpDigits];
+        newDigits[index] = numOnly;
+        setOtpDigits(newDigits);
+
+        const fullOtp = newDigits.join('');
+        setOtpInput(fullOtp);
+
+        if (numOnly !== '' && index < 5) {
+            document.getElementById(`otp-input-${index + 1}`)?.focus();
+        }
+    };
+
+    const handleDigitKeyDown = (e, index) => {
+        if (e.key === 'Backspace' && otpDigits[index] === '' && index > 0) {
+            const newDigits = [...otpDigits];
+            newDigits[index - 1] = '';
+            setOtpDigits(newDigits);
+            setOtpInput(newDigits.join(''));
+            document.getElementById(`otp-input-${index - 1}`)?.focus();
+        }
+    };
+
+    const proceedCreateFD = async (fd) => {
+        try {
             const saved = await createFixedDeposit(fd);
+            const today = new Date().toISOString().split('T')[0];
             
             // Deduct from account balance via a transaction
             if (onTransferComplete) {
@@ -295,7 +368,7 @@ export default function FDManager({ accounts = [], onTransferComplete, user }) {
                     id: `txn-fd-${Date.now()}`,
                     customerId: 'CID-001',
                     date: today,
-                    description: `Fixed Deposit Booking - ${calculation.duration}`,
+                    description: `Fixed Deposit Booking - ${fd.tenure}`,
                     category: 'Investments (FD)',
                     amount: -amount,
                     status: 'Completed',
@@ -634,11 +707,11 @@ export default function FDManager({ accounts = [], onTransferComplete, user }) {
                                     className="btn fd-btn-open"
                                     data-testid="btn-open-fd"
                                     onClick={handleOpenFD}
-                                    disabled={activeFDs.length >= MAX_FDS}
+                                    disabled={activeFDs.length >= MAX_FDS || isSendingOtp}
                                     title={activeFDs.length >= MAX_FDS ? 'Maximum of 8 FDs reached' : 'Open a new Fixed Deposit'}
                                     style={activeFDs.length >= MAX_FDS ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                                 >
-                                    {activeFDs.length >= MAX_FDS ? `Limit Reached (${MAX_FDS}/8)` : 'Open Fixed Deposit'} <ChevronRight size={16} />
+                                    {isSendingOtp ? 'Sending OTP...' : activeFDs.length >= MAX_FDS ? `Limit Reached (${MAX_FDS}/8)` : 'Open Fixed Deposit'} <ChevronRight size={16} />
                                 </button>
                                 <button className="btn fd-btn-rates" data-testid="btn-view-rates" onClick={handleViewAllRates}>
                                     View All Interest Rates
@@ -664,8 +737,8 @@ export default function FDManager({ accounts = [], onTransferComplete, user }) {
                                     Your Active Deposits
                                 </h2>
                                 <span className="badge badge-blue">
-                                    {activeFDs.length} / 8 Active
-                                    {activeFDs.length >= 8 && <span style={{ marginLeft: '6px', color: 'var(--danger)' }}>· Limit Reached</span>}
+                                    {activeFDs.length} / 20 Active
+                                    {activeFDs.length >= 20 && <span style={{ marginLeft: '6px', color: 'var(--danger)' }}>· Limit Reached</span>}
                                 </span>
                             </div>
                             <div className="fd-list">
@@ -767,6 +840,94 @@ export default function FDManager({ accounts = [], onTransferComplete, user }) {
                     </div>
                 </div>
             </div>
+
+            {/* ── OTP Verification Modal ────────────── */}
+            {showOtpModal && (
+                <div className="fd-modal-overlay">
+                    <div className="fd-modal" style={{ maxWidth: '440px', textAlign: 'center', padding: '28px 24px' }}>
+                        <div className="fd-modal-header" style={{ justifyContent: 'center', borderBottom: 'none', padding: '0 0 16px' }}>
+                            <h2 style={{ fontSize: '1.4rem' }}>Verify OTP</h2>
+                        </div>
+                        <p style={{ color: 'var(--gray-500)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: '1.5' }}>
+                            We've sent a 6-digit verification code to your registered mobile number via SMS.
+                        </p>
+                        
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
+                            {otpDigits.map((digit, idx) => (
+                                <input
+                                    key={idx}
+                                    id={`otp-input-${idx}`}
+                                    type="text"
+                                    maxLength="1"
+                                    className="otp-digit-input"
+                                    value={digit}
+                                    onChange={(e) => handleDigitChange(e.target.value, idx)}
+                                    onKeyDown={(e) => handleDigitKeyDown(e, idx)}
+                                    style={{
+                                        width: '46px',
+                                        height: '52px',
+                                        fontSize: '1.5rem',
+                                        fontWeight: '700',
+                                        textAlign: 'center',
+                                        borderRadius: '10px',
+                                        border: '1.5px solid var(--gray-200)',
+                                        background: 'var(--gray-50)',
+                                        outline: 'none',
+                                        transition: 'all 0.25s ease',
+                                        color: 'var(--gray-800)',
+                                        fontFamily: 'inherit'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = 'var(--blue-500)';
+                                        e.target.style.background = 'white';
+                                        e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.12)';
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = 'var(--gray-200)';
+                                        e.target.style.background = 'var(--gray-50)';
+                                        e.target.style.boxShadow = 'none';
+                                    }}
+                                />
+                            ))}
+                        </div>
+
+                        {otpError && <p style={{ color: 'var(--red-500)', fontSize: '0.85rem', marginBottom: '20px', fontWeight: '500' }}>{otpError}</p>}
+                        
+                        <button
+                            className="btn fd-btn-open"
+                            onClick={handleVerifyOtp}
+                            disabled={isVerifyingOtp || otpInput.length < 6}
+                            style={{
+                                width: '100%',
+                                justifyContent: 'center',
+                                background: 'linear-gradient(135deg, var(--blue-600), var(--blue-700))',
+                                color: 'white',
+                                padding: '14px',
+                                fontSize: '0.95rem',
+                                opacity: otpInput.length < 6 ? 0.6 : 1
+                            }}
+                        >
+                            {isVerifyingOtp ? 'Verifying...' : 'Confirm & Open Account'}
+                        </button>
+                        
+                        <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                            <button
+                                onClick={() => setShowOtpModal(false)}
+                                style={{ background: 'transparent', border: 'none', color: 'var(--gray-400)', cursor: 'pointer', fontWeight: '600' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleOpenFD}
+                                disabled={isSendingOtp}
+                                style={{ background: 'transparent', border: 'none', color: 'var(--blue-600)', cursor: 'pointer', fontWeight: '700' }}
+                            >
+                                {isSendingOtp ? 'Sending...' : 'Resend Code'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── Success Toast ────────────── */}
             {showSuccessToast && (

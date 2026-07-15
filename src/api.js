@@ -23,8 +23,22 @@ export const checkHealth = async () => {
 };
 
 async function request(path, options = {}) {
+    // Retrieve token from sessionStorage
+    const sessionData = sessionStorage.getItem("banking_user");
+    const user = sessionData ? JSON.parse(sessionData) : null;
+    const token = user?.token;
+
+    const headers = { 
+        'Content-Type': 'application/json', 
+        ...options.headers 
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${BASE}${path}`, {
-        headers: { 'Content-Type': 'application/json', ...options.headers },
+        headers,
         ...options,
         body: options.body ? JSON.stringify(options.body) : undefined,
     });
@@ -86,6 +100,8 @@ export const updateUserProfile = (id, data) =>
     request(`/users/${id}`, { method: 'PATCH', body: data });
 
 // ── Auth ──────────────────────────────────────
+export const loginUser = (email, password) =>
+    request('/auth/login', { method: 'POST', body: { email, password } });
 export const oauthLogin = (provider, code) =>
     request('/auth/oauth-callback', { method: 'POST', body: { provider, code } });
 export const getCaptcha = () => request('/auth/captcha');
@@ -96,9 +112,18 @@ export const uploadKycDocument = async (documentType, file) => {
     formData.append('documentType', documentType);
     formData.append('document', file);
 
+    const sessionData = sessionStorage.getItem("banking_user");
+    const user = sessionData ? JSON.parse(sessionData) : null;
+    const token = user?.token;
+    
+    const headers = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${BASE}/kyc/upload`, {
         method: 'POST',
-        // Omit Content-Type so fetch can set the correct multipart boundary
+        headers, // Omit Content-Type so fetch can set the correct multipart boundary
         body: formData,
     });
 
@@ -111,3 +136,9 @@ export const uploadKycDocument = async (documentType, file) => {
 
 export const getKycStatus = () => request('/kyc/status');
 export const deleteKycDocument = (type) => request(`/kyc/document/${type}`, { method: 'DELETE' });
+
+// ── OTP ───────────────────────────────────────
+export const sendSmsOtp = (userId) =>
+    request('/otp/send-sms', { method: 'POST', body: { userId } });
+export const verifySmsOtp = (userId, otp) =>
+    request('/otp/verify-sms', { method: 'POST', body: { userId, otp } });

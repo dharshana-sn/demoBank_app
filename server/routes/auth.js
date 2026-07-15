@@ -1,8 +1,32 @@
 import express from 'express';
 import User from '../models/User.js';
 import svgCaptcha from 'svg-captcha';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
+
+// ── Credentials Login ─────────────────────────────
+router.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required.' });
+    }
+    try {
+        const user = await User.findOne({ email });
+        if (!user || user.password !== password) {
+            return res.status(401).json({ error: 'Invalid email or password.' });
+        }
+        const token = jwt.sign(
+            { id: user.id, email: user.email },
+            process.env.JWT_SECRET || 'demobank_secure_jwt_secret_2026',
+            { expiresIn: '24h' }
+        );
+        res.json({ user, token });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 const MOCK_PROFILES = {
     google: {
@@ -44,7 +68,14 @@ router.post('/oauth-callback', async (req, res) => {
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
 
-        res.json(user);
+        // Generate JWT
+        const token = jwt.sign(
+            { id: user.id, email: user.email },
+            process.env.JWT_SECRET || 'demobank_secure_jwt_secret_2026',
+            { expiresIn: '24h' }
+        );
+
+        res.json({ user, token });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

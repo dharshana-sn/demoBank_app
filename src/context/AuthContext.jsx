@@ -16,10 +16,14 @@ export function AuthProvider({ children }) {
         return sessionData ? JSON.parse(sessionData) : null;
     });
 
-    const triggerLogin = useCallback((newUserData) => {
+    const triggerLogin = useCallback((loginResponse) => {
+        // We now expect loginResponse to be { user, token }
+        const { user, token } = loginResponse;
+
         const userProfileWithMetadata = {
-            ...newUserData,
-            loginTime: new Date().toISOString()
+            ...user,
+            loginTime: new Date().toISOString(),
+            token: token // Store the token
         };
 
         sessionStorage.setItem("banking_user", JSON.stringify(userProfileWithMetadata));

@@ -130,3 +130,9 @@ export const uploadKycDocument = async (type, fileUri, fileName, mimeType, userI
         throw err;
     }
 };
+
+// ── OTP ───────────────────────────────────────
+export const sendSmsOtp = (userId) =>
+    request('/otp/send-sms', { method: 'POST', body: { userId } });
+export const verifySmsOtp = (userId, otp) =>
+    request('/otp/verify-sms', { method: 'POST', body: { userId, otp } });

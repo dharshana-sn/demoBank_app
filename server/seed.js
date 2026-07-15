@@ -1,9 +1,3 @@
-/**
- * server/seed.js
- * Run once with: node server/seed.js
- * Seeds MongoDB with all mockData accounts, transactions, and initial FDs.
- */
-
 import 'dotenv/config';
 import mongoose from 'mongoose';
 import Account from './models/Account.js';
@@ -12,15 +6,15 @@ import FixedDeposit from './models/FixedDeposit.js';
 import User from './models/User.js';
 
 const ACCOUNTS = [
-    { id: "acc-1", name: "Checking Account", number: "4521678901", balance: 62450.75, type: "checking", color: "#1E40AF", userId: "user-1" },
-    { id: "acc-2", name: "Savings Account", number: "8832456701", balance: 56789, type: "savings", color: "#1D4ED8", userId: "user-1" },
-    { id: "acc-4", name: "Investments (FD)", number: "6650234501", balance: 98100.2, type: "investment", color: "#3B82F6", userId: "user-1" },
+    { id: "acc-1", name: "Checking Account", number: "4521678901", balance: 162450.75, type: "checking", color: "#1E40AF", userId: "user-1" },
+    { id: "acc-2", name: "Savings Account", number: "8832456701", balance: 156789, type: "savings", color: "#1D4ED8", userId: "user-1" },
+    { id: "acc-4", name: "Investments (FD)", number: "6650234501", balance: 198100.2, type: "investment", color: "#3B82F6", userId: "user-1" },
     { id: "acc-5", name: "Platinum Credit Card", number: "5678901234", balance: -8890.00, type: "credit", limit: 70000, color: "#4F46E5", userId: "user-1" },
-    
+
     // Accounts for the second user (Recipient)
     { id: "acc-101", name: "Personal Savings", number: "9876543210", balance: 2500.00, type: "savings", color: "#10B981", userId: "user-2" },
     { id: "acc-102", name: "Main Checking", number: "1234567890", balance: 1200.50, type: "checking", color: "#F59E0B", userId: "user-2" },
-    
+
     // Accounts for other mock users
     { id: "acc-usr-1", name: "Savings Account", number: "4528172635", balance: 5000.00, type: "savings", color: "#10B981", userId: "usr-1" },
     { id: "acc-usr-2", name: "Savings Account", number: "9823746150", balance: 5000.00, type: "savings", color: "#10B981", userId: "usr-2" },

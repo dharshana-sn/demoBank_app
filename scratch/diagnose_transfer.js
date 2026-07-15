@@ -1,7 +1,8 @@
 // Diagnostic: check what the API finds for John Doe's account numbers
 // and verify the transfer would work correctly
 
-const BASE_URL = 'http://localhost:5001/api';
+// const BASE_URL = 'http://localhost:5001/api';
+ const BASE_URL = 'http://192.168.22.89:5001/api';
 
 async function checkAccounts() {
     // Check all accounts

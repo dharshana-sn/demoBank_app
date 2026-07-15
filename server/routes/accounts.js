@@ -15,6 +15,17 @@ router.get('/', async (req, res) => {
     }
 });
 
+// GET /api/accounts/:id/balance — get balance
+router.get('/:id/balance', async (req, res) => {
+    try {
+        const account = await Account.findOne({ id: req.params.id });
+        if (!account) return res.status(404).json({ error: 'Account not found' });
+        res.json({ balance: account.balance });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // PATCH /api/accounts/:id/balance — update balance
 router.patch('/:id/balance', async (req, res) => {
     try {
@@ -25,6 +36,17 @@ router.patch('/:id/balance', async (req, res) => {
         account.balance = Math.round((account.balance + delta) * 100) / 100;
         await account.save();
         res.json(account);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/accounts/by-number/:number/balance — get balance by account number
+router.get('/by-number/:number/balance', async (req, res) => {
+    try {
+        const account = await Account.findOne({ number: req.params.number });
+        if (!account) return res.status(404).json({ error: 'Account not found' });
+        res.json({ balance: account.balance });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
