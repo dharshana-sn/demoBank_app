@@ -29,11 +29,15 @@ export default function FixedDepositsScreen({ navigation }) {
 
     // OTP State
     const [showOtpModal, setShowOtpModal] = useState(false);
-    const [otpInput, setOtpInput] = useState('');
+    const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
     const [isSendingOtp, setIsSendingOtp] = useState(false);
     const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
     const [otpError, setOtpError] = useState('');
     const [pendingFdData, setPendingFdData] = useState(null);
+    const [focusedIndex, setFocusedIndex] = useState(null);
+
+    const otpRefs = React.useRef([]);
+    const otpInput = otpDigits.join('');
 
     const styles = getStyles(C);
     const selectedTenure = TENURE_OPTIONS.find(t => t.value === form.tenure) || TENURE_OPTIONS[2];
@@ -100,7 +104,7 @@ export default function FixedDepositsScreen({ navigation }) {
             setIsSendingOtp(false);
             
             setShowOtpModal(true);
-            setOtpInput('');
+            setOtpDigits(['', '', '', '', '', '']);
             setOtpError('');
         } catch (err) {
             setIsSendingOtp(false);
@@ -130,6 +134,30 @@ export default function FixedDepositsScreen({ navigation }) {
         } catch (err) {
             setIsVerifyingOtp(false);
             setOtpError(err.message || 'Invalid OTP.');
+        }
+    };
+
+    const handleDigitChange = (val, index) => {
+        const cleaned = val.replace(/[^0-9]/g, '');
+        const digit = cleaned.slice(-1);
+        
+        const newDigits = [...otpDigits];
+        newDigits[index] = digit;
+        setOtpDigits(newDigits);
+
+        if (digit !== '' && index < 5) {
+            otpRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleDigitKeyPress = (e, index) => {
+        if (e.nativeEvent.key === 'Backspace') {
+            if (otpDigits[index] === '' && index > 0) {
+                const newDigits = [...otpDigits];
+                newDigits[index - 1] = '';
+                setOtpDigits(newDigits);
+                otpRefs.current[index - 1]?.focus();
+            }
         }
     };
 
@@ -336,21 +364,35 @@ export default function FixedDepositsScreen({ navigation }) {
                             We've sent a 6-digit OTP to your registered mobile number via SMS.
                         </Text>
                         
-                        <TextInput
-                            style={styles.otpInput}
-                            placeholder="• • • • • •"
-                            placeholderTextColor={C.textMuted}
-                            keyboardType="numeric"
-                            maxLength={6}
-                            value={otpInput}
-                            onChangeText={v => setOtpInput(v.replace(/[^0-9]/g, ''))}
-                        />
+                        <View style={styles.otpContainer}>
+                            {otpDigits.map((digit, idx) => (
+                                <TextInput
+                                    key={idx}
+                                    ref={el => (otpRefs.current[idx] = el)}
+                                    style={[
+                                        styles.otpDigitInput,
+                                        focusedIndex === idx && styles.otpDigitInputFocused
+                                    ]}
+                                    keyboardType="numeric"
+                                    maxLength={1}
+                                    value={digit}
+                                    onChangeText={v => handleDigitChange(v, idx)}
+                                    onKeyPress={e => handleDigitKeyPress(e, idx)}
+                                    onFocus={() => setFocusedIndex(idx)}
+                                    onBlur={() => setFocusedIndex(null)}
+                                    selectTextOnFocus={true}
+                                />
+                            ))}
+                        </View>
                         {otpError ? <Text style={styles.errorText}>{otpError}</Text> : null}
 
                         <TouchableOpacity 
-                            style={[styles.verifyBtn, isVerifyingOtp && { opacity: 0.7 }]} 
+                            style={[
+                                styles.verifyBtn, 
+                                (isVerifyingOtp || otpInput.length < 6) && { opacity: 0.7 }
+                            ]} 
                             onPress={handleVerifyOtp}
-                            disabled={isVerifyingOtp}
+                            disabled={isVerifyingOtp || otpInput.length < 6}
                         >
                             {isVerifyingOtp ? <ActivityIndicator color="#fff" /> : <Text style={styles.verifyBtnText}>Verify & Create FD</Text>}
                         </TouchableOpacity>
@@ -447,10 +489,33 @@ function getStyles(C) {
         modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
         modalTitle: { ...FONTS.bold, fontSize: 18, color: C.text },
         modalSub: { ...FONTS.regular, fontSize: 14, color: C.textMuted, marginBottom: 20, textAlign: 'center' },
-        otpInput: { 
-            borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, 
-            padding: 15, fontSize: 24, textAlign: 'center', letterSpacing: 8, 
-            ...FONTS.bold, color: C.text, marginBottom: 10 
+        otpContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginVertical: 15,
+            paddingHorizontal: 5,
+        },
+        otpDigitInput: {
+            width: 40,
+            height: 48,
+            borderWidth: 1.5,
+            borderColor: C.border,
+            borderRadius: RADIUS.md,
+            backgroundColor: C.bg,
+            fontSize: 20,
+            ...FONTS.bold,
+            textAlign: 'center',
+            color: C.text,
+        },
+        otpDigitInputFocused: {
+            borderColor: C.primary,
+            backgroundColor: C.card,
+            shadowColor: C.primary,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 2,
         },
         errorText: { ...FONTS.medium, color: C.danger, fontSize: 12, marginBottom: 10, textAlign: 'center' },
         verifyBtn: { backgroundColor: C.primary, padding: 15, borderRadius: RADIUS.md, alignItems: 'center', marginTop: 10 },
