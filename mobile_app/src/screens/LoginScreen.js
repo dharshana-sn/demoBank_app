@@ -7,7 +7,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { checkHealth } from '../api/api';
+import { checkHealth, loginUser } from '../api/api';
 import { FONTS, RADIUS, SPACING, SHADOWS } from '../theme/theme';
 import { mockUsers } from '../utils/mockData';
 
@@ -49,17 +49,24 @@ export default function LoginScreen() {
             return;
         }
 
-        // 2. Simulate login delay
-        await new Promise(r => setTimeout(r, 900));
-        
-        const matchedUser = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
-        
-        if (matchedUser && password === DEMO_PASSWORD) {
-            await login({ id: matchedUser.id, name: matchedUser.name, email: matchedUser.email, avatar: matchedUser.avatar });
-        } else {
-            Alert.alert('Login Failed', 'Invalid credentials.\nTry testUser@gmail.com or other mock emails with password123');
+        try {
+            // Call real backend authentication endpoint
+            const res = await loginUser(email, password);
+            await login({
+                id: res.user.id,
+                name: res.user.name,
+                email: res.user.email,
+                avatar: res.user.avatar,
+                token: res.token
+            });
+        } catch (error) {
+            Alert.alert(
+                'Login Failed',
+                error.message || 'Invalid credentials.\nTry testUser@gmail.com or other mock emails with password123'
+            );
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     const fillDemo = () => {

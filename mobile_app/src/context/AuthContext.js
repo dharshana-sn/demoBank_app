@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerForPushNotificationsAsync, setupNotificationHandler } from '../utils/notifications';
-import { updateUserProfile } from '../api/api';
+import { updateUserProfile, getUserProfile, setOnUnauthorized } from '../api/api';
 
 const AuthContext = createContext(null);
 
@@ -36,16 +36,37 @@ export function AuthProvider({ children }) {
             const stored = await AsyncStorage.getItem('user');
             if (stored) {
                 const userData = JSON.parse(stored);
-                setUser(userData);
                 
-                // Ensure push notifications are enabled on restoration
-                if (!userData.pushToken) {
-                    const token = await registerForPushNotificationsAsync();
-                    if (token && userData.id) {
-                        const updatedUser = { ...userData, pushToken: token };
-                        setUser(updatedUser);
-                        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-                        await updateUserProfile(userData.id, { pushToken: token });
+                // If there's no JWT token, log out immediately to force re-authentication
+                if (!userData.token) {
+                    await AsyncStorage.removeItem('user');
+                    setUser(null);
+                    return;
+                }
+
+                // Verify the token by calling getUserProfile
+                try {
+                    await getUserProfile(userData.id);
+                    setUser(userData);
+
+                    // Ensure push notifications are enabled on restoration
+                    if (!userData.pushToken) {
+                        const token = await registerForPushNotificationsAsync();
+                        if (token && userData.id) {
+                            const updatedUser = { ...userData, pushToken: token };
+                            setUser(updatedUser);
+                            await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+                            await updateUserProfile(userData.id, { pushToken: token });
+                        }
+                    }
+                } catch (err) {
+                    // Check if token verification failed due to authentication issue
+                    if (err.message.includes('Access denied') || err.message.includes('token') || err.message.includes('API error')) {
+                        await AsyncStorage.removeItem('user');
+                        setUser(null);
+                    } else {
+                        // Network error or server offline. Keep current session cached.
+                        setUser(userData);
                     }
                 }
             }
@@ -54,6 +75,10 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         setupNotificationHandler();
+        setOnUnauthorized(async () => {
+            setUser(null);
+            await AsyncStorage.removeItem('user');
+        });
     }, []);
 
     return (

@@ -28,11 +28,11 @@ async function request(path, options = {}) {
     const user = sessionData ? JSON.parse(sessionData) : null;
     const token = user?.token;
 
-    const headers = { 
-        'Content-Type': 'application/json', 
-        ...options.headers 
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
     };
-    
+
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
@@ -42,7 +42,7 @@ async function request(path, options = {}) {
         ...options,
         body: options.body ? JSON.stringify(options.body) : undefined,
     });
-    
+
     const contentType = res.headers.get('content-type');
     if (!res.ok) {
         if (contentType && contentType.includes('application/json')) {
@@ -115,7 +115,7 @@ export const uploadKycDocument = async (documentType, file) => {
     const sessionData = sessionStorage.getItem("banking_user");
     const user = sessionData ? JSON.parse(sessionData) : null;
     const token = user?.token;
-    
+
     const headers = {};
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;

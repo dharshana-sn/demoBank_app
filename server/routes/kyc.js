@@ -46,25 +46,25 @@ router.post('/upload', upload.single('document'), (req, res) => {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded.' });
         }
-        
+
         const { documentType: docType, userId } = req.body;
         if (!userId) {
             fs.unlinkSync(req.file.path);
             return res.status(400).json({ error: 'userId is required' });
         }
-        
+
         if (!['aadhar', 'pan', 'license'].includes(docType)) {
             // Cleanup the file if invalid type
             fs.unlinkSync(req.file.path);
             return res.status(400).json({ error: 'Invalid document type. Must be aadhar, pan, or license.' });
         }
- 
+
         // Save successfully uploaded filename
         if (!mockKycStatus[userId]) {
             mockKycStatus[userId] = { aadhar: null, pan: null, license: null };
         }
         mockKycStatus[userId][docType] = req.file.filename;
- 
+
         // Simulate processing delay for demo
         setTimeout(() => {
             res.json({
@@ -84,16 +84,16 @@ router.post('/upload', upload.single('document'), (req, res) => {
 router.delete('/document/:type', (req, res) => {
     const { type } = req.params;
     const { userId } = req.query;
-    
+
     if (!userId) return res.status(400).json({ error: 'userId is required' });
     if (!['aadhar', 'pan', 'license'].includes(type)) {
         return res.status(400).json({ error: 'Invalid document type.' });
     }
- 
+
     if (!mockKycStatus[userId]) {
         return res.json({ success: true, message: 'Document deleted successfully' });
     }
- 
+
     const filename = mockKycStatus[userId][type];
     if (filename) {
         const filepath = path.join(uploadDir, filename);
@@ -102,7 +102,7 @@ router.delete('/document/:type', (req, res) => {
         }
         mockKycStatus[userId][type] = null;
     }
-    
+
     res.json({ success: true, message: 'Document deleted successfully' });
 });
 

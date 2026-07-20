@@ -3,11 +3,13 @@
  * Points to the backend server (update BASE_URL to your backend IP/URL).
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 // Change this to your backend URL:
 // - Local dev: 'http://10.0.2.2:5001/api' for Android emulator
 // - Local dev: 'http://localhost:5001/api' for iOS simulator
 // - Production: 'https://demobank-app-backend.onrender.com/api'
-// export const BASE_URL = 'http://10.0.2.2:5001/api';
+// export const BASE_URL = 'http://10.117.88.164:5001/api';
 export const BASE_URL = 'http://192.168.22.89:5001/api';
 
 export const checkHealth = async () => {
@@ -26,13 +28,46 @@ export const checkHealth = async () => {
     }
 };
 
+let onUnauthorizedCallback = null;
+
+export const setOnUnauthorized = (cb) => {
+    onUnauthorizedCallback = cb;
+};
+
+const buildQueryString = (params = {}) => {
+    const keys = Object.keys(params).filter(
+        key => params[key] !== undefined && params[key] !== null
+    );
+    if (keys.length === 0) return '';
+    return '?' + keys
+        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+        .join('&');
+};
+
 async function request(path, options = {}) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
+        let token = null;
+        try {
+            const stored = await AsyncStorage.getItem('user');
+            if (stored) {
+                const userData = JSON.parse(stored);
+                token = userData?.token;
+            }
+        } catch (_) {}
+
+        const headers = { 
+            'Content-Type': 'application/json', 
+            ...options.headers 
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const res = await fetch(`${BASE_URL}${path}`, {
-            headers: { 'Content-Type': 'application/json', ...options.headers },
+            headers,
             ...options,
             signal: controller.signal,
             body: options.body ? JSON.stringify(options.body) : undefined,
@@ -41,6 +76,9 @@ async function request(path, options = {}) {
 
         if (!res.ok) {
             const err = await res.json().catch(() => ({ error: res.statusText }));
+            if ((res.status === 401 || res.status === 403) && onUnauthorizedCallback) {
+                onUnauthorizedCallback();
+            }
             throw new Error(err.error || 'API error');
         }
         return res.json();
@@ -54,9 +92,8 @@ async function request(path, options = {}) {
 }
 
 // ── Accounts ──────────────────────────────────
-export const getAccounts = async (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
-    return request(`/accounts${qs ? `?${qs}` : ''}`);
+export const getAccounts = (params = {}) => {
+    return request(`/accounts${buildQueryString(params)}`);
 };
 export const updateAccountBalance = (id, delta) =>
     request(`/accounts/${id}/balance`, { method: 'PATCH', body: { delta } });
@@ -70,8 +107,7 @@ export const deleteAccount = (id) =>
 
 // ── Transactions ──────────────────────────────
 export const getTransactions = (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
-    return request(`/transactions${qs ? `?${qs}` : ''}`);
+    return request(`/transactions${buildQueryString(params)}`);
 };
 export const createTransaction = (txn) =>
     request('/transactions', { method: 'POST', body: txn });
@@ -80,8 +116,7 @@ export const sameBankTransfer = (data) =>
 
 // ── Fixed Deposits ────────────────────────────
 export const getFixedDeposits = (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
-    return request(`/fixed-deposits${qs ? `?${qs}` : ''}`);
+    return request(`/fixed-deposits${buildQueryString(params)}`);
 };
 export const createFixedDeposit = (fd) =>
     request('/fixed-deposits', { method: 'POST', body: fd });
@@ -97,24 +132,38 @@ export const loginUser = (email, password) =>
 
 // ── KYC ───────────────────────────────────────
 export const getKycStatus = (params = {}) => {
-    const qs = new URLSearchParams(params).toString();
-    return request(`/kyc/status${qs ? `?${qs}` : ''}`);
+    return request(`/kyc/status${buildQueryString(params)}`);
 };
 export const deleteKycDocument = (type, params = {}) => {
-    const qs = new URLSearchParams(params).toString();
-    return request(`/kyc/document/${type}${qs ? `?${qs}` : ''}`, { method: 'DELETE' });
+    return request(`/kyc/document/${type}${buildQueryString(params)}`, { method: 'DELETE' });
 };
 
 export const uploadKycDocument = async (type, fileUri, fileName, mimeType, userId) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
     try {
+        let token = null;
+        try {
+            const stored = await AsyncStorage.getItem('user');
+            if (stored) {
+                const userData = JSON.parse(stored);
+                token = userData?.token;
+            }
+        } catch (_) {}
+
         const formData = new FormData();
         formData.append('document', { uri: fileUri, name: fileName, type: mimeType || 'application/octet-stream' });
         formData.append('documentType', type);
         formData.append('userId', userId);
+
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const res = await fetch(`${BASE_URL}/kyc/upload`, {
             method: 'POST',
+            headers,
             body: formData,
             signal: controller.signal,
         });
